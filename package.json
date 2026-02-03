@@ -1,0 +1,36 @@
+{
+    "name": "divination-dashboard",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@hookform/resolvers": "latest",
+        "chart.js": "^4.5.1",
+        "clsx": "latest",
+        "lucide-react": "latest",
+        "next": "latest",
+        "next-auth": "beta",
+        "react": "latest",
+        "react-chartjs-2": "^5.3.1",
+        "react-dom": "latest",
+        "react-hook-form": "latest",
+        "tailwind-merge": "latest",
+        "zod": "latest"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "autoprefixer": "^10.0.1",
+        "eslint": "^9",
+        "eslint-config-next": "latest",
+        "postcss": "^8",
+        "tailwindcss": "^3.3.0",
+        "typescript": "^5"
+    }
+}
