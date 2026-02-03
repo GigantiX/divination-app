@@ -250,11 +250,11 @@ export default function EventDetailPage() {
             </div>
 
             {/* FAB */}
-            <div className="fixed bottom-6 right-6">
+            <Link href={`/events/${eventData.id}/reports/new`} className="fixed bottom-6 right-6">
                 <Button className="h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary-hover">
                     <Plus className="h-6 w-6 text-white" />
                 </Button>
-            </div>
+            </Link>
         </div>
     )
 }
