@@ -9,6 +9,8 @@ import {
     ChevronDown,
     MessageSquare,
     Plus,
+    Layers,
+    Settings,
 } from "lucide-react"
 import {
     Chart as ChartJS,
@@ -173,6 +175,19 @@ export default function EventDetailPage() {
     const [activeTab, setActiveTab] = React.useState<"overview" | "reports">("overview")
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedBatch, setSelectedBatch] = React.useState(eventData.batches[0].id)
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+    const menuRef = React.useRef<HTMLDivElement>(null)
+
+    // Close menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary pb-20">
@@ -185,9 +200,37 @@ export default function EventDetailPage() {
                         </Button>
                     </Link>
                     <h1 className="text-lg font-bold text-black">{eventData.name}</h1>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="h-5 w-5" />
-                    </Button>
+                    <div className="relative" ref={menuRef}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        >
+                            <MoreVertical className="h-5 w-5" />
+                        </Button>
+
+                        {/* Dropdown Menu */}
+                        {isMenuOpen && (
+                            <div className="absolute right-0 top-10 z-50 w-48 rounded-lg border bg-white py-1 shadow-lg">
+                                <Link
+                                    href={`/events/${eventData.id}/batches/new`}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <Layers className="h-4 w-4 text-blue-500" />
+                                    Add New Batch
+                                </Link>
+                                <button
+                                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <Settings className="h-4 w-4 text-gray-500" />
+                                    Event Settings
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Batch Selector */}
