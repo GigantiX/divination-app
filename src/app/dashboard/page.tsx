@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Calendar, Users, Plus } from "lucide-react"
+import { Calendar, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { BottomNav } from "@/components/ui/bottom-nav"
 
 // Mock data - will be replaced with actual DB data later
 const mockEvents = {
@@ -190,38 +191,7 @@ export default function DashboardPage() {
                 )}
             </div>
 
-            {/* Bottom Navigation */}
-            <div className="sticky bottom-0 border-t bg-white">
-                <nav className="flex items-center justify-around py-3">
-                    <Link
-                        href="/dashboard"
-                        className="flex flex-col items-center gap-1 text-primary"
-                    >
-                        <Calendar className="h-6 w-6" />
-                        <span className="text-xs font-medium">Home</span>
-                    </Link>
-                    {mockUser.role === "admin" && (
-                        <Link
-                            href="/people"
-                            className="flex flex-col items-center gap-1 text-text-secondary"
-                        >
-                            <Users className="h-6 w-6" />
-                            <span className="text-xs font-medium">People</span>
-                        </Link>
-                    )}
-                    <Link
-                        href="/settings"
-                        className="flex flex-col items-center gap-1 text-text-secondary"
-                    >
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-text-secondary text-white">
-                            <span className="text-[10px] font-semibold">
-                                {mockUser.displayName.charAt(0)}
-                            </span>
-                        </div>
-                        <span className="text-xs font-medium">Settings</span>
-                    </Link>
-                </nav>
-            </div>
+            <BottomNav isAdmin={mockUser.role === "admin"} />
             {/* Confirmation Modal */}
             {modalConfig.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
