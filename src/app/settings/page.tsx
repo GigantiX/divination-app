@@ -8,6 +8,7 @@ import {
     HelpCircle,
     Power,
     ChevronRight,
+    LogOut,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -24,9 +25,10 @@ const currentUser = {
 
 export default function SettingsPage() {
     const router = useRouter()
+    const [showLogoutDialog, setShowLogoutDialog] = React.useState(false)
 
     const handleLogout = () => {
-        // TODO: Handle actual logout
+        // TODO: Handle actual logout (clear session, tokens, etc.)
         console.log("Logging out...")
         router.push("/login")
     }
@@ -101,7 +103,7 @@ export default function SettingsPage() {
                 <Card className="border-none shadow-sm mb-6">
                     <CardContent className="p-0">
                         <button
-                            onClick={handleLogout}
+                            onClick={() => setShowLogoutDialog(true)}
                             className="flex items-center gap-4 w-full p-4 hover:bg-red-50 transition-colors"
                         >
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
@@ -119,6 +121,45 @@ export default function SettingsPage() {
             </div>
 
             <BottomNav isAdmin={currentUser.role === "admin"} />
+
+            {/* Logout Confirmation Dialog */}
+            {showLogoutDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+                        {/* Icon */}
+                        <div className="flex justify-center mb-4">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                                <LogOut className="h-8 w-8 text-red-500" />
+                            </div>
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="text-center text-xl font-bold text-gray-900 mb-2">
+                            Keluar dari Akun?
+                        </h3>
+                        <p className="text-center text-gray-500 mb-6">
+                            Anda akan keluar dari akun ini. Pastikan semua perubahan sudah tersimpan.
+                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowLogoutDialog(false)}
+                                className="h-12 rounded-xl border-gray-300 font-semibold"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                onClick={handleLogout}
+                                className="h-12 rounded-xl bg-red-500 hover:bg-red-600 font-semibold"
+                            >
+                                Ya, Keluar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
