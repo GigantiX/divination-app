@@ -2,21 +2,22 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
     Lock,
     HelpCircle,
     Power,
     ChevronRight,
     LogOut,
+    Loader2,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { BottomNav } from "@/components/ui/bottom-nav"
+import { logoutAction } from "@/app/actions/auth"
 
-// Mock user data
+// Mock user data - TODO: Replace with actual session data
 const currentUser = {
     name: "Budi Santoso",
     username: "budisantoso",
@@ -24,13 +25,12 @@ const currentUser = {
 }
 
 export default function SettingsPage() {
-    const router = useRouter()
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false)
+    const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
-    const handleLogout = () => {
-        // TODO: Handle actual logout (clear session, tokens, etc.)
-        console.log("Logging out...")
-        router.push("/login")
+    const handleLogout = async () => {
+        setIsLoggingOut(true)
+        await logoutAction()
     }
 
     return (
@@ -147,14 +147,23 @@ export default function SettingsPage() {
                                 variant="outline"
                                 onClick={() => setShowLogoutDialog(false)}
                                 className="h-12 rounded-xl border-gray-300 font-semibold"
+                                disabled={isLoggingOut}
                             >
                                 Batal
                             </Button>
                             <Button
                                 onClick={handleLogout}
                                 className="h-12 rounded-xl bg-red-500 hover:bg-red-600 font-semibold"
+                                disabled={isLoggingOut}
                             >
-                                Ya, Keluar
+                                {isLoggingOut ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Keluar...
+                                    </>
+                                ) : (
+                                    "Ya, Keluar"
+                                )}
                             </Button>
                         </div>
                     </div>
