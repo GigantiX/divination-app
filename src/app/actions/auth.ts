@@ -2,7 +2,9 @@
 
 import { signIn, signOut } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { hashPassword } from '@/lib/password'
+import { getRandomEmoji } from '@/lib/emojis'
 import { redirect } from 'next/navigation'
 import { AuthError } from 'next-auth'
 
@@ -40,6 +42,7 @@ export async function loginAction(formData: FormData) {
 
 /**
  * Register action - Create new user account
+ * Uses admin client to bypass RLS for profile creation
  */
 export async function registerAction(formData: FormData) {
     const email = formData.get('email') as string
@@ -67,7 +70,8 @@ export async function registerAction(formData: FormData) {
         return { error: 'Nama minimal 2 karakter' }
     }
 
-    const supabase = await createClient()
+    // Use admin client to bypass RLS
+    const supabase = createAdminClient()
 
     // Check if user exists
     const { data: existing } = await supabase
@@ -83,12 +87,14 @@ export async function registerAction(formData: FormData) {
     // Hash password
     const passwordHash = await hashPassword(password)
 
-    // Create profile
+    // Create profile (admin client bypasses RLS)
     const { error } = await supabase.from('profiles').insert({
+        id: crypto.randomUUID(), // Generate UUID since we're not using auth.users
         username: email,
         full_name: displayName,
         role: 'user',
         password_hash: passwordHash,
+        emoji: getRandomEmoji(), // Random emoji for avatar
     })
 
     if (error) {
@@ -101,17 +107,17 @@ export async function registerAction(formData: FormData) {
         await signIn('credentials', {
             email,
             password,
-            redirect: false,
+            redirectTo: '/dashboard',
         })
     } catch (error) {
-        // Registration successful but login failed
-        return {
-            success: true,
-            message: 'Akun berhasil dibuat! Silakan login.',
+        // Auth.js throws NEXT_REDIRECT which is expected behavior
+        // We need to re-throw it so Next.js can handle the redirect
+        if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+            throw error
         }
+        // Registration successful but login failed - redirect to login page
+        redirect('/login')
     }
-
-    redirect('/dashboard')
 }
 
 /**

@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyPassword } from '@/lib/password'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -18,8 +18,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     throw new Error('Email dan password wajib diisi')
                 }
 
-                // Get user from Supabase
-                const supabase = await createClient()
+                // Use admin client to bypass RLS for user lookup
+                const supabase = createAdminClient()
                 const { data: profile, error } = await supabase
                     .from('profiles')
                     .select('*')

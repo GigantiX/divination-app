@@ -9,28 +9,49 @@ import {
     ChevronRight,
     LogOut,
     Loader2,
+    Smile,
+    X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { BottomNav } from "@/components/ui/bottom-nav"
 import { logoutAction } from "@/app/actions/auth"
+import { getEmojisByCategory, ALL_EMOJIS } from "@/lib/emojis"
 
 // Mock user data - TODO: Replace with actual session data
 const currentUser = {
     name: "Budi Santoso",
     username: "budisantoso",
-    role: "admin"
+    role: "admin",
+    emoji: "😎", // TODO: Get from session/database
 }
 
 export default function SettingsPage() {
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false)
+    const [showEmojiPicker, setShowEmojiPicker] = React.useState(false)
     const [isLoggingOut, setIsLoggingOut] = React.useState(false)
+    const [isSavingEmoji, setIsSavingEmoji] = React.useState(false)
+    const [selectedEmoji, setSelectedEmoji] = React.useState(currentUser.emoji)
+    const [activeCategory, setActiveCategory] = React.useState<"faces" | "animals" | "objects">("faces")
+
+    const emojiCategories = getEmojisByCategory()
 
     const handleLogout = async () => {
         setIsLoggingOut(true)
         await logoutAction()
+    }
+
+    const handleSelectEmoji = async (emoji: string) => {
+        setIsSavingEmoji(true)
+        setSelectedEmoji(emoji)
+        // TODO: Save to database
+        // await updateProfileEmoji(emoji)
+        setTimeout(() => {
+            setIsSavingEmoji(false)
+            setShowEmojiPicker(false)
+        }, 500) // Simulated save delay
     }
 
     return (
@@ -46,12 +67,20 @@ export default function SettingsPage() {
                 <Card className="border-none shadow-sm mb-4">
                     <CardContent className="p-6">
                         <div className="flex flex-col items-center text-center">
-                            {/* Avatar */}
-                            <Avatar className="h-24 w-24 border-4 border-white shadow-lg mb-4">
-                                <AvatarFallback className="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 text-2xl font-bold">
-                                    {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                </AvatarFallback>
-                            </Avatar>
+                            {/* Emoji Avatar - Clickable */}
+                            <button
+                                onClick={() => setShowEmojiPicker(true)}
+                                className="relative mb-4 group"
+                            >
+                                <AvatarEmoji
+                                    emoji={selectedEmoji}
+                                    size="xl"
+                                    className="border-4 border-white shadow-lg transition-transform group-hover:scale-105"
+                                />
+                                <div className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center border-2 border-white shadow-md">
+                                    <Smile className="h-4 w-4 text-white" />
+                                </div>
+                            </button>
 
                             {/* Name and Username */}
                             <h2 className="text-xl font-bold text-gray-900 mb-1">{currentUser.name}</h2>
@@ -71,6 +100,20 @@ export default function SettingsPage() {
                 {/* Menu Items */}
                 <Card className="border-none shadow-sm mb-4">
                     <CardContent className="p-0">
+                        {/* Change Emoji */}
+                        <button
+                            onClick={() => setShowEmojiPicker(true)}
+                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 w-full text-left"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-50">
+                                    <Smile className="h-5 w-5 text-yellow-500" />
+                                </div>
+                                <span className="font-medium text-gray-900">Ubah Emoji Profil</span>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                        </button>
+
                         {/* Change Password */}
                         <Link href="/settings/change-password">
                             <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
@@ -121,6 +164,78 @@ export default function SettingsPage() {
             </div>
 
             <BottomNav isAdmin={currentUser.role === "admin"} />
+
+            {/* Emoji Picker Modal */}
+            {showEmojiPicker && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+                    <div className="w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl animate-in slide-in-from-bottom">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">Pilih Emoji</h3>
+                            <button
+                                onClick={() => setShowEmojiPicker(false)}
+                                className="p-2 hover:bg-gray-100 rounded-full"
+                            >
+                                <X className="h-5 w-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Category Tabs */}
+                        <div className="flex gap-2 mb-4">
+                            <button
+                                onClick={() => setActiveCategory("faces")}
+                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "faces"
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                😀 Wajah
+                            </button>
+                            <button
+                                onClick={() => setActiveCategory("animals")}
+                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "animals"
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                🐶 Hewan
+                            </button>
+                            <button
+                                onClick={() => setActiveCategory("objects")}
+                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "objects"
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    }`}
+                            >
+                                ⭐ Objek
+                            </button>
+                        </div>
+
+                        {/* Emoji Grid */}
+                        <div className="grid grid-cols-8 gap-2 max-h-64 overflow-y-auto pb-4">
+                            {emojiCategories[activeCategory].map((emoji, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleSelectEmoji(emoji)}
+                                    disabled={isSavingEmoji}
+                                    className={`h-10 w-10 flex items-center justify-center text-2xl rounded-lg transition-all hover:bg-gray-100 hover:scale-110 ${selectedEmoji === emoji ? "bg-blue-100 ring-2 ring-blue-500" : ""
+                                        } ${isSavingEmoji ? "opacity-50" : ""}`}
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Loading indicator */}
+                        {isSavingEmoji && (
+                            <div className="flex items-center justify-center gap-2 py-2 text-blue-500">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Menyimpan...</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Logout Confirmation Dialog */}
             {showLogoutDialog && (

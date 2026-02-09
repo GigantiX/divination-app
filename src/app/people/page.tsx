@@ -10,7 +10,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { BottomNav } from "@/components/ui/bottom-nav"
 import { cn } from "@/lib/utils"
 
@@ -20,20 +20,20 @@ interface TeamMember {
     id: string
     name: string
     role?: string
-    avatar?: string
+    emoji: string
     status: "assigned" | "unassigned" | "admin"
     eventsCount: number
 }
 
 // Mock Data
 const teamMembers: TeamMember[] = [
-    { id: "1", name: "Siti Rahma", status: "unassigned", eventsCount: 0 },
-    { id: "2", name: "Budi Santoso", status: "admin", eventsCount: 0, role: "Admin" },
-    { id: "3", name: "Joko Widodo", status: "assigned", eventsCount: 2 },
-    { id: "4", name: "Dewi Putri", status: "unassigned", eventsCount: 0 },
-    { id: "5", name: "Rina Melati", status: "assigned", eventsCount: 3 },
-    { id: "6", name: "Ahmad Fauzi", status: "assigned", eventsCount: 5 },
-    { id: "7", name: "Lisa Permata", status: "unassigned", eventsCount: 0 },
+    { id: "1", name: "Siti Rahma", emoji: "🌸", status: "unassigned", eventsCount: 0 },
+    { id: "2", name: "Budi Santoso", emoji: "😎", status: "admin", eventsCount: 0, role: "Admin" },
+    { id: "3", name: "Joko Widodo", emoji: "🦁", status: "assigned", eventsCount: 2 },
+    { id: "4", name: "Dewi Putri", emoji: "🦋", status: "unassigned", eventsCount: 0 },
+    { id: "5", name: "Rina Melati", emoji: "🌺", status: "assigned", eventsCount: 3 },
+    { id: "6", name: "Ahmad Fauzi", emoji: "🚀", status: "assigned", eventsCount: 5 },
+    { id: "7", name: "Lisa Permata", emoji: "💎", status: "unassigned", eventsCount: 0 },
 ]
 
 export default function PeopleManagementPage() {
@@ -172,12 +172,12 @@ function MemberCard({ member }: { member: TeamMember }) {
             <Card className="border-none shadow-sm cursor-pointer transition-all hover:shadow-md">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                        {/* Avatar */}
-                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 font-semibold">
-                                {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                        </Avatar>
+                        {/* Emoji Avatar */}
+                        <AvatarEmoji
+                            emoji={member.emoji}
+                            size="md"
+                            className="border-2 border-white shadow-sm"
+                        />
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
