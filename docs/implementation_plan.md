@@ -1306,3 +1306,69 @@ CREATE INDEX idx_reports_date ON reports(report_date);
 > [!NOTE]
 > **JWT Verification:** Using new asymmetric JWT signing keys (RS256). No JWT secret needed in env - verification done via JWKS endpoint: `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`
 
+---
+
+## 11. Emoji Avatar System ✅
+
+### Overview
+
+Profile pictures replaced with emoji avatars to save storage space. Each user has an emoji instead of an uploaded image.
+
+### Database Schema Change
+
+```sql
+-- Remove avatar_url, add emoji column
+ALTER TABLE profiles DROP COLUMN IF EXISTS avatar_url;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS emoji TEXT DEFAULT '😀';
+```
+
+### Emoji Categories (136 Total)
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| Faces | 40 | 😀 😃 😄 😎 🤓 🥳 🤠 👻 🤖 👽 |
+| Animals | 48 | 🐶 🐱 🐭 🦊 🐻 🐼 🦁 🐯 🦋 🐢 |
+| Objects | 48 | ⭐ 🌟 🔥 💧 🌈 🚀 💎 👑 🎮 🎨 |
+
+### Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/emojis.ts` | Emoji constants and `getRandomEmoji()` |
+| `src/components/ui/avatar-emoji.tsx` | AvatarEmoji component |
+
+### AvatarEmoji Component
+
+```tsx
+// Size variants: sm, md, lg, xl
+<AvatarEmoji emoji="😎" size="xl" />
+```
+
+| Size | Dimensions | Text Size |
+|------|------------|-----------|
+| sm | 32×32 | text-base |
+| md | 40×40 | text-lg |
+| lg | 64×64 | text-2xl |
+| xl | 96×96 | text-4xl |
+
+### Emoji Picker (Settings Page)
+
+- Modal slides up from bottom
+- 3 category tabs: Wajah, Hewan, Objek
+- 8-column grid of emojis
+- Selected emoji highlighted with ring
+- Saves to database on tap
+
+### Registration Flow
+
+1. User registers → `getRandomEmoji()` called
+2. Random emoji assigned to profile
+3. User can change later in Settings
+
+### UI Locations Using Emojis
+
+- ✅ Settings page profile card
+- ✅ People list
+- ⬜ Dashboard header (TODO)
+- ⬜ User detail page (TODO)
+
