@@ -156,7 +156,7 @@ export function SettingsClient({ profile }: SettingsClientProps) {
                 </Card>
             </div>
 
-            <BottomNav isAdmin={profile.role === "admin"} />
+            <BottomNav isAdmin={profile.role === "admin" || profile.role === "developer"} />
 
             {/* Emoji Picker Modal */}
             {showEmojiPicker && (
