@@ -29,14 +29,55 @@
 - [x] Save to database
 - [x] Success feedback and redirect
 
+## Dashboard ✅
+- [x] Backend sync with database
+- [x] Role badge component (Developer/Admin/User)
+- [x] Event cards with real data
+- [x] Batch count from database
+- [x] Status toggle (active/inactive)
+- [x] Empty state for unassigned users
+- [x] Header with emoji avatar
+
+## Create Event ✅
+- [x] Create event server action
+- [x] Logo upload with compression (512×512 WebP)
+- [x] 5MB file size limit
+- [x] Image preview and clear button
+- [x] Supabase Storage integration
+- [x] Validation and error handling
+
+## Event Detail ✅
+- [x] Server component with data fetching
+- [x] Overview tab (stats, chart, advertisers, PICs)
+- [x] Reports tab (daily reports list)
+- [x] Batch selector
+- [x] 7-day leads/sales chart
+- [x] Role-based UI (menu, FAB)
+- [x] Empty states
+
+## Add Batch ✅
+- [x] Create batch server action
+- [x] Form with name, dates, notes
+- [x] Optional end date (ongoing batches)
+- [x] "Batch Aktif Terus" toggle
+- [x] Role-based access (Admin/Dev/PIC)
+- [x] Auto-redirect after creation
+
 ## Pending Database Migrations
 Run in Supabase SQL Editor:
-- [ ] `20260207_add_password_hash.sql`
-- [ ] `20260207_remove_auth_users_fk.sql`
-- [ ] `20260207_add_emoji_avatar.sql`
+- [x] `20260207_add_password_hash.sql`
+- [x] `20260207_remove_auth_users_fk.sql`
+- [x] `20260207_add_emoji_avatar.sql`
+- [ ] `20260210_storage_bucket.sql`
+- [ ] `20260210_batch_nullable_end_date.sql`
+
+## In Progress
+- [ ] Add Report feature
+- [ ] People management backend
 
 ## Future Enhancements
-- [ ] Dashboard header avatar
-- [ ] User detail page avatar
 - [ ] Change password functionality
 - [ ] Help center content
+- [ ] Event settings page
+- [ ] Delete event/batch
+- [ ] Edit report
