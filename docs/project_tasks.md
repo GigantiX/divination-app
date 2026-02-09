@@ -1,26 +1,42 @@
-# Auth.js Implementation Tasks
+# Project Tasks
 
-## Installation
-- [x] Install bcryptjs and types
+## Authentication ✅
+- [x] Auth.js v5 with Credentials provider
+- [x] bcrypt password hashing
+- [x] 7-day JWT sessions
+- [x] Login/register/logout server actions
+- [x] Indonesian error messages
+- [x] Auto-login after registration
 
-## Core Auth Files
-- [x] Create `src/auth.ts` - Auth.js configuration
-- [x] Create `src/app/api/auth/[...nextauth]/route.ts` - API route
-- [x] Create `src/lib/password.ts` - Password utilities
-- [x] Create `src/types/next-auth.d.ts` - Type definitions
-- [x] Create `src/app/actions/auth.ts` - Server actions
+## Emoji Avatars ✅
+- [x] Remove avatar_url, add emoji column
+- [x] Create 136 emoji constants (faces, animals, objects)
+- [x] Create AvatarEmoji component with size variants
+- [x] Update register action with random emoji
+- [x] Settings page emoji picker with category tabs
+- [x] People list using emoji avatars
 
-## Database
-- [x] Create password_hash migration
+## Settings Page ✅
+- [x] Backend sync with database (name, email, emoji)
+- [x] Remove "Pengaturan" header
+- [x] Remove version info
+- [x] Emoji picker modal
+- [x] Logout functionality
 
-## Updates
-- [x] Update `src/middleware.ts` - Replace with Auth.js
-- [x] Update `src/app/login/page.tsx` - Connect to auth
-- [x] Update `src/app/register/page.tsx` - Connect to auth
-- [x] Update `src/app/settings/page.tsx` - Connect logout
+## Edit Profile ✅
+- [x] Edit profile page at `/settings/edit-profile`
+- [x] Display name field (2-100 chars)
+- [x] Save to database
+- [x] Success feedback and redirect
 
-## Verification
-- [x] Build verification passed ✅
-- [ ] Test login flow (requires database migration)
-- [ ] Test register flow (requires database migration)
-- [ ] Test logout flow (requires database migration)
+## Pending Database Migrations
+Run in Supabase SQL Editor:
+- [ ] `20260207_add_password_hash.sql`
+- [ ] `20260207_remove_auth_users_fk.sql`
+- [ ] `20260207_add_emoji_avatar.sql`
+
+## Future Enhancements
+- [ ] Dashboard header avatar
+- [ ] User detail page avatar
+- [ ] Change password functionality
+- [ ] Help center content

@@ -1,110 +1,81 @@
-# Auth.js Authentication - Implementation Complete ✅
+# Development Log
 
-## Summary
+## Latest Updates (Feb 2026)
 
-Implemented authentication using **Auth.js v5** with Credentials provider, bcrypt password hashing, 7-day JWT sessions, and Indonesian error messages.
+### Settings & Profile Features
+- **Emoji Avatars** - Profile pics replaced with emoji (136 options: faces, animals, objects)
+- **Edit Profile Page** - `/settings/edit-profile` with display name field
+- **Settings Backend** - Syncs with Supabase (name, email, emoji)
+- **Profile Actions** - `getProfile()`, `updateDisplayName()`, `updateEmoji()`
 
----
-
-## Files Created
-
-| File | Description |
-|------|-------------|
-| [`src/auth.ts`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/auth.ts) | Auth.js configuration with Credentials provider |
-| [`src/app/api/auth/[...nextauth]/route.ts`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/app/api/auth/%5B...nextauth%5D/route.ts) | Auth.js API route handler |
-| [`src/app/actions/auth.ts`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/app/actions/auth.ts) | Server actions for login/register/logout |
-| [`src/lib/password.ts`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/lib/password.ts) | Password hashing utilities (bcrypt) |
-| [`src/types/next-auth.d.ts`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/types/next-auth.d.ts) | TypeScript type extensions |
-| [`supabase/migrations/20260207_add_password_hash.sql`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/supabase/migrations/20260207_add_password_hash.sql) | Database migration for password storage |
+### Authentication (Auth.js v5)
+- **Credentials Provider** - Email/password login with bcrypt
+- **JWT Sessions** - 7-day duration
+- **Auto-login** - After registration → Dashboard
+- **Indonesian Messages** - All error/success text in Indonesian
 
 ---
 
-## Files Modified
+## File Structure
 
-| File | Changes |
+### Auth System
+| File | Purpose |
 |------|---------|
-| [`src/middleware.ts`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/middleware.ts) | Replaced Supabase Auth with Auth.js |
-| [`src/app/login/page.tsx`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/app/login/page.tsx) | Added auth action, loading state, Indonesian labels |
-| [`src/app/register/page.tsx`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/app/register/page.tsx) | Added auth action, validation, Indonesian labels |
-| [`src/app/settings/page.tsx`](file:///Users/axelabs/MyFolder/Divination/DivinationDashboard/src/app/settings/page.tsx) | Connected logout button to auth action |
+| `src/auth.ts` | Auth.js config with Credentials provider |
+| `src/app/api/auth/[...nextauth]/route.ts` | Auth API routes |
+| `src/app/actions/auth.ts` | Login/register/logout server actions |
+| `src/lib/password.ts` | bcrypt password utilities |
+| `src/lib/supabase/admin.ts` | Admin client (bypasses RLS) |
+
+### Profile & Settings
+| File | Purpose |
+|------|---------|
+| `src/app/actions/profile.ts` | Profile CRUD actions |
+| `src/app/settings/page.tsx` | Settings server component |
+| `src/app/settings/settings-client.tsx` | Settings UI with emoji picker |
+| `src/app/settings/edit-profile/` | Edit display name page |
+| `src/lib/emojis.ts` | 136 emojis (faces, animals, objects) |
+| `src/components/ui/avatar-emoji.tsx` | Emoji avatar component |
 
 ---
 
-## Indonesian Error Messages
+## Database Migrations
 
-| Scenario | Message |
-|----------|---------|
-| Empty fields | "Email dan password wajib diisi" / "Semua kolom wajib diisi" |
-| Invalid credentials | "Email atau password salah" |
-| Password too short | "Password minimal 8 karakter" |
-| Name too short | "Nama minimal 2 karakter" |
-| Invalid email format | "Format email tidak valid" |
-| Email exists | "Email sudah terdaftar" |
-| Password mismatch | "Password tidak cocok" |
-| Account creation failed | "Gagal membuat akun. Silakan coba lagi." |
+Run in order in Supabase SQL Editor:
+
+1. `20260206_initial_schema.sql` - Base tables
+2. `20260207_add_password_hash.sql` - Add password_hash column
+3. `20260207_remove_auth_users_fk.sql` - Remove auth.users FK
+4. `20260207_add_emoji_avatar.sql` - Replace avatar_url with emoji
 
 ---
 
 ## Configuration
 
-- **Session Duration:** 7 days (JWT)
-- **Password:** Minimum 8 characters, simple chars OK
-- **Username:** Email used as username
-- **Default Role:** `'user'`
-- **Email Verification:** Not required
+| Setting | Value |
+|---------|-------|
+| Session Duration | 7 days (JWT) |
+| Password Min Length | 8 characters |
+| Username Format | Email used as username |
+| Default Role | `'user'` |
+| Email Verification | Not required |
 
 ---
 
 ## Build Status
 
 ```
-✓ Compiled successfully
+✓ Compiled successfully (Next.js 16.1.6 Turbopack)
 ✓ TypeScript passed
-✓ All 11 pages generated
+✓ 17 pages generated (12 static, 5 dynamic)
 ```
 
 ---
 
-## Next Steps
+## Commits
 
-### 1. Run Database Migration
-
-Before testing auth, run in Supabase SQL Editor:
-
-```sql
--- Run the initial schema first (if not done)
--- Then run the password hash migration:
-ALTER TABLE profiles 
-ADD COLUMN IF NOT EXISTS password_hash TEXT;
-```
-
-### 2. Create First User
-
-Register via the app, or manually create in database:
-
-```sql
--- Hash password externally or use the app's register flow
-INSERT INTO profiles (id, username, full_name, role, password_hash)
-VALUES (
-  gen_random_uuid(),
-  'admin@example.com',
-  'Admin User',
-  'admin',
-  '$2a$10$...' -- bcrypt hash
-);
-```
-
-### 3. Test Auth Flows
-
-1. **Register:** `/register` → Create account → Auto-login → Dashboard
-2. **Login:** `/login` → Enter credentials → Dashboard
-3. **Logout:** Settings → Keluar → Confirm → Login page
-
----
-
-## Dependencies Added
-
-- `bcryptjs` - Password hashing
-- `@types/bcryptjs` - TypeScript types
-- `@radix-ui/react-slot` - Button component dependency
-- `class-variance-authority` - Button variants
+| Date | Commit | Description |
+|------|--------|-------------|
+| Feb 9 | `b80a2f6` | Settings backend + edit profile page |
+| Feb 9 | `3e4bf85` | Emoji avatars replacing profile pics |
+| Feb 7 | - | Auth.js v5 implementation |
