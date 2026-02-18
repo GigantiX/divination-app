@@ -2,113 +2,119 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter, useParams, useSearchParams } from "next/navigation"
-import { ChevronLeft, Calendar, DollarSign, Users, ShoppingCart, FileText, Loader2, Check } from "lucide-react"
+import { useRouter, useParams } from "next/navigation"
+import {
+    ChevronLeft,
+    Calendar,
+    DollarSign,
+    Users,
+    ShoppingCart,
+    FileText,
+    Loader2,
+    Check,
+    Trash2,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { createReport } from "@/app/actions/reports"
+import { getReport, updateReport, deleteReport } from "@/app/actions/reports"
 
-type DateOption = "today" | "yesterday" | "custom"
-
-// Get today's date in Jakarta timezone (UTC+7)
-const getJakartaDate = () => {
-    const now = new Date()
-    const jakartaOffset = 7 * 60
-    const localOffset = now.getTimezoneOffset()
-    const jakartaTime = new Date(now.getTime() + (jakartaOffset + localOffset) * 60 * 1000)
-    return jakartaTime.toISOString().split('T')[0]
-}
-
-const getYesterdayDate = () => {
-    const today = new Date(getJakartaDate())
-    today.setDate(today.getDate() - 1)
-    return today.toISOString().split('T')[0]
-}
-
-export default function NewReportPage() {
+export default function EditReportPage() {
     const router = useRouter()
     const params = useParams()
-    const searchParams = useSearchParams()
     const eventId = params.id as string
-    const batchId = searchParams.get('batch') || ''
+    const reportId = params.reportId as string
 
-    const todayDate = getJakartaDate()
-    const yesterdayDate = getYesterdayDate()
-
-    const [isLoading, setIsLoading] = React.useState(false)
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [isSaving, setIsSaving] = React.useState(false)
+    const [isDeleting, setIsDeleting] = React.useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
     const [success, setSuccess] = React.useState(false)
-    const [dateOption, setDateOption] = React.useState<DateOption>("today")
-    const [customDate, setCustomDate] = React.useState(todayDate)
+    const [batchId, setBatchId] = React.useState("")
+    const [reporterName, setReporterName] = React.useState("")
 
     const [formData, setFormData] = React.useState({
+        reportDate: "",
         spend: "",
         leads: "",
         sales: "",
-        notes: ""
+        notes: "",
     })
 
-    const getReportDate = () => {
-        switch (dateOption) {
-            case "today":
-                return todayDate
-            case "yesterday":
-                return yesterdayDate
-            case "custom":
-                return customDate
+    // Load report data
+    React.useEffect(() => {
+        const loadReport = async () => {
+            const report = await getReport(reportId)
+            if (!report) {
+                setError("Laporan tidak ditemukan atau tidak memiliki akses.")
+                setIsLoading(false)
+                return
+            }
+
+            setBatchId(report.batch_id)
+            const profileData = report.profiles as unknown as { full_name: string; emoji: string } | null
+            setReporterName(profileData?.full_name || "Unknown")
+
+            setFormData({
+                reportDate: report.report_date,
+                spend: formatCurrency(Math.round(Number(report.ads_spent)).toString()),
+                leads: report.leads_count.toString(),
+                sales: report.closing_count.toString(),
+                notes: report.notes || "",
+            })
+            setIsLoading(false)
         }
-    }
-
-    const formatDisplayDate = (dateStr: string) => {
-        const date = new Date(dateStr)
-        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
-        setError(null)
-    }
+        loadReport()
+    }, [reportId])
 
     const formatCurrency = (value: string) => {
-        const num = value.replace(/\D/g, '')
+        const num = value.replace(/\D/g, "")
         return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    }
+
+    const parseCurrency = (value: string): number => {
+        return parseInt(value.replace(/\./g, "") || "0", 10)
+    }
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target
+        setFormData((prev) => ({ ...prev, [name]: value }))
+        setError(null)
     }
 
     const handleSpendChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const formatted = formatCurrency(e.target.value)
-        setFormData(prev => ({ ...prev, spend: formatted }))
+        setFormData((prev) => ({ ...prev, spend: formatted }))
         setError(null)
     }
 
-    const parseCurrency = (value: string): number => {
-        return parseInt(value.replace(/\./g, '') || '0', 10)
+    const formatDisplayDate = (dateStr: string) => {
+        if (!dateStr) return ""
+        const date = new Date(dateStr)
+        return date.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
+        setIsSaving(true)
         setError(null)
 
-        if (!batchId) {
-            setError('Batch tidak ditemukan. Silakan kembali dan pilih batch.')
-            setIsLoading(false)
-            return
-        }
-
-        const reportDate = getReportDate()
         const adsSpent = parseCurrency(formData.spend)
-        const leadsCount = parseInt(formData.leads || '0', 10)
-        const closingCount = parseInt(formData.sales || '0', 10)
+        const leadsCount = parseInt(formData.leads || "0", 10)
+        const closingCount = parseInt(formData.sales || "0", 10)
 
-        const result = await createReport({
-            batchId,
-            reportDate,
+        const result = await updateReport(reportId, {
+            reportDate: formData.reportDate,
             leadsCount,
             closingCount,
             adsSpent,
@@ -117,25 +123,63 @@ export default function NewReportPage() {
 
         if (result.error) {
             setError(result.error)
-            setIsLoading(false)
+            setIsSaving(false)
             return
         }
 
         setSuccess(true)
-        setIsLoading(false)
+        setIsSaving(false)
 
-        // Redirect to event detail after brief success message
         setTimeout(() => {
             router.push(`/events/${eventId}?batch=${batchId}`)
             router.refresh()
         }, 1000)
     }
 
-    const reportDate = getReportDate()
-    const leadsNum = parseInt(formData.leads || '0', 10)
-    const salesNum = parseInt(formData.sales || '0', 10)
+    const handleDelete = async () => {
+        setIsDeleting(true)
+        setError(null)
+
+        const result = await deleteReport(reportId)
+
+        if (result.error) {
+            setError(result.error)
+            setIsDeleting(false)
+            setShowDeleteConfirm(false)
+            return
+        }
+
+        router.push(`/events/${eventId}?batch=${batchId}`)
+        router.refresh()
+    }
+
+    const leadsNum = parseInt(formData.leads || "0", 10)
+    const salesNum = parseInt(formData.sales || "0", 10)
     const spendNum = parseCurrency(formData.spend)
-    const isValid = formData.spend && formData.leads && formData.sales && batchId
+    const isValid = formData.spend && formData.leads && formData.sales && formData.reportDate
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen flex-col bg-background-secondary">
+                <div className="sticky top-0 z-10 border-b bg-white px-4 py-4">
+                    <div className="flex items-center">
+                        <Link href={`/events/${eventId}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 mr-2">
+                                <ChevronLeft className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <h1 className="flex-1 text-center text-lg font-bold text-black pr-10">
+                            Edit Laporan
+                        </h1>
+                    </div>
+                </div>
+                <div className="flex flex-1 items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
@@ -148,93 +192,32 @@ export default function NewReportPage() {
                         </Button>
                     </Link>
                     <h1 className="flex-1 text-center text-lg font-bold text-black pr-10">
-                        Tambah Laporan
+                        Edit Laporan
                     </h1>
                 </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 p-4 md:p-6 md:max-w-2xl md:mx-auto md:w-full">
-                {/* No batch warning */}
-                {!batchId && (
-                    <div className="mb-4 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-700">
-                        ⚠️ Batch tidak ditemukan. Silakan kembali ke halaman event dan pilih batch terlebih dahulu.
-                    </div>
-                )}
+                {/* Reporter Info */}
+                <div className="mb-4 rounded-lg bg-gray-50 px-4 py-3">
+                    <p className="text-xs text-gray-500">
+                        Laporan oleh <span className="font-medium text-gray-700">{reporterName}</span>
+                    </p>
+                </div>
 
                 <Card className="border-none shadow-sm">
                     <CardContent className="p-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Date Selection */}
-                            <div className="space-y-3">
+                            {/* Date Display */}
+                            <div className="space-y-2">
                                 <Label className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-gray-500" />
                                     Tanggal Laporan
                                 </Label>
-
-                                {/* Date Chips */}
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setDateOption("today")}
-                                        className={cn(
-                                            "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                                            dateOption === "today"
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        Hari ini
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDateOption("yesterday")}
-                                        className={cn(
-                                            "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                                            dateOption === "yesterday"
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        Kemarin
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDateOption("custom")}
-                                        className={cn(
-                                            "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                                            dateOption === "custom"
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        Pilih Tanggal
-                                    </button>
-                                </div>
-
-                                {/* Custom Date Picker */}
-                                {dateOption === "custom" && (
-                                    <div className="pt-2">
-                                        <div
-                                            className="relative cursor-pointer"
-                                            onClick={() => (document.getElementById('customDate') as HTMLInputElement)?.showPicker?.()}
-                                        >
-                                            <Input
-                                                id="customDate"
-                                                type="date"
-                                                value={customDate}
-                                                max={todayDate}
-                                                onChange={(e) => setCustomDate(e.target.value)}
-                                                className="h-11 cursor-pointer"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Selected Date Display */}
                                 <div className="rounded-lg bg-blue-50 px-3 py-2">
                                     <p className="text-xs text-blue-600">
-                                        📅 {formatDisplayDate(reportDate)}
+                                        📅 {formatDisplayDate(formData.reportDate)}
                                     </p>
                                 </div>
                             </div>
@@ -271,7 +254,6 @@ export default function NewReportPage() {
 
                                 {/* Leads & Sales Grid */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    {/* Leads Field */}
                                     <div className="space-y-2">
                                         <Label htmlFor="leads" className="flex items-center gap-2">
                                             <Users className="h-4 w-4 text-violet-500" />
@@ -291,7 +273,6 @@ export default function NewReportPage() {
                                         />
                                     </div>
 
-                                    {/* Sales Field */}
                                     <div className="space-y-2">
                                         <Label htmlFor="sales" className="flex items-center gap-2">
                                             <ShoppingCart className="h-4 w-4 text-emerald-500" />
@@ -323,7 +304,7 @@ export default function NewReportPage() {
                                 <Textarea
                                     id="notes"
                                     name="notes"
-                                    placeholder="Tambahkan catatan tentang performa hari ini..."
+                                    placeholder="Tambahkan catatan..."
                                     value={formData.notes}
                                     onChange={handleChange}
                                     className="min-h-[100px] resize-none"
@@ -334,15 +315,16 @@ export default function NewReportPage() {
                             {/* Quick Stats Preview */}
                             {(formData.spend || formData.leads) && (
                                 <div className="rounded-xl bg-gradient-to-r from-blue-50 to-violet-50 p-4">
-                                    <p className="text-xs font-semibold text-gray-600 mb-2">PREVIEW</p>
+                                    <p className="text-xs font-semibold text-gray-600 mb-2">
+                                        PREVIEW
+                                    </p>
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm text-gray-500">CPL</p>
                                             <p className="text-lg font-bold text-blue-600">
                                                 {spendNum > 0 && leadsNum > 0
                                                     ? `Rp ${formatCurrency(Math.round(spendNum / leadsNum).toString())}`
-                                                    : '-'
-                                                }
+                                                    : "-"}
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -350,8 +332,7 @@ export default function NewReportPage() {
                                             <p className="text-lg font-bold text-emerald-500">
                                                 {leadsNum > 0 && salesNum >= 0
                                                     ? `${((salesNum / leadsNum) * 100).toFixed(1)}%`
-                                                    : '-'
-                                                }
+                                                    : "-"}
                                             </p>
                                         </div>
                                     </div>
@@ -369,7 +350,9 @@ export default function NewReportPage() {
                             {success && (
                                 <div className="rounded-lg bg-green-50 p-4 flex items-center gap-2">
                                     <Check className="h-4 w-4 text-green-600" />
-                                    <p className="text-sm text-green-600">Laporan berhasil disimpan!</p>
+                                    <p className="text-sm text-green-600">
+                                        Laporan berhasil diperbarui!
+                                    </p>
                                 </div>
                             )}
 
@@ -377,12 +360,12 @@ export default function NewReportPage() {
                             <Button
                                 type="submit"
                                 className="h-12 w-full text-base font-semibold"
-                                disabled={isLoading || !isValid || success}
+                                disabled={isSaving || !isValid || success}
                             >
-                                {isLoading ? (
+                                {isSaving ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Menyimpan Laporan...
+                                        Menyimpan...
                                     </>
                                 ) : success ? (
                                     <>
@@ -390,17 +373,55 @@ export default function NewReportPage() {
                                         Berhasil!
                                     </>
                                 ) : (
-                                    "Simpan Laporan"
+                                    "Simpan Perubahan"
                                 )}
                             </Button>
                         </form>
+
+                        {/* Delete Section */}
+                        <div className="mt-6 border-t pt-6">
+                            {!showDeleteConfirm ? (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Hapus Laporan
+                                </button>
+                            ) : (
+                                <div className="space-y-3">
+                                    <p className="text-center text-sm text-gray-600">
+                                        Yakin ingin menghapus laporan ini?
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <Button
+                                            variant="outline"
+                                            className="flex-1"
+                                            onClick={() => setShowDeleteConfirm(false)}
+                                            disabled={isDeleting}
+                                        >
+                                            Batal
+                                        </Button>
+                                        <Button
+                                            className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                                            onClick={handleDelete}
+                                            disabled={isDeleting}
+                                        >
+                                            {isDeleting ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Menghapus...
+                                                </>
+                                            ) : (
+                                                "Ya, Hapus"
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
-
-                {/* Helper Text */}
-                <p className="mt-4 text-center text-xs text-gray-400">
-                    Laporan disimpan ke batch yang sedang aktif
-                </p>
             </div>
         </div>
     )

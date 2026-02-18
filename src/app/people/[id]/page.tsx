@@ -2,81 +2,145 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import {
     ChevronLeft,
-    Plus
+    Plus,
+    Loader2,
+    Shield,
+    ShieldCheck,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { cn } from "@/lib/utils"
+import {
+    getUserDetail,
+    revokeAssignment,
+    updateUserRole,
+    type UserDetailData,
+} from "@/app/actions/people"
 
-interface AssignedEvent {
-    id: string
-    name: string
-    role: "PIC" | "Advertiser" | "Support"
-}
-
-interface UserDetail {
-    id: string
-    name: string
-    username: string
-    isOnline: boolean
-    assignedEvents: AssignedEvent[]
-}
-
-// Mock Data
-const getUserData = (id: string): UserDetail => {
-    const users: Record<string, UserDetail> = {
-        "1": {
-            id: "1",
-            name: "Siti Rahma",
-            username: "sitirahma",
-            isOnline: true,
-            assignedEvents: [
-                { id: "1", name: "Jakarta Tech Summit", role: "PIC" },
-                { id: "2", name: "Bali Music Festival", role: "Advertiser" },
-                { id: "3", name: "Surabaya Culinary Expo", role: "Support" }
-            ]
-        },
-        "2": {
-            id: "2",
-            name: "Budi Santoso",
-            username: "budisantoso",
-            isOnline: false,
-            assignedEvents: []
-        },
-        "3": {
-            id: "3",
-            name: "Joko Widodo",
-            username: "jokowi",
-            isOnline: true,
-            assignedEvents: [
-                { id: "1", name: "Meta Ads Campaign Q1 2024", role: "PIC" },
-                { id: "4", name: "Google Ads Summer Sale", role: "Advertiser" }
-            ]
-        }
-    }
-    return users[id] || users["1"]
-}
-
-const getRoleBadgeStyle = (role: "PIC" | "Advertiser" | "Support") => {
+const getRoleBadgeStyle = (role: "pic" | "advertiser") => {
     switch (role) {
-        case "PIC":
-            return { bgColor: "bg-blue-50", textColor: "text-blue-600" }
-        case "Advertiser":
-            return { bgColor: "bg-purple-50", textColor: "text-purple-600" }
-        case "Support":
-            return { bgColor: "bg-orange-50", textColor: "text-orange-600" }
+        case "pic":
+            return { bgColor: "bg-blue-50", textColor: "text-blue-600", label: "PIC" }
+        case "advertiser":
+            return { bgColor: "bg-purple-50", textColor: "text-purple-600", label: "Advertiser" }
+    }
+}
+
+const getGlobalRoleConfig = (role: string) => {
+    switch (role) {
+        case "developer":
+            return { label: "Developer", bgColor: "bg-purple-100", textColor: "text-purple-700" }
+        case "admin":
+            return { label: "Admin", bgColor: "bg-blue-100", textColor: "text-blue-700" }
+        default:
+            return { label: "User", bgColor: "bg-gray-100", textColor: "text-gray-700" }
     }
 }
 
 export default function UserDetailPage() {
     const params = useParams()
+    const router = useRouter()
     const userId = params.id as string
-    const user = getUserData(userId)
+
+    const [user, setUser] = React.useState<UserDetailData | null>(null)
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [error, setError] = React.useState<string | null>(null)
+    const [revokingId, setRevokingId] = React.useState<string | null>(null)
+    const [isChangingRole, setIsChangingRole] = React.useState(false)
+    const [showRoleConfirm, setShowRoleConfirm] = React.useState(false)
+    const [pendingRole, setPendingRole] = React.useState<'admin' | 'user' | null>(null)
+
+    const loadUser = React.useCallback(async () => {
+        const result = await getUserDetail(userId)
+        if (result.error) {
+            setError(result.error)
+        } else if (result.user) {
+            setUser(result.user)
+        }
+        setIsLoading(false)
+    }, [userId])
+
+    React.useEffect(() => {
+        loadUser()
+    }, [loadUser])
+
+    const handleRevoke = async (assignmentId: string) => {
+        setRevokingId(assignmentId)
+        const result = await revokeAssignment(assignmentId)
+        if (result.error) {
+            setError(result.error)
+            setRevokingId(null)
+            return
+        }
+        // Reload user data
+        await loadUser()
+        setRevokingId(null)
+    }
+
+    const handleRoleChange = async () => {
+        if (!pendingRole) return
+        setIsChangingRole(true)
+        const result = await updateUserRole(userId, pendingRole)
+        if (result.error) {
+            setError(result.error)
+        } else {
+            await loadUser()
+        }
+        setIsChangingRole(false)
+        setShowRoleConfirm(false)
+        setPendingRole(null)
+    }
+
+    const globalRoleConfig = user ? getGlobalRoleConfig(user.role) : null
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen flex-col bg-gray-50">
+                <div className="bg-white px-4 py-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <Link href="/people">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <ChevronLeft className="h-6 w-6" />
+                            </Button>
+                        </Link>
+                        <h1 className="text-xl font-bold text-black">User Details</h1>
+                    </div>
+                </div>
+                <div className="flex flex-1 items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </div>
+        )
+    }
+
+    if (error && !user) {
+        return (
+            <div className="flex min-h-screen flex-col bg-gray-50">
+                <div className="bg-white px-4 py-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <Link href="/people">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <ChevronLeft className="h-6 w-6" />
+                            </Button>
+                        </Link>
+                        <h1 className="text-xl font-bold text-black">User Details</h1>
+                    </div>
+                </div>
+                <div className="flex flex-1 items-center justify-center">
+                    <p className="text-red-500">{error}</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!user) return null
+
+    const isAdminOrDev = user.role === "admin" || user.role === "developer"
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50">
@@ -96,64 +160,132 @@ export default function UserDetailPage() {
             <div className="flex-1 p-6 md:max-w-2xl md:mx-auto md:w-full">
                 {/* Profile Section */}
                 <div className="flex flex-col items-center text-center mb-8">
-                    {/* Avatar with Online Indicator */}
-                    <div className="relative mb-4">
-                        <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
-                            <AvatarFallback className="bg-gradient-to-br from-orange-200 to-orange-300 text-gray-800 text-3xl font-bold">
-                                {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                        </Avatar>
-                        {user.isOnline && (
-                            <div className="absolute bottom-2 right-2 h-6 w-6 rounded-full border-4 border-white bg-emerald-500" />
-                        )}
-                    </div>
+                    <AvatarEmoji emoji={user.emoji} size="lg" className="mb-4 border-4 border-white shadow-lg" />
 
-                    {/* Name and Username */}
                     <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
-                    <p className="text-gray-500">@{user.username}</p>
+                    <p className="text-gray-500 mb-3">@{user.username}</p>
+
+                    {/* Global Role Badge */}
+                    {globalRoleConfig && (
+                        <span className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
+                            globalRoleConfig.bgColor, globalRoleConfig.textColor
+                        )}>
+                            {user.role === "developer" && <ShieldCheck className="h-3.5 w-3.5" />}
+                            {user.role === "admin" && <Shield className="h-3.5 w-3.5" />}
+                            {globalRoleConfig.label}
+                        </span>
+                    )}
                 </div>
 
-                {/* Assign to Event Button */}
-                <Link href={`/people/${userId}/assign`}>
-                    <Button className="w-full h-14 rounded-2xl text-base font-semibold mb-8 bg-blue-500 hover:bg-blue-600">
-                        <Plus className="h-5 w-5 mr-2" />
-                        Assign to Event
-                    </Button>
-                </Link>
+                {/* Role Management (Developer only, for non-developer users) */}
+                {user.role !== "developer" && (
+                    <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                            Global Role
+                        </h3>
+                        <Card className="border-none shadow-sm">
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-gray-600">
+                                        Role saat ini: <span className="font-semibold">{globalRoleConfig?.label}</span>
+                                    </p>
+                                    {user.role === "user" ? (
+                                        <Button
+                                            variant="outline"
+                                            className="text-sm"
+                                            onClick={() => {
+                                                setPendingRole("admin")
+                                                setShowRoleConfirm(true)
+                                            }}
+                                        >
+                                            <Shield className="h-3.5 w-3.5 mr-1" />
+                                            Jadikan Admin
+                                        </Button>
+                                    ) : user.role === "admin" ? (
+                                        <Button
+                                            variant="outline"
+                                            className="text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                            onClick={() => {
+                                                setPendingRole("user")
+                                                setShowRoleConfirm(true)
+                                            }}
+                                        >
+                                            Turunkan ke User
+                                        </Button>
+                                    ) : null}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {/* Assign to Event Button — Only for regular users */}
+                {!isAdminOrDev && (
+                    <Link href={`/people/${userId}/assign`}>
+                        <Button className="w-full h-14 rounded-2xl text-base font-semibold mb-8 bg-blue-500 hover:bg-blue-600">
+                            <Plus className="h-5 w-5 mr-2" />
+                            Tugaskan ke Event
+                        </Button>
+                    </Link>
+                )}
+
+                {isAdminOrDev && (
+                    <div className="mb-8 rounded-lg bg-blue-50 px-4 py-3">
+                        <p className="text-xs text-blue-600">
+                            ℹ️ {user.role === "developer" ? "Developer" : "Admin"} memiliki akses ke semua event secara otomatis.
+                        </p>
+                    </div>
+                )}
+
+                {/* Error display */}
+                {error && (
+                    <div className="mb-4 rounded-lg bg-red-50 px-4 py-3">
+                        <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                )}
 
                 {/* Assigned Events Section */}
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Assigned Events</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Event yang Ditugaskan</h3>
 
-                    {user.assignedEvents.length === 0 ? (
+                    {user.assignments.length === 0 ? (
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-8 text-center">
-                                <p className="text-gray-500">No events assigned yet</p>
+                                <p className="text-gray-500">Belum ada event yang ditugaskan</p>
                             </CardContent>
                         </Card>
                     ) : (
                         <div className="space-y-3">
-                            {user.assignedEvents.map((event) => {
-                                const roleStyle = getRoleBadgeStyle(event.role)
+                            {user.assignments.map((assignment) => {
+                                const roleStyle = getRoleBadgeStyle(assignment.role)
                                 return (
-                                    <Card key={event.id} className="border-none shadow-sm">
+                                    <Card key={assignment.id} className="border-none shadow-sm">
                                         <CardContent className="p-4">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="font-semibold text-gray-900 mb-2">{event.name}</h4>
+                                                    <h4 className="font-semibold text-gray-900 mb-2">
+                                                        {assignment.eventName}
+                                                    </h4>
                                                     <span className={cn(
                                                         "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
                                                         roleStyle.bgColor,
                                                         roleStyle.textColor
                                                     )}>
-                                                        {event.role}
+                                                        {roleStyle.label}
                                                     </span>
                                                 </div>
                                                 <Button
                                                     variant="ghost"
                                                     className="text-red-500 hover:text-red-600 hover:bg-red-50 font-semibold"
+                                                    onClick={() => handleRevoke(assignment.id)}
+                                                    disabled={revokingId === assignment.id}
                                                 >
-                                                    Revoke
+                                                    {revokingId === assignment.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        "Revoke"
+                                                    )}
                                                 </Button>
                                             </div>
                                         </CardContent>
@@ -164,6 +296,52 @@ export default function UserDetailPage() {
                     )}
                 </div>
             </div>
+
+            {/* Role Change Confirmation Dialog */}
+            {showRoleConfirm && pendingRole && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+                        <h3 className="text-center text-lg font-bold text-gray-900 mb-2">
+                            Konfirmasi Perubahan Role
+                        </h3>
+                        <p className="text-center text-sm text-gray-500 mb-6">
+                            {pendingRole === "admin"
+                                ? `Jadikan ${user.name} sebagai Admin? Admin memiliki akses ke semua event.`
+                                : `Turunkan ${user.name} dari Admin menjadi User biasa?`
+                            }
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => {
+                                    setShowRoleConfirm(false)
+                                    setPendingRole(null)
+                                }}
+                                disabled={isChangingRole}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                className={cn(
+                                    "flex-1",
+                                    pendingRole === "admin"
+                                        ? "bg-blue-500 hover:bg-blue-600"
+                                        : "bg-orange-500 hover:bg-orange-600"
+                                )}
+                                onClick={handleRoleChange}
+                                disabled={isChangingRole}
+                            >
+                                {isChangingRole ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    "Konfirmasi"
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

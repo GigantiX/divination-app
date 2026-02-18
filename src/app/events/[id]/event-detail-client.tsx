@@ -12,6 +12,7 @@ import {
     Layers,
     Settings,
     Inbox,
+    Loader2,
 } from "lucide-react"
 import {
     Chart as ChartJS,
@@ -106,6 +107,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     const [activeTab, setActiveTab] = React.useState<"overview" | "reports">("overview")
     const [selectedBatch, setSelectedBatch] = React.useState(data.currentBatchId || "")
     const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+    const [isBatchLoading, setIsBatchLoading] = React.useState(false)
     const menuRef = React.useRef<HTMLDivElement>(null)
 
     // Chart data state
@@ -130,12 +132,16 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     // Fetch chart data when batch changes
     React.useEffect(() => {
         if (selectedBatch) {
-            getEventChartData(selectedBatch).then(setChartData)
+            getEventChartData(selectedBatch).then((result) => {
+                setChartData(result)
+                setIsBatchLoading(false)
+            })
         }
     }, [selectedBatch])
 
     // Handle batch change
     const handleBatchChange = (newBatchId: string) => {
+        setIsBatchLoading(true)
         setSelectedBatch(newBatchId)
         const params = new URLSearchParams(searchParams.toString())
         params.set('batch', newBatchId)
@@ -252,7 +258,15 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
             </div>
 
             {/* Content */}
-            <div className="p-4">
+            <div className="p-4 relative">
+                {isBatchLoading && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background-secondary/80 backdrop-blur-[1px] rounded-lg">
+                        <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-sm text-gray-500">Memuat data...</p>
+                        </div>
+                    </div>
+                )}
                 {activeTab === "overview" ? (
                     <OverviewContent data={data} chartData={chartData} />
                 ) : (
@@ -461,8 +475,13 @@ function ReportsContent({ data }: ContentProps) {
                                 <AvatarEmoji emoji={report.reporter.emoji} size="sm" />
                                 <span className="text-xs text-gray-500">{report.reporter.name}</span>
                             </div>
-                            {data.canManageEvent && (
-                                <button className="text-sm font-medium text-blue-500">Edit</button>
+                            {(data.canManageEvent || report.reporter.id === data.currentUserId) && (
+                                <Link
+                                    href={`/events/${data.event.id}/reports/${report.id}/edit`}
+                                    className="text-sm font-medium text-blue-500"
+                                >
+                                    Edit
+                                </Link>
                             )}
                         </div>
                     </CardContent>

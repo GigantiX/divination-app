@@ -50,7 +50,7 @@
 - [x] Server component with data fetching
 - [x] Overview tab (stats, chart, advertisers, PICs)
 - [x] Reports tab (daily reports list)
-- [x] Batch selector
+- [x] Batch selector with loading spinner
 - [x] 7-day leads/sales chart
 - [x] Role-based UI (menu, FAB)
 - [x] Empty states
@@ -63,21 +63,36 @@
 - [x] Role-based access (Admin/Dev/PIC)
 - [x] Auto-redirect after creation
 
+## Add Report ✅
+- [x] Create report server action
+- [x] Form with date/spend/leads/closing
+- [x] CPL & Conversion visualization
+- [x] Role-based access (Admin/Dev/Advertiser)
+- [x] Prevent duplicate reports for same date
+
+## Edit Report ✅
+- [x] Update/Delete report server actions
+- [x] Edit form with pre-filled data
+- [x] Ownership check (can only edit own reports unless Admin)
+- [x] Delete confirmation dialog
+- [x] Navigation back to correct batch
+
+## People Management (Next)
+- [ ] View list of all users (Admin/Dev)
+- [ ] User detail page
+- [ ] Assign role (Admin/Dev)
+- [ ] Assign to events
+
 ## Pending Database Migrations
 Run in Supabase SQL Editor:
 - [x] `20260207_add_password_hash.sql`
 - [x] `20260207_remove_auth_users_fk.sql`
 - [x] `20260207_add_emoji_avatar.sql`
-- [ ] `20260210_storage_bucket.sql`
-- [ ] `20260210_batch_nullable_end_date.sql`
-
-## In Progress
-- [ ] Add Report feature
-- [ ] People management backend
+- [x] `20260210_storage_bucket.sql`
+- [x] `20260210_batch_nullable_end_date.sql`
 
 ## Future Enhancements
 - [ ] Change password functionality
 - [ ] Help center content
 - [ ] Event settings page
 - [ ] Delete event/batch
-- [ ] Edit report

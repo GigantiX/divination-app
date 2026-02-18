@@ -54,6 +54,7 @@ export interface EventDetailData {
     reports: EventDetailReport[]
     userRole: 'developer' | 'admin' | 'user'
     userEventRole: 'pic' | 'advertiser' | null // User's role in this event
+    currentUserId: string // Current logged-in user's ID
     canManageEvent: boolean // Can add batch, edit event, etc
     canAddReport: boolean // Can submit daily reports
 }
@@ -267,6 +268,7 @@ export async function getEventDetail(
         advertisers,
         pics,
         reports,
+        currentUserId: session.user.id,
         userRole: profile.role as 'developer' | 'admin' | 'user',
         userEventRole,
         canManageEvent,

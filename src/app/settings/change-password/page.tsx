@@ -3,11 +3,12 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Eye, EyeOff, Info, Loader2 } from "lucide-react"
+import { ChevronLeft, Eye, EyeOff, Info, Loader2, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { changePassword } from "@/app/actions/settings"
 
 export default function ChangePasswordPage() {
     const router = useRouter()
@@ -15,6 +16,8 @@ export default function ChangePasswordPage() {
     const [showCurrentPassword, setShowCurrentPassword] = React.useState(false)
     const [showNewPassword, setShowNewPassword] = React.useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+    const [serverError, setServerError] = React.useState("")
+    const [success, setSuccess] = React.useState(false)
 
     const [formData, setFormData] = React.useState({
         currentPassword: "",
@@ -57,19 +60,28 @@ export default function ChangePasswordPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setServerError("")
 
         if (!validateForm()) return
 
         setIsSubmitting(true)
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        const result = await changePassword({
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword,
+        })
 
-        // TODO: Handle actual password change
-        console.log("Password changed successfully")
+        if (result.error) {
+            setServerError(result.error)
+            setIsSubmitting(false)
+            return
+        }
 
+        setSuccess(true)
         setIsSubmitting(false)
-        router.push("/settings")
+
+        // Redirect after brief success display
+        setTimeout(() => router.push("/settings"), 1500)
     }
 
     return (
@@ -89,6 +101,22 @@ export default function ChangePasswordPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
                 <div className="flex-1 p-4 md:max-w-2xl md:mx-auto md:w-full space-y-6">
+                    {/* Success Message */}
+                    {success && (
+                        <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <p className="text-sm font-medium text-green-700">
+                                Kata sandi berhasil diubah! Mengalihkan...
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Server Error */}
+                    {serverError && (
+                        <div className="rounded-xl bg-red-50 px-4 py-3">
+                            <p className="text-sm font-medium text-red-600">{serverError}</p>
+                        </div>
+                    )}
                     {/* Current Password */}
                     <div className="space-y-2">
                         <Label htmlFor="currentPassword" className="text-sm font-medium text-gray-700">

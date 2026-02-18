@@ -1,6 +1,27 @@
 # Development Log
 
-## Latest Updates (Feb 10, 2026)
+## Latest Updates (Feb 12, 2026)
+
+### Edit Report Feature
+- **Edit Page** - `/events/[id]/reports/[reportId]/edit`
+- **Ownership Check** - Only report owner or Admin/Dev can edit
+- **Delete Functionality** - With confirmation dialog
+- **CPL Preview** - Live calculation of Cost Per Lead
+- **Navigation** - Returns to specific batch after save/delete
+- **Loading State** - Spinner while fetching report data
+
+### UI Improvements
+- **Batch Switching** - Added loading overlay with spinner when changing batches
+- **Button Styling** - Fixed variant issue, red styling for delete actions
+
+### Report Management
+- **Add Report** - Form with date selection (Today/Yesterday/Custom)
+- **Validation** - Closing count cannot exceed Leads count
+- **Duplicate Prevention** - Checks for existing report on same date/batch/user
+
+---
+
+## Previous Updates (Feb 10, 2026)
 
 ### Event Detail Page
 - **Full Backend Integration** - Fetches real data from database
@@ -22,23 +43,7 @@
 ### Add Event with Logo Upload
 - **Create Event Action** - Saves to database
 - **Image Compression** - 512×512 WebP, 80% quality
-- **5MB Limit** - With validation and error handling
 - **Supabase Storage** - For logo uploads
-
----
-
-## Previous Updates (Feb 9, 2026)
-
-### Settings & Profile Features
-- **Emoji Avatars** - Profile pics replaced with emoji (136 options)
-- **Edit Profile Page** - `/settings/edit-profile` with display name
-- **Settings Backend** - Syncs with Supabase (name, email, emoji)
-
-### Authentication (Auth.js v5)
-- **Credentials Provider** - Email/password login with bcrypt
-- **JWT Sessions** - 7-day duration
-- **Auto-login** - After registration → Dashboard
-- **Indonesian Messages** - All error/success text in Indonesian
 
 ---
 
@@ -53,6 +58,7 @@
 | `src/app/actions/events.ts` | Event CRUD |
 | `src/app/actions/event-detail.ts` | Event detail + chart data |
 | `src/app/actions/batches.ts` | Batch CRUD |
+| `src/app/actions/reports.ts` | Report CRUD (Create/Read/Update/Delete) |
 | `src/app/actions/storage.ts` | Supabase Storage uploads |
 
 ### Auth & Profile
@@ -73,6 +79,8 @@
 | `src/app/events/[id]/page.tsx` | Event detail server component |
 | `src/app/events/[id]/event-detail-client.tsx` | Event detail UI |
 | `src/app/events/[id]/batches/new/page.tsx` | Create batch |
+| `src/app/events/[id]/reports/new/page.tsx` | Create report |
+| `src/app/events/[id]/reports/[reportId]/edit/page.tsx` | Edit report |
 
 ---
 
@@ -98,6 +106,8 @@ Run in order in Supabase SQL Editor:
 | Add batch | ✅ | ✅ | ✅ | ❌ |
 | Event settings | ✅ | ✅ | ✅ | ❌ |
 | Add report | ✅ | ✅ | ❌ | ✅ |
+| Edit own report | ✅ | ✅ | ❌ | ✅ |
+| Edit any report | ✅ | ✅ | ❌ | ❌ |
 | View People tab | ✅ | ✅ | ❌ | ❌ |
 
 ---
@@ -107,7 +117,7 @@ Run in order in Supabase SQL Editor:
 ```
 ✓ Compiled successfully (Next.js 16.1.6 Turbopack)
 ✓ TypeScript passed
-✓ 17 pages generated (12 static, 5 dynamic)
+✓ 18 pages generated
 ```
 
 ---
@@ -116,7 +126,9 @@ Run in order in Supabase SQL Editor:
 
 | Date | Commit | Description |
 |------|--------|-------------|
-| Feb 10 | - | Event detail + add batch |
+| Feb 12 | - | Edit report feature + UI improvements |
+| Feb 11 | - | Add report feature + duplicate detection |
+| Feb 10 | `15f6c9e` | Event detail + add batch with backend |
 | Feb 10 | `0aaac05` | Dashboard backend, add event, logo upload |
 | Feb 9 | `b80a2f6` | Settings backend + edit profile page |
 | Feb 9 | `3e4bf85` | Emoji avatars replacing profile pics |
