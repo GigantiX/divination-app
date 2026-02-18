@@ -10,6 +10,7 @@ export interface CreateReportInput {
     leadsCount: number
     closingCount: number
     adsSpent: number
+    taxPercentage: number
     notes?: string
 }
 
@@ -96,6 +97,11 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
         return { error: 'Laporan untuk tanggal ini sudah ada. Silakan edit laporan yang sudah ada.' }
     }
 
+    // Validate tax percentage
+    if (input.taxPercentage < 0 || input.taxPercentage > 100) {
+        return { error: 'Persentase pajak harus antara 0-100%' }
+    }
+
     // Create report
     const { data: report, error } = await supabase
         .from('reports')
@@ -106,6 +112,7 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
             leads_count: input.leadsCount,
             closing_count: input.closingCount,
             ads_spent: input.adsSpent,
+            tax_percentage: input.taxPercentage,
             notes: input.notes?.trim() || null,
         })
         .select('id')
@@ -144,6 +151,7 @@ export async function getReport(reportId: string) {
             leads_count,
             closing_count,
             ads_spent,
+            tax_percentage,
             notes,
             created_at,
             profiles:profiles(full_name, emoji)
@@ -219,6 +227,7 @@ export async function updateReport(
     if (input.leadsCount !== undefined) updateData.leads_count = input.leadsCount
     if (input.closingCount !== undefined) updateData.closing_count = input.closingCount
     if (input.adsSpent !== undefined) updateData.ads_spent = input.adsSpent
+    if (input.taxPercentage !== undefined) updateData.tax_percentage = input.taxPercentage
     if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null
 
     const { error } = await supabase

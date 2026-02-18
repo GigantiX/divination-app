@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
-import { ChevronLeft, Calendar, DollarSign, Users, ShoppingCart, FileText, Loader2, Check } from "lucide-react"
+import { ChevronLeft, Calendar, DollarSign, Users, ShoppingCart, FileText, Loader2, Check, Percent } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { createReport } from "@/app/actions/reports"
+import { getBatch } from "@/app/actions/batches"
 
 type DateOption = "today" | "yesterday" | "custom"
 
@@ -45,6 +46,16 @@ export default function NewReportPage() {
     const [success, setSuccess] = React.useState(false)
     const [dateOption, setDateOption] = React.useState<DateOption>("today")
     const [customDate, setCustomDate] = React.useState(todayDate)
+    const [batchName, setBatchName] = React.useState<string | null>(null)
+
+    // Fetch batch name
+    React.useEffect(() => {
+        if (batchId) {
+            getBatch(batchId).then(batch => {
+                if (batch) setBatchName(batch.name)
+            })
+        }
+    }, [batchId])
 
     const [formData, setFormData] = React.useState({
         spend: "",
@@ -52,6 +63,15 @@ export default function NewReportPage() {
         sales: "",
         notes: ""
     })
+
+    type TaxOption = "4" | "11" | "custom"
+    const [taxOption, setTaxOption] = React.useState<TaxOption>("11")
+    const [customTax, setCustomTax] = React.useState("")
+
+    const getTaxPercentage = (): number => {
+        if (taxOption === "custom") return Math.min(100, Math.max(0, parseFloat(customTax) || 0))
+        return parseInt(taxOption)
+    }
 
     const getReportDate = () => {
         switch (dateOption) {
@@ -106,12 +126,19 @@ export default function NewReportPage() {
         const leadsCount = parseInt(formData.leads || '0', 10)
         const closingCount = parseInt(formData.sales || '0', 10)
 
+        if (closingCount > leadsCount) {
+            setError('Jumlah closing tidak boleh lebih dari leads')
+            setIsLoading(false)
+            return
+        }
+
         const result = await createReport({
             batchId,
             reportDate,
             leadsCount,
             closingCount,
             adsSpent,
+            taxPercentage: getTaxPercentage(),
             notes: formData.notes || undefined,
         })
 
@@ -135,6 +162,8 @@ export default function NewReportPage() {
     const leadsNum = parseInt(formData.leads || '0', 10)
     const salesNum = parseInt(formData.sales || '0', 10)
     const spendNum = parseCurrency(formData.spend)
+    const taxPct = getTaxPercentage()
+    const spendWithTax = Math.round(spendNum * (1 + taxPct / 100))
     const isValid = formData.spend && formData.leads && formData.sales && batchId
 
     return (
@@ -159,6 +188,16 @@ export default function NewReportPage() {
                 {!batchId && (
                     <div className="mb-4 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-700">
                         ⚠️ Batch tidak ditemukan. Silakan kembali ke halaman event dan pilih batch terlebih dahulu.
+                    </div>
+                )}
+
+                {/* Batch Info */}
+                {batchId && batchName && (
+                    <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-center gap-2">
+                        <span className="text-blue-500 text-sm">📋</span>
+                        <p className="text-sm text-blue-700">
+                            Menambah laporan ke batch <span className="font-semibold">{batchName}</span>
+                        </p>
                     </div>
                 )}
 
@@ -269,6 +308,50 @@ export default function NewReportPage() {
                                     </div>
                                 </div>
 
+                                {/* Tax Selector */}
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2">
+                                        <Percent className="h-4 w-4 text-amber-500" />
+                                        Pajak Meta Ads
+                                    </Label>
+                                    <div className="flex gap-2">
+                                        {(["4", "11", "custom"] as const).map((opt) => (
+                                            <button
+                                                key={opt}
+                                                type="button"
+                                                onClick={() => setTaxOption(opt)}
+                                                className={cn(
+                                                    "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
+                                                    taxOption === opt
+                                                        ? "bg-amber-500 text-white shadow-sm"
+                                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                )}
+                                            >
+                                                {opt === "custom" ? "Custom" : `${opt}%`}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {taxOption === "custom" && (
+                                        <div className="relative pt-1">
+                                            <Input
+                                                type="number"
+                                                inputMode="decimal"
+                                                placeholder="Masukkan persentase pajak"
+                                                value={customTax}
+                                                onChange={(e) => setCustomTax(e.target.value)}
+                                                min="0"
+                                                max="100"
+                                                step="0.1"
+                                                className="h-11 pr-8"
+                                            />
+                                            <span className="absolute right-3 top-1/2 translate-y-[-35%] text-gray-400 font-medium">%</span>
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-gray-400">
+                                        Pajak akan ditambahkan ke Ad Spend{spendNum > 0 ? `: Rp ${formatCurrency(spendNum.toString())} + ${taxPct}% = Rp ${formatCurrency(spendWithTax.toString())}` : ""}
+                                    </p>
+                                </div>
+
                                 {/* Leads & Sales Grid */}
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Leads Field */}
@@ -337,16 +420,25 @@ export default function NewReportPage() {
                                     <p className="text-xs font-semibold text-gray-600 mb-2">PREVIEW</p>
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm text-gray-500">CPL</p>
+                                            <p className="text-sm text-gray-500">Total + Pajak</p>
                                             <p className="text-lg font-bold text-blue-600">
-                                                {spendNum > 0 && leadsNum > 0
-                                                    ? `Rp ${formatCurrency(Math.round(spendNum / leadsNum).toString())}`
+                                                {spendWithTax > 0
+                                                    ? `Rp ${formatCurrency(spendWithTax.toString())}`
+                                                    : '-'
+                                                }
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">CPL</p>
+                                            <p className="text-lg font-bold text-violet-600">
+                                                {spendWithTax > 0 && leadsNum > 0
+                                                    ? `Rp ${formatCurrency(Math.round(spendWithTax / leadsNum).toString())}`
                                                     : '-'
                                                 }
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm text-gray-500">Conversion Rate</p>
+                                            <p className="text-sm text-gray-500">Conv. Rate</p>
                                             <p className="text-lg font-bold text-emerald-500">
                                                 {leadsNum > 0 && salesNum >= 0
                                                     ? `${((salesNum / leadsNum) * 100).toFixed(1)}%`

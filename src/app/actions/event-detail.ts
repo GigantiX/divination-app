@@ -166,17 +166,22 @@ export async function getEventDetail(
                 if (currentBatchId) {
                     const { data: reports } = await supabase
                         .from('reports')
-                        .select('ads_spent, leads_count, closing_count')
+                        .select('ads_spent, tax_percentage, leads_count, closing_count')
                         .eq('batch_id', currentBatchId)
                         .eq('user_id', profileData.id)
 
                     if (reports) {
                         advertiserStats = reports.reduce(
-                            (acc, r) => ({
-                                spend: acc.spend + Number(r.ads_spent || 0),
-                                leads: acc.leads + (r.leads_count || 0),
-                                sales: acc.sales + (r.closing_count || 0),
-                            }),
+                            (acc, r) => {
+                                const spent = Number(r.ads_spent || 0)
+                                const tax = Number(r.tax_percentage ?? 11)
+                                const spendWithTax = Math.round(spent * (1 + tax / 100))
+                                return {
+                                    spend: acc.spend + spendWithTax,
+                                    leads: acc.leads + (r.leads_count || 0),
+                                    sales: acc.sales + (r.closing_count || 0),
+                                }
+                            },
                             { spend: 0, leads: 0, sales: 0 }
                         )
                     }
@@ -195,16 +200,21 @@ export async function getEventDetail(
     if (currentBatchId) {
         const { data: allReports } = await supabase
             .from('reports')
-            .select('ads_spent, leads_count, closing_count')
+            .select('ads_spent, tax_percentage, leads_count, closing_count')
             .eq('batch_id', currentBatchId)
 
         if (allReports) {
             const totals = allReports.reduce(
-                (acc, r) => ({
-                    spend: acc.spend + Number(r.ads_spent || 0),
-                    leads: acc.leads + (r.leads_count || 0),
-                    sales: acc.sales + (r.closing_count || 0),
-                }),
+                (acc, r) => {
+                    const spent = Number(r.ads_spent || 0)
+                    const tax = Number(r.tax_percentage ?? 11)
+                    const spendWithTax = Math.round(spent * (1 + tax / 100))
+                    return {
+                        spend: acc.spend + spendWithTax,
+                        leads: acc.leads + (r.leads_count || 0),
+                        sales: acc.sales + (r.closing_count || 0),
+                    }
+                },
                 { spend: 0, leads: 0, sales: 0 }
             )
 
@@ -227,6 +237,7 @@ export async function getEventDetail(
                 id,
                 report_date,
                 ads_spent,
+                tax_percentage,
                 leads_count,
                 closing_count,
                 notes,
@@ -242,7 +253,7 @@ export async function getEventDetail(
                 return {
                     id: r.id,
                     date: r.report_date,
-                    spend: Number(r.ads_spent || 0),
+                    spend: Math.round(Number(r.ads_spent || 0) * (1 + Number(r.tax_percentage ?? 11) / 100)),
                     leads: r.leads_count || 0,
                     sales: r.closing_count || 0,
                     notes: r.notes,
