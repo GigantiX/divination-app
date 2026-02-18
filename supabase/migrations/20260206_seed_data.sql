@@ -1,0 +1,163 @@
+-- =====================================================
+-- SEED DATA FOR DEVELOPMENT/TESTING
+-- =====================================================
+-- Run this AFTER initial_schema.sql
+-- This creates sample data for testing the application
+
+-- Note: You'll need to replace the auth.users IDs with actual IDs from your Supabase Auth
+
+-- =====================================================
+-- SAMPLE USERS (Profiles)
+-- =====================================================
+
+-- Developer user (super admin)
+-- INSERT INTO profiles (id, username, full_name, role)
+-- VALUES (
+--   'replace-with-auth-user-id-1',
+--   'developer',
+--   'Developer User',
+--   'developer'
+-- );
+
+-- Admin user
+-- INSERT INTO profiles (id, username, full_name, role)
+-- VALUES (
+--   'replace-with-auth-user-id-2',
+--   'admin',
+--   'Admin User',
+--   'admin'
+-- );
+
+-- Regular users (PIC/Advertiser)
+-- INSERT INTO profiles (id, username, full_name, role)
+-- VALUES 
+--   ('replace-with-auth-user-id-3', 'john_doe', 'John Doe', 'user'),
+--   ('replace-with-auth-user-id-4', 'jane_smith', 'Jane Smith', 'user'),
+--   ('replace-with-auth-user-id-5', 'bob_wilson', 'Bob Wilson', 'user');
+
+-- =====================================================
+-- SAMPLE EVENTS
+-- =====================================================
+
+-- INSERT INTO events (id, name, logo_url, status, created_by)
+-- VALUES 
+--   (
+--     gen_random_uuid(),
+--     'Webinar Digital Marketing',
+--     'https://via.placeholder.com/150',
+--     'active',
+--     'replace-with-admin-user-id'
+--   ),
+--   (
+--     gen_random_uuid(),
+--     'Online Course Launch',
+--     'https://via.placeholder.com/150',
+--     'active',
+--     'replace-with-admin-user-id'
+--   ),
+--   (
+--     gen_random_uuid(),
+--     'Product Campaign Q1',
+--     NULL,
+--     'upcoming',
+--     'replace-with-admin-user-id'
+--   );
+
+-- =====================================================
+-- SAMPLE BATCHES
+-- =====================================================
+
+-- INSERT INTO batches (event_id, name, start_date, end_date, notes)
+-- VALUES 
+--   (
+--     (SELECT id FROM events WHERE name = 'Webinar Digital Marketing' LIMIT 1),
+--     'Batch 1',
+--     '2026-01-01',
+--     '2026-01-15',
+--     'Initial batch for Q1'
+--   ),
+--   (
+--     (SELECT id FROM events WHERE name = 'Webinar Digital Marketing' LIMIT 1),
+--     'Batch 2',
+--     '2026-01-16',
+--     '2026-01-31',
+--     'Second batch for Q1'
+--   ),
+--   (
+--     (SELECT id FROM events WHERE name = 'Online Course Launch' LIMIT 1),
+--     'Batch 1',
+--     '2026-02-01',
+--     '2026-02-28',
+--     'Launch month campaign'
+--   );
+
+-- =====================================================
+-- SAMPLE EVENT ASSIGNMENTS
+-- =====================================================
+
+-- Assign users to events with roles
+-- INSERT INTO event_assignments (event_id, user_id, role)
+-- VALUES 
+--   (
+--     (SELECT id FROM events WHERE name = 'Webinar Digital Marketing' LIMIT 1),
+--     'replace-with-john-user-id',
+--     'pic'
+--   ),
+--   (
+--     (SELECT id FROM events WHERE name = 'Webinar Digital Marketing' LIMIT 1),
+--     'replace-with-jane-user-id',
+--     'advertiser'
+--   ),
+--   (
+--     (SELECT id FROM events WHERE name = 'Online Course Launch' LIMIT 1),
+--     'replace-with-jane-user-id',
+--     'pic'
+--   ),
+--   (
+--     (SELECT id FROM events WHERE name = 'Online Course Launch' LIMIT 1),
+--     'replace-with-bob-user-id',
+--     'advertiser'
+--   );
+
+-- =====================================================
+-- SAMPLE REPORTS
+-- =====================================================
+
+-- INSERT INTO reports (batch_id, user_id, report_date, leads_count, closing_count, ads_spent, notes)
+-- VALUES 
+--   (
+--     (SELECT id FROM batches WHERE name = 'Batch 1' AND event_id = (SELECT id FROM events WHERE name = 'Webinar Digital Marketing' LIMIT 1) LIMIT 1),
+--     'replace-with-jane-user-id',
+--     '2026-01-05',
+--     50,
+--     12,
+--     5000000.00,
+--     'Good conversion rate, targeting on point'
+--   ),
+--   (
+--     (SELECT id FROM batches WHERE name = 'Batch 1' AND event_id = (SELECT id FROM events WHERE name = 'Webinar Digital Marketing' LIMIT 1) LIMIT 1),
+--     'replace-with-jane-user-id',
+--     '2026-01-10',
+--     70,
+--     18,
+--     7500000.00,
+--     'Increased budget, better results'
+--   ),
+--   (
+--     (SELECT id FROM batches WHERE name = 'Batch 1' AND event_id = (SELECT id FROM events WHERE name = 'Online Course Launch' LIMIT 1) LIMIT 1),
+--     'replace-with-bob-user-id',
+--     '2026-02-05',
+--     100,
+--     25,
+--     10000000.00,
+--     'Launch campaign performing well'
+--   );
+
+-- =====================================================
+-- SEED DATA COMPLETE
+-- =====================================================
+-- To use this seed data:
+-- 1. Create users via Supabase Auth Dashboard
+-- 2. Replace all 'replace-with-xxx-id' placeholders with actual UUIDs
+-- 3. Uncomment the INSERT statements
+-- 4. Run this migration

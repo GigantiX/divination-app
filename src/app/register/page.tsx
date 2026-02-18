@@ -2,20 +2,47 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { registerAction } from "@/app/actions/auth"
 
 export default function RegisterPage() {
     const [showPassword, setShowPassword] = React.useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+    const [isLoading, setIsLoading] = React.useState(false)
+    const [error, setError] = React.useState("")
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        console.log("Register attempted")
+        setIsLoading(true)
+        setError("")
+
+        const formData = new FormData(e.currentTarget)
+        const password = formData.get("password") as string
+        const confirmPassword = formData.get("confirmPassword") as string
+
+        // Client-side validation for password match
+        if (password !== confirmPassword) {
+            setError("Password tidak cocok")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            const result = await registerAction(formData)
+            if (result?.error) {
+                setError(result.error)
+                setIsLoading(false)
+            }
+            // Success case handled by redirect in action
+        } catch {
+            setError("Terjadi kesalahan. Silakan coba lagi.")
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -26,33 +53,57 @@ export default function RegisterPage() {
             <div className="flex flex-1 items-center justify-center p-4">
                 <Card className="w-full max-w-md border-none shadow-lg sm:border-solid">
                     <CardHeader className="space-y-1 text-center">
-                        <CardTitle className="text-xl font-semibold">Create an account</CardTitle>
+                        <CardTitle className="text-xl font-semibold">Buat Akun</CardTitle>
                         <CardDescription>
-                            Enter your details below to create your account
+                            Masukkan data Anda untuk mendaftar
                         </CardDescription>
                     </CardHeader>
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
+                            {error && (
+                                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                                    {error}
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" placeholder="m@example.com" required />
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="email@contoh.com"
+                                    required
+                                    disabled={isLoading}
+                                />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="name">Display Name</Label>
-                                <Input id="name" type="text" placeholder="John Doe" required />
+                                <Label htmlFor="displayName">Nama Lengkap</Label>
+                                <Input
+                                    id="displayName"
+                                    name="displayName"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    required
+                                    disabled={isLoading}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
+                                        name="password"
                                         type={showPassword ? "text" : "password"}
+                                        placeholder="Minimal 8 karakter"
                                         required
+                                        minLength={8}
+                                        disabled={isLoading}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                                        disabled={isLoading}
                                     >
                                         {showPassword ? (
                                             <EyeOff className="h-4 w-4" />
@@ -63,17 +114,22 @@ export default function RegisterPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="confirm-password">Confirm Password</Label>
+                                <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
                                 <div className="relative">
                                     <Input
-                                        id="confirm-password"
+                                        id="confirmPassword"
+                                        name="confirmPassword"
                                         type={showConfirmPassword ? "text" : "password"}
+                                        placeholder="Ulangi password"
                                         required
+                                        minLength={8}
+                                        disabled={isLoading}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                                        disabled={isLoading}
                                     >
                                         {showConfirmPassword ? (
                                             <EyeOff className="h-4 w-4" />
@@ -85,13 +141,20 @@ export default function RegisterPage() {
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">
-                            <Button type="submit" className="w-full">
-                                Create account
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Memproses...
+                                    </>
+                                ) : (
+                                    "Daftar"
+                                )}
                             </Button>
                             <div className="text-center text-sm text-text-secondary">
-                                Already have an account?{" "}
+                                Sudah punya akun?{" "}
                                 <Link href="/login" className="font-semibold text-primary hover:underline">
-                                    Sign In
+                                    Masuk
                                 </Link>
                             </div>
                         </CardFooter>
