@@ -20,6 +20,31 @@ export interface ReportResult {
     reportId?: string
 }
 
+async function getUserProfileRole(supabase: ReturnType<typeof createAdminClient>, userId: string) {
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+
+    return profile?.role ?? null
+}
+
+async function getEventAssignmentRole(
+    supabase: ReturnType<typeof createAdminClient>,
+    eventId: string,
+    userId: string
+) {
+    const { data: assignment } = await supabase
+        .from('event_assignments')
+        .select('role')
+        .eq('event_id', eventId)
+        .eq('user_id', userId)
+        .maybeSingle()
+
+    return assignment?.role ?? null
+}
+
 /**
  * Create a new daily report (Admin/Developer/Advertiser)
  * Validates that user has permission and report date is valid
@@ -34,17 +59,12 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
     const supabase = createAdminClient()
 
     // Get user profile
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
+    const role = await getUserProfileRole(supabase, session.user.id)
+    if (!role) {
         return { error: 'Profil tidak ditemukan' }
     }
 
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
+    const isAdminOrDev = role === 'admin' || role === 'developer'
 
     // Get batch to verify it exists and get event_id
     const { data: batch } = await supabase
@@ -59,14 +79,9 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
 
     // If not admin/dev, check user is advertiser for this event
     if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', batch.event_id)
-            .eq('user_id', session.user.id)
-            .single()
+        const assignmentRole = await getEventAssignmentRole(supabase, batch.event_id, session.user.id)
 
-        if (!assignment || assignment.role !== 'advertiser') {
+        if (assignmentRole !== 'advertiser') {
             return { error: 'Tidak memiliki akses untuk menambahkan laporan' }
         }
     }
@@ -141,6 +156,13 @@ export async function getReport(reportId: string) {
 
     const supabase = createAdminClient()
 
+    const role = await getUserProfileRole(supabase, session.user.id)
+    if (!role) {
+        return null
+    }
+
+    const isAdminOrDev = role === 'admin' || role === 'developer'
+
     const { data, error } = await supabase
         .from('reports')
         .select(`
@@ -154,7 +176,8 @@ export async function getReport(reportId: string) {
             tax_percentage,
             notes,
             created_at,
-            profiles:profiles(full_name, emoji)
+            profiles:profiles(full_name, emoji),
+            batches:batches(event_id)
         `)
         .eq('id', reportId)
         .single()
@@ -163,7 +186,31 @@ export async function getReport(reportId: string) {
         return null
     }
 
-    return data
+    if (!isAdminOrDev) {
+        const batchData = data.batches as unknown as { event_id: string } | null
+        if (!batchData?.event_id) {
+            return null
+        }
+
+        const assignmentRole = await getEventAssignmentRole(supabase, batchData.event_id, session.user.id)
+        if (assignmentRole !== 'advertiser' && assignmentRole !== 'pic') {
+            return null
+        }
+    }
+
+    return {
+        id: data.id,
+        batch_id: data.batch_id,
+        user_id: data.user_id,
+        report_date: data.report_date,
+        leads_count: data.leads_count,
+        closing_count: data.closing_count,
+        ads_spent: data.ads_spent,
+        tax_percentage: data.tax_percentage,
+        notes: data.notes,
+        created_at: data.created_at,
+        profiles: data.profiles,
+    }
 }
 
 /**
@@ -193,21 +240,24 @@ export async function updateReport(
     }
 
     // Check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
+    const role = await getUserProfileRole(supabase, session.user.id)
+    if (!role) {
         return { error: 'Profil tidak ditemukan' }
     }
 
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
+    const isAdminOrDev = role === 'admin' || role === 'developer'
     const isOwner = report.user_id === session.user.id
+    const batchData = report.batches as unknown as { event_id: string } | null
 
-    if (!isAdminOrDev && !isOwner) {
-        return { error: 'Tidak memiliki akses untuk mengedit laporan ini' }
+    if (!batchData?.event_id) {
+        return { error: 'Data event tidak ditemukan' }
+    }
+
+    if (!isAdminOrDev) {
+        const assignmentRole = await getEventAssignmentRole(supabase, batchData.event_id, session.user.id)
+        if (assignmentRole !== 'advertiser' || !isOwner) {
+            return { error: 'Tidak memiliki akses untuk mengedit laporan ini' }
+        }
     }
 
     // Validate
@@ -219,6 +269,12 @@ export async function updateReport(
     }
     if (input.adsSpent !== undefined && input.adsSpent < 0) {
         return { error: 'Ad spend tidak boleh negatif' }
+    }
+    if (
+        input.taxPercentage !== undefined &&
+        (input.taxPercentage < 0 || input.taxPercentage > 100)
+    ) {
+        return { error: 'Persentase pajak harus antara 0-100%' }
     }
 
     // Build update object
@@ -240,7 +296,6 @@ export async function updateReport(
         return { error: 'Gagal mengupdate laporan' }
     }
 
-    const batchData = report.batches as unknown as { event_id: string } | null
     if (batchData) {
         revalidatePath(`/events/${batchData.event_id}`)
     }
@@ -272,21 +327,24 @@ export async function deleteReport(reportId: string): Promise<ReportResult> {
     }
 
     // Check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
+    const role = await getUserProfileRole(supabase, session.user.id)
+    if (!role) {
         return { error: 'Profil tidak ditemukan' }
     }
 
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
+    const isAdminOrDev = role === 'admin' || role === 'developer'
     const isOwner = report.user_id === session.user.id
+    const batchData = report.batches as unknown as { event_id: string } | null
 
-    if (!isAdminOrDev && !isOwner) {
-        return { error: 'Tidak memiliki akses' }
+    if (!batchData?.event_id) {
+        return { error: 'Data event tidak ditemukan' }
+    }
+
+    if (!isAdminOrDev) {
+        const assignmentRole = await getEventAssignmentRole(supabase, batchData.event_id, session.user.id)
+        if (assignmentRole !== 'advertiser' || !isOwner) {
+            return { error: 'Tidak memiliki akses' }
+        }
     }
 
     const { error } = await supabase
@@ -299,7 +357,6 @@ export async function deleteReport(reportId: string): Promise<ReportResult> {
         return { error: 'Gagal menghapus laporan' }
     }
 
-    const batchData = report.batches as unknown as { event_id: string } | null
     if (batchData) {
         revalidatePath(`/events/${batchData.event_id}`)
     }
