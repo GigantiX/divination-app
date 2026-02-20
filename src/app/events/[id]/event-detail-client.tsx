@@ -14,19 +14,7 @@ import {
     Inbox,
     Loader2,
 } from "lucide-react"
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler,
-    ScriptableContext
-} from "chart.js"
-import { Line } from "react-chartjs-2"
+import dynamic from "next/dynamic"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -34,68 +22,14 @@ import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { cn } from "@/lib/utils"
 import { getEventChartData, type EventDetailData } from "@/app/actions/event-detail"
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler
-)
-
-const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            display: false,
-        },
-        tooltip: {
-            mode: "index" as const,
-            intersect: false,
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            titleColor: "#000",
-            bodyColor: "#000",
-            borderColor: "#e5e7eb",
-            borderWidth: 1,
-            padding: 10,
-            displayColors: false,
-        },
-    },
-    scales: {
-        x: {
-            grid: {
-                display: false,
-            },
-            ticks: {
-                color: "#9ca3af",
-                font: {
-                    size: 10
-                }
-            }
-        },
-        y: {
-            display: true,
-            min: 0,
-            grid: {
-                color: "#f3f4f6",
-            },
-            ticks: {
-                color: "#9ca3af",
-                font: {
-                    size: 10
-                },
-            }
-        },
-    },
-    interaction: {
-        mode: "nearest" as const,
-        axis: "x" as const,
-        intersect: false,
-    },
-}
+const LineChart = dynamic(() => import("./line-chart"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-48 w-full flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-300" />
+        </div>
+    ),
+})
 
 interface EventDetailClientProps {
     data: EventDetailData
@@ -235,7 +169,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     <button
                         onClick={() => setActiveTab("overview")}
                         className={cn(
-                            "flex-1 border-b-2 py-3 text-sm font-medium transition-colors",
+                            "flex-1 border-b-2 min-h-[44px] py-3 text-sm font-medium transition-colors",
                             activeTab === "overview"
                                 ? "border-primary text-primary"
                                 : "border-transparent text-gray-500"
@@ -246,7 +180,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     <button
                         onClick={() => setActiveTab("reports")}
                         className={cn(
-                            "flex-1 border-b-2 py-3 text-sm font-medium transition-colors",
+                            "flex-1 border-b-2 min-h-[44px] py-3 text-sm font-medium transition-colors",
                             activeTab === "reports"
                                 ? "border-primary text-primary"
                                 : "border-transparent text-gray-500"
@@ -297,48 +231,6 @@ interface ContentProps {
 }
 
 function OverviewContent({ data, chartData }: ContentProps) {
-    const chartDataConfig = chartData ? {
-        labels: chartData.labels,
-        datasets: [
-            {
-                fill: true,
-                label: "Leads",
-                data: chartData.leadsData,
-                borderColor: "#3b82f6",
-                backgroundColor: (context: ScriptableContext<"line">) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, "rgba(59, 130, 246, 0.5)");
-                    gradient.addColorStop(1, "rgba(59, 130, 246, 0.0)");
-                    return gradient;
-                },
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointBackgroundColor: "#3b82f6",
-                borderWidth: 2,
-            },
-            {
-                fill: true,
-                label: "Sales",
-                data: chartData.salesData,
-                borderColor: "#10b981",
-                backgroundColor: (context: ScriptableContext<"line">) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, "rgba(16, 185, 129, 0.5)");
-                    gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)");
-                    return gradient;
-                },
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointBackgroundColor: "#10b981",
-                borderWidth: 2,
-            },
-        ],
-    } : null
-
     return (
         <div className="space-y-6">
             {/* Stats Grid */}
@@ -350,7 +242,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
             </div>
 
             {/* Chart Section */}
-            {chartDataConfig && (
+            {chartData && (
                 <Card className="rounded-2xl border-none shadow-sm">
                     <CardContent className="p-6">
                         <div className="mb-6 flex items-baseline justify-between">
@@ -359,11 +251,11 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                 <h3 className="text-xl font-bold">7 Hari Terakhir</h3>
                             </div>
                             <span className="text-sm font-medium text-blue-500">
-                                +{chartData?.todayLeads || 0} hari ini
+                                +{chartData.todayLeads || 0} hari ini
                             </span>
                         </div>
                         <div className="h-48 w-full">
-                            <Line options={chartOptions} data={chartDataConfig} />
+                            <LineChart labels={chartData.labels} leadsData={chartData.leadsData} salesData={chartData.salesData} />
                         </div>
                     </CardContent>
                 </Card>
@@ -387,15 +279,15 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 border-t border-gray-50 pt-3">
                                     <div>
-                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
                                         <p className="mt-0.5 text-sm font-bold text-blue-600">{formatCompact(adv.spend)}</p>
                                     </div>
                                     <div className="border-l border-gray-100 pl-2">
-                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
                                         <p className="mt-0.5 text-sm font-bold text-violet-600">{adv.leads}</p>
                                     </div>
                                     <div className="border-l border-gray-100 pl-2">
-                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
                                         <p className="mt-0.5 text-sm font-bold text-emerald-500">{adv.sales}</p>
                                     </div>
                                 </div>
@@ -498,7 +390,7 @@ function StatCard({ title, value }: { title: string; value: string }) {
     return (
         <Card className="rounded-2xl border-none shadow-sm h-32 flex flex-col justify-center">
             <CardContent className="p-4">
-                <p className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">{title}</p>
+                <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">{title}</p>
                 <p className="mt-2 text-xl font-bold">{value}</p>
             </CardContent>
         </Card>
@@ -508,7 +400,7 @@ function StatCard({ title, value }: { title: string; value: string }) {
 function BadgeBox({ label, value }: { label: string; value: string }) {
     return (
         <div className="min-w-[80px] rounded-lg bg-gray-50 p-2">
-            <p className="text-[10px] font-medium text-gray-500 uppercase">{label}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
             <p className="font-semibold">{value}</p>
         </div>
     )

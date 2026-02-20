@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
@@ -155,12 +156,14 @@ export default function AssignUserPage() {
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-4">
                                         {/* Event Logo */}
-                                        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-2xl overflow-hidden">
+                                        <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-2xl overflow-hidden">
                                             {event.logoUrl ? (
-                                                <img
+                                                <Image
                                                     src={event.logoUrl}
                                                     alt={event.name}
-                                                    className="h-full w-full object-cover"
+                                                    fill
+                                                    sizes="56px"
+                                                    className="object-cover"
                                                 />
                                             ) : (
                                                 "📋"
@@ -221,12 +224,14 @@ export default function AssignUserPage() {
 
                         {/* Event Info */}
                         <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 rounded-xl">
-                            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xl overflow-hidden">
+                            <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xl overflow-hidden">
                                 {selectedEvent.logoUrl ? (
-                                    <img
+                                    <Image
                                         src={selectedEvent.logoUrl}
                                         alt={selectedEvent.name}
-                                        className="h-full w-full object-cover"
+                                        fill
+                                        sizes="48px"
+                                        className="object-cover"
                                     />
                                 ) : (
                                     "📋"

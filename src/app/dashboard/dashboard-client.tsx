@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Calendar, Plus, Inbox, Loader2 } from "lucide-react"
@@ -260,13 +261,15 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
             <Card className={`overflow-hidden transition-all hover:shadow-md ${!isActive ? "opacity-70" : ""}`}>
                 <CardContent className="p-0">
                     <div className="flex items-center gap-4 p-4">
-                        {/* Event Logo Placeholder */}
-                        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        {/* Event Logo */}
+                        <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
                             {event.logo_url ? (
-                                <img
+                                <Image
                                     src={event.logo_url}
                                     alt={event.name}
-                                    className="h-full w-full rounded-lg object-cover"
+                                    fill
+                                    sizes="64px"
+                                    className="rounded-lg object-cover"
                                 />
                             ) : (
                                 <Calendar className="h-8 w-8 text-primary" />
@@ -291,13 +294,16 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
                                             onToggleClick(event.id, event.status, event.name)
                                         }}
                                         disabled={isToggling}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-red-500"
-                                            } ${isToggling ? "opacity-50" : ""}`}
+                                        aria-label={isActive ? "Deactivate event" : "Activate event"}
+                                        className={`relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center ${isToggling ? "opacity-50" : ""}`}
                                     >
                                         <span
-                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
-                                                }`}
-                                        />
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-red-500"}`}
+                                        >
+                                            <span
+                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"}`}
+                                            />
+                                        </span>
                                     </button>
                                     <span className={`text-xs font-medium ${isActive ? "text-green-600" : "text-red-500"}`}>
                                         {isActive ? "Active" : "Inactive"}

@@ -36,7 +36,7 @@ export function BottomNav({ isAdmin = false }: BottomNavProps) {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center gap-1 relative",
+                                "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 relative",
                                 active ? "text-primary" : "text-gray-400"
                             )}
                         >

@@ -24,6 +24,7 @@ const AvatarImage = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <img
         ref={ref}
+        loading="lazy"
         className={cn("aspect-square h-full w-full", className)}
         {...props}
     />

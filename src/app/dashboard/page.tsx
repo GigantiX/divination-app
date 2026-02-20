@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { getDashboardData } from "@/app/actions/dashboard"
 import { DashboardClient } from "./dashboard-client"
 
+export const revalidate = 60
+
 export default async function DashboardPage() {
     const data = await getDashboardData()
 
