@@ -28,7 +28,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
         isOpen: boolean
         eventId: string | null
         eventName: string | null
-        currentStatus: 'active' | 'inactive' | null
+        currentStatus: 'active' | 'completed' | 'upcoming' | null
     }>({
         isOpen: false,
         eventId: null,
@@ -39,7 +39,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
     const isAdmin = user.role === 'admin' || user.role === 'developer'
     const hasNoEvents = activeEvents.length === 0 && inactiveEvents.length === 0
 
-    const handleToggleClick = (eventId: string, currentStatus: 'active' | 'inactive', eventName: string) => {
+    const handleToggleClick = (eventId: string, currentStatus: 'active' | 'completed' | 'upcoming', eventName: string) => {
         setModalConfig({
             isOpen: true,
             eventId,
@@ -53,7 +53,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
         if (!eventId || !currentStatus) return
 
         setIsToggling(eventId)
-        const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
+        const newStatus = currentStatus === 'active' ? 'completed' : 'active'
 
         const result = await toggleEventStatus(eventId, newStatus)
 
@@ -62,7 +62,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 const eventToMove = activeEvents.find(e => e.id === eventId)
                 if (eventToMove) {
                     setActiveEvents(activeEvents.filter(e => e.id !== eventId))
-                    setInactiveEvents([...inactiveEvents, { ...eventToMove, status: 'inactive' }])
+                    setInactiveEvents([...inactiveEvents, { ...eventToMove, status: 'completed' as const }])
                 }
             } else {
                 const eventToMove = inactiveEvents.find(e => e.id === eventId)
@@ -250,7 +250,7 @@ interface EventCardProps {
     event: DashboardEvent
     isAdmin: boolean
     isToggling: boolean
-    onToggleClick: (eventId: string, currentStatus: 'active' | 'inactive', eventName: string) => void
+    onToggleClick: (eventId: string, currentStatus: 'active' | 'completed' | 'upcoming', eventName: string) => void
 }
 
 function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps) {

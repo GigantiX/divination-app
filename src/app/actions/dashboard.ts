@@ -15,7 +15,7 @@ export interface DashboardEvent {
     id: string
     name: string
     logo_url: string | null
-    status: 'active' | 'inactive'
+    status: 'active' | 'completed' | 'upcoming'
     batchCount: number
 }
 
@@ -83,12 +83,12 @@ export async function getDashboardData(): Promise<DashboardData | null> {
                 id: event.id,
                 name: event.name,
                 logo_url: event.logo_url,
-                status: event.status as 'active' | 'inactive',
+                status: event.status as 'active' | 'completed' | 'upcoming',
                 batchCount: Array.isArray(event.batches) ? event.batches.length : 0,
             }))
 
             activeEvents = mappedEvents.filter((e) => e.status === 'active')
-            inactiveEvents = mappedEvents.filter((e) => e.status === 'inactive')
+            inactiveEvents = mappedEvents.filter((e) => e.status !== 'active')
         }
     } else {
         // Regular user sees only assigned events
@@ -125,7 +125,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
                         id: event.id,
                         name: event.name,
                         logo_url: event.logo_url,
-                        status: event.status as 'active' | 'inactive',
+                        status: event.status as 'active' | 'completed' | 'upcoming',
                         batchCount: Array.isArray(event.batches) ? event.batches.length : 0,
                     }
                 })
@@ -145,7 +145,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
 /**
  * Toggle event status (Admin/Developer only)
  */
-export async function toggleEventStatus(eventId: string, newStatus: 'active' | 'inactive') {
+export async function toggleEventStatus(eventId: string, newStatus: 'active' | 'completed') {
     const session = await auth()
 
     if (!session?.user?.id) {

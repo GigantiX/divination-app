@@ -121,13 +121,16 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                     <Layers className="h-4 w-4 text-blue-500" />
                                     Tambah Batch
                                 </Link>
-                                <button
-                                    className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    <Settings className="h-4 w-4 text-gray-500" />
-                                    Pengaturan Event
-                                </button>
+                                {(data.userRole === 'admin' || data.userRole === 'developer') && (
+                                    <Link
+                                        href={`/events/${data.event.id}/edit`}
+                                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        <Settings className="h-4 w-4 text-gray-500" />
+                                        Edit Event
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>

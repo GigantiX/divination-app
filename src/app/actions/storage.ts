@@ -43,7 +43,8 @@ async function requireAdminOrDeveloper() {
  */
 export async function uploadEventLogo(
     formData: FormData,
-    eventId: string
+    eventId: string,
+    oldLogoUrl?: string | null
 ): Promise<{ url?: string; error?: string }> {
     const access = await requireAdminOrDeveloper()
     if ('error' in access) {
@@ -78,6 +79,16 @@ export async function uploadEventLogo(
     // Generate unique filename
     const timestamp = Date.now()
     const filename = `event-logos/${userId}/${eventId}-${timestamp}.${extension}`
+
+    // Delete old logo from storage before uploading new one
+    if (oldLogoUrl) {
+        const urlParts = oldLogoUrl.split('/uploads/')
+        if (urlParts.length >= 2) {
+            const oldFilename = decodeURIComponent(urlParts[1].split('?')[0])
+            // Best-effort delete — don't block upload if delete fails
+            await supabase.storage.from('uploads').remove([oldFilename]).catch(() => { })
+        }
+    }
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
