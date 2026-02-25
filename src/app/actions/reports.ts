@@ -91,6 +91,13 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
         return { error: 'Tanggal laporan wajib diisi' }
     }
 
+    // Prevent future-dated reports (use Jakarta timezone)
+    const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+    const today = jakartaNow.toISOString().split('T')[0]
+    if (input.reportDate > today) {
+        return { error: 'Tanggal laporan tidak boleh di masa depan' }
+    }
+
     if (input.leadsCount < 0 || input.closingCount < 0 || input.adsSpent < 0) {
         return { error: 'Nilai tidak boleh negatif' }
     }

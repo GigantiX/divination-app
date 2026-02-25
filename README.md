@@ -1,219 +1,157 @@
-# Divination App
+# Divination Dashboard
 
-A modern, mobile-first dashboard application for managing advertising events, tracking leads, and analyzing campaign performance.
+A mobile-first dashboard for managing advertising events, tracking leads/sales, and analyzing campaign performance.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3-38bdf8?logo=tailwindcss)
-![License](https://img.shields.io/badge/License-Private-red)
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Available Scripts](#available-scripts)
-- [Branch Strategy](#branch-strategy)
-- [Contributing](#contributing)
-
-## Overview
-
-Divination is an admin dashboard designed for managing advertising campaigns and events. It provides role-based access control, real-time analytics visualization, and comprehensive event management capabilities.
-
-### Key Highlights
-
-- 📱 **Mobile-First Design** - Optimized for mobile devices with responsive desktop support
-- 🎨 **Modern UI/UX** - Clean, intuitive interface with smooth animations
-- 📊 **Interactive Charts** - Chart.js integration for data visualization
-- 🔐 **Role-Based Access** - Support for Admin, PIC, and Advertiser roles
-
-## Features
-
-### Authentication
-- Login & Registration pages
-- Password visibility toggle
-- Form validation ready
-
-### Dashboard
-- Role-based event display (Active/Inactive)
-- Event status toggle with confirmation modal
-- Color-coded status indicators (Green: Active, Red: Inactive)
-- Bottom navigation bar
-
-### Event Management
-- **Event Detail Page** with Overview and Reports tabs
-- **Overview Tab:**
-  - Stats Grid (Spend, Leads, Sales, CPL)
-  - Dual-line Chart (Leads & Sales trends)
-  - Advertiser performance cards
-  - PIC list
-- **Reports Tab:**
-  - Daily report cards
-  - Edit functionality
-- Batch selector dropdown
-- Create New Event form with image upload
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-2.x-3ecf8e?logo=supabase)
+![Auth.js](https://img.shields.io/badge/Auth.js-v5-purple)
 
 ## Tech Stack
 
 | Technology | Purpose |
-|------------|---------|
-| [Next.js 16](https://nextjs.org/) | React framework with App Router |
-| [TypeScript](https://www.typescriptlang.org/) | Type-safe JavaScript |
-| [Tailwind CSS](https://tailwindcss.com/) | Utility-first CSS framework |
-| [Chart.js](https://www.chartjs.org/) | Data visualization |
-| [Lucide React](https://lucide.dev/) | Icon library |
-| [Auth.js](https://authjs.dev/) | Authentication (planned) |
+|---|---|
+| Next.js 16 (App Router) | Framework + Server Actions |
+| TypeScript (strict) | Type safety |
+| Supabase | Database (Postgres) + Storage + RLS |
+| Auth.js v5 | Authentication (JWT + Credentials) |
+| Tailwind CSS | Styling |
+| Chart.js | Data visualization |
+| bcryptjs | Password hashing |
+| Lucide React | Icons |
+| shadcn/ui | UI components (Radix primitives) |
+
+## Role System
+
+### Global Roles (in `profiles` table)
+
+| Role | Can do |
+|---|---|
+| **Developer** | Everything. Can promote users to admin. |
+| **Admin** | Create events, manage people, view all reports. Cannot promote to developer. |
+| **User** | Can only access assigned events. |
+
+### Event Roles (in `event_assignments` table)
+
+| Role | Can do within an event |
+|---|---|
+| **PIC** | View all reports, manage batches for assigned event |
+| **Advertiser** | Submit and edit own daily reports |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.17 or later
-- npm, yarn, or pnpm
+- Node.js 18.17+
+- A [Supabase](https://supabase.com) project (free tier works)
 
-### Installation
+### 1. Clone & Install
 
-1. **Clone the repository**
-   ```bash
-   git clone git@github.com:GigantiX/divination-app.git
-   cd divination-app
-   ```
+```bash
+git clone git@github.com:GigantiX/divination-app.git
+cd divination-app
+npm install
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 2. Set Up Supabase
 
-3. **Start development server**
-   ```bash
-   npm run dev
-   ```
+1. Create a new Supabase project
+2. Go to **SQL Editor** and run the migration files in order:
+   - `supabase/migrations/20260206_initial_schema.sql` — tables, RLS, indexes
+   - `supabase/migrations/20260210_storage_bucket.sql` — storage bucket for logos
+   - `supabase/migrations/20260218_report_tax_percentage.sql` — tax column
+3. Go to **Settings → API** and copy your keys
 
-4. **Open in browser**
-   ```
-   http://localhost:3000
-   ```
+### 3. Environment Variables
 
-### Environment Variables
-
-Create a `.env.local` file in the root directory:
+Copy `.env.example` to `.env.local` and fill in:
 
 ```env
-# Auth.js (when implementing authentication)
-AUTH_SECRET=your-secret-key
+# Supabase (from Settings → API → "API Keys" tab)
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx
+SUPABASE_SECRET_KEY=sb_secret_xxxxx
 
-# Database (when integrating Supabase)
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Auth.js
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=<run: openssl rand -base64 32>
 ```
+
+> **Only these 5 variables are needed.** Ignore `DATABASE_URL`/`DIRECT_URL` in `.env.example` — they are unused.
+
+### 4. Create First Account
+
+```bash
+npm run dev
+```
+
+1. Open `http://localhost:3000/register`
+2. Register an account — it will be created with `user` role
+3. To make yourself a developer, run this in Supabase SQL Editor:
+
+```sql
+UPDATE profiles SET role = 'developer' WHERE username = 'your@email.com';
+```
+
+4. Log out and log back in for the role change to take effect
+
+### 5. Start Using
+
+- Create events from the dashboard
+- Add batches to events
+- Assign users as PIC or Advertiser via the People page
+- Advertisers submit daily reports
+
+## Deployment (Vercel)
+
+1. Push to GitHub
+2. Import project in [Vercel](https://vercel.com)
+3. Set environment variables (same 5 as above, but use production Supabase URL and set `NEXTAUTH_URL` to your Vercel domain)
+4. Deploy
 
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── dashboard/          # Main dashboard
-│   ├── events/
-│   │   ├── [id]/           # Event detail (dynamic route)
-│   │   └── new/            # Create new event
-│   ├── login/              # Authentication
-│   ├── register/
-│   ├── globals.css         # Global styles
-│   ├── layout.tsx          # Root layout
-│   └── page.tsx            # Root redirect
-├── components/
-│   └── ui/                 # Reusable UI components
-│       ├── avatar.tsx
-│       ├── button.tsx
-│       ├── card.tsx
-│       ├── input.tsx
-│       ├── label.tsx
-│       ├── tabs.tsx
-│       └── textarea.tsx
-└── lib/
-    └── utils.ts            # Utility functions (cn)
+├── app/
+│   ├── actions/         # Server Actions (all backend logic)
+│   ├── api/auth/        # Auth.js route handler
+│   ├── dashboard/       # Main dashboard
+│   ├── events/          # Event pages (detail, edit, reports)
+│   ├── people/          # User management
+│   ├── settings/        # Profile settings
+│   ├── login/           # Login page
+│   ├── register/        # Registration page
+│   ├── error.tsx        # Root error boundary
+│   ├── global-error.tsx # Layout-level error boundary
+│   └── not-found.tsx    # Custom 404
+├── components/ui/       # Reusable UI components (shadcn/ui)
+├── lib/
+│   ├── supabase/        # Supabase clients (admin, server, browser)
+│   ├── image.ts         # Image compression utilities
+│   ├── password.ts      # bcrypt helpers
+│   └── emojis.ts        # Emoji avatar system
+├── types/               # TypeScript declarations
+└── middleware.ts        # Auth route protection
 ```
-
-## Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
 
 ## Branch Strategy
 
 | Branch | Purpose |
-|--------|---------|
-| `main` | Stable, production-ready code |
+|---|---|
+| `main` | Production-ready code |
 | `staging` | Development and testing |
+| `audit-app` | Security audit branch |
 
-### Workflow
+## Scripts
 
-1. **Development** → Push to `staging`
-2. **Testing** → Test on staging branch
-3. **Release** → Merge `staging` into `main`
-
-```bash
-# During development
-git checkout staging
-git add .
-git commit -m "feat: add new feature"
-git push
-
-# When ready for release
-git checkout main
-git merge staging
-git push
-git checkout staging
-```
-
-## Contributing
-
-1. Create a feature branch from `staging`
-   ```bash
-   git checkout staging
-   git checkout -b feature/your-feature-name
-   ```
-
-2. Make your changes and commit
-   ```bash
-   git add .
-   git commit -m "feat: description of changes"
-   ```
-
-3. Push and create a Pull Request
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-### Commit Convention
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Code style changes (formatting)
-- `refactor:` Code refactoring
-- `test:` Adding tests
-- `chore:` Maintenance tasks
+| Command | Description |
+|---|---|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run linter |
 
 ---
 
-## Roadmap
-
-- [ ] Backend integration with Supabase
-- [ ] Authentication implementation
-- [ ] New Report Modal
-- [ ] People Management page
-- [ ] Settings page
-- [ ] Real-time data sync
-
----
-
-Built with ❤️ using Next.js and Tailwind CSS
+Built with ❤️ by GigantiX
