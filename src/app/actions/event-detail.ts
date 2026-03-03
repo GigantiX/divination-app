@@ -54,7 +54,16 @@ export interface EventDetailData {
     batches: EventDetailBatch[]
     currentBatchId: string | null
     stats: EventDetailStats
-    advertisers: (EventDetailUser & { spend: number; leads: number; sales: number })[]
+    advertisers: (EventDetailUser & {
+        spend: number
+        leads: number
+        sales: number
+        cpl: number
+        closingRate: number
+        revenue: number
+        profitLoss: number
+        roas: number
+    })[]
     pics: EventDetailUser[]
     reports: EventDetailReport[]
     userRole: 'developer' | 'admin' | 'user'
@@ -150,8 +159,11 @@ export async function getEventDetail(
         `)
         .eq('event_id', eventId)
 
-    const advertisers: (EventDetailUser & { spend: number; leads: number; sales: number })[] = []
+    const advertisers: EventDetailData['advertisers'] = []
     const pics: EventDetailUser[] = []
+
+    // Pre-calculate the current batch price for revenue calculations
+    const currentBatchPrice = mappedBatches.find(b => b.id === currentBatchId)?.price ?? 0
 
     if (assignments) {
         for (const a of assignments) {
@@ -193,7 +205,18 @@ export async function getEventDetail(
                     }
                 }
 
-                advertisers.push({ ...user, ...advertiserStats })
+                const advRevenue = advertiserStats.sales * currentBatchPrice
+                const advProfitLoss = advRevenue - advertiserStats.spend
+
+                advertisers.push({
+                    ...user,
+                    ...advertiserStats,
+                    cpl: advertiserStats.leads > 0 ? Math.round(advertiserStats.spend / advertiserStats.leads) : 0,
+                    closingRate: advertiserStats.leads > 0 ? Math.round((advertiserStats.sales / advertiserStats.leads) * 10000) / 100 : 0,
+                    revenue: advRevenue,
+                    profitLoss: advProfitLoss,
+                    roas: advertiserStats.spend > 0 ? Math.round((advRevenue / advertiserStats.spend) * 100) / 100 : 0,
+                })
             } else {
                 pics.push(user)
             }
@@ -201,7 +224,6 @@ export async function getEventDetail(
     }
 
     // Calculate overall stats for current batch
-    const currentBatchPrice = mappedBatches.find(b => b.id === currentBatchId)?.price ?? 0
     let stats: EventDetailStats = {
         totalSpend: 0, totalLeads: 0, totalSales: 0,
         cpl: 0, closingRate: 0, revenue: 0, profitLoss: 0, roas: 0,

@@ -354,25 +354,55 @@ function OverviewContent({ data, chartData }: ContentProps) {
                     )}
                 </div>
                 {data.advertisers.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {data.advertisers.slice(0, 5).map((adv) => (
-                            <div key={adv.id} className="rounded-xl border border-blue-50 bg-white p-4 shadow-sm transition-all hover:shadow-md">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <AvatarEmoji emoji={adv.emoji} size="md" className="border-2 border-white shadow-sm" />
-                                    <p className="font-semibold text-gray-900">{adv.name}</p>
+                            <div key={adv.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+                                {/* Header / Identity */}
+                                <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/50 px-4 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-white shadow-sm" />
+                                        <p className="font-semibold text-gray-900">{adv.name}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
+                                        <p className="font-bold text-gray-900">{formatCompact(adv.revenue)}</p>
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2 border-t border-gray-50 pt-3">
-                                    <div>
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                        <p className="mt-0.5 text-sm font-bold text-blue-600">{formatCompact(adv.spend)}</p>
+
+                                {/* Metrics Body */}
+                                <div className="p-4">
+                                    {/* Profit / ROAS row */}
+                                    <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
+                                            <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
+                                            <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
+                                        </div>
                                     </div>
-                                    <div className="border-l border-gray-100 pl-2">
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
-                                        <p className="mt-0.5 text-sm font-bold text-violet-600">{adv.leads}</p>
-                                    </div>
-                                    <div className="border-l border-gray-100 pl-2">
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
-                                        <p className="mt-0.5 text-sm font-bold text-emerald-500">{adv.sales}</p>
+
+                                    {/* Core Metrics Grid */}
+                                    <div className="grid grid-cols-4 gap-2 text-center divide-x divide-gray-100">
+                                        <div>
+                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
+                                            <p className="mt-1 text-xs sm:text-sm font-bold text-blue-600">{formatCompact(adv.spend)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
+                                            <p className="mt-1 text-xs sm:text-sm font-bold text-violet-600">{adv.leads}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
+                                            <p className="mt-1 text-xs sm:text-sm font-bold text-emerald-500">{adv.sales}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Closing</p>
+                                            <p className="mt-1 text-xs sm:text-sm font-bold text-gray-700">{adv.closingRate}%</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
