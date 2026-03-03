@@ -9,6 +9,7 @@ export interface CreateBatchInput {
     name: string
     startDate: string
     endDate?: string | null // Null = ongoing batch
+    price?: number
     notes?: string
 }
 
@@ -91,6 +92,11 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
         }
     }
 
+    // Validate price
+    if (input.price !== undefined && input.price < 0) {
+        return { error: 'Harga tidak boleh negatif' }
+    }
+
     // Create batch
     const { data: batch, error } = await supabase
         .from('batches')
@@ -99,6 +105,7 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
             name: input.name.trim(),
             start_date: input.startDate,
             end_date: input.endDate || null, // Null for ongoing batches
+            price: input.price ?? 0,
             notes: input.notes?.trim() || null,
         })
         .select('id')
@@ -134,6 +141,7 @@ export async function getBatch(batchId: string) {
             name,
             start_date,
             end_date,
+            price,
             notes,
             event_id,
             created_at
@@ -205,6 +213,7 @@ export async function updateBatch(
     if (input.name !== undefined) updateData.name = input.name.trim()
     if (input.startDate !== undefined) updateData.start_date = input.startDate
     if (input.endDate !== undefined) updateData.end_date = input.endDate
+    if (input.price !== undefined) updateData.price = input.price
     if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null
 
     const { error } = await supabase

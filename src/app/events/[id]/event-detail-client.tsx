@@ -13,6 +13,12 @@ import {
     Settings,
     Inbox,
     Loader2,
+    Banknote,
+    Pencil,
+    TrendingUp,
+    Wallet,
+    Users,
+    Target,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -121,6 +127,16 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                     <Layers className="h-4 w-4 text-blue-500" />
                                     Tambah Batch
                                 </Link>
+                                {selectedBatch && (
+                                    <Link
+                                        href={`/events/${data.event.id}/batches/${selectedBatch}/edit`}
+                                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        <Pencil className="h-4 w-4 text-amber-500" />
+                                        Edit Batch
+                                    </Link>
+                                )}
                                 {(data.userRole === 'admin' || data.userRole === 'developer') && (
                                     <Link
                                         href={`/events/${data.event.id}/edit`}
@@ -158,6 +174,21 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                 ))}
                             </select>
                         </div>
+
+                        {/* Batch Price */}
+                        {selectedBatchData && (
+                            <div className="mt-2 flex items-center gap-1.5 px-1">
+                                <Banknote className="h-3.5 w-3.5 text-emerald-500" />
+                                <p className="text-xs text-gray-500">
+                                    Harga Tiket:{" "}
+                                    <span className="font-semibold text-gray-700">
+                                        {selectedBatchData.price > 0
+                                            ? `Rp ${selectedBatchData.price.toLocaleString('id-ID')}`
+                                            : "Belum diatur"}
+                                    </span>
+                                </p>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="px-4 pb-4">
@@ -236,12 +267,62 @@ interface ContentProps {
 function OverviewContent({ data, chartData }: ContentProps) {
     return (
         <div className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-                <StatCard title="SPEND (IDR)" value={formatCurrency(data.stats.totalSpend)} />
-                <StatCard title="LEADS" value={data.stats.totalLeads.toString()} />
-                <StatCard title="SALES" value={data.stats.totalSales.toString()} />
-                <StatCard title="CPL (IDR)" value={formatCurrency(data.stats.cpl)} />
+            {/* --- Summary Highlights --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Profit & ROAS Highlight Card */}
+                <div className={`rounded-2xl border p-5 flex flex-col justify-between shadow-sm relative overflow-hidden ${data.stats.profitLoss >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"}`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <TrendingUp className={`w-16 h-16 ${data.stats.profitLoss >= 0 ? "text-emerald-500" : "text-red-500"}`} />
+                    </div>
+                    <div>
+                        <p className={`text-xs font-bold uppercase tracking-wider ${data.stats.profitLoss >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            PROFIT / LOSS
+                        </p>
+                        <p className={`mt-1 text-2xl md:text-3xl font-bold ${data.stats.profitLoss >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                            {data.stats.profitLoss >= 0 ? "+" : ""}{formatCurrency(data.stats.profitLoss)}
+                        </p>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                        <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                            ROAS: {data.stats.roas}x
+                        </div>
+                    </div>
+                </div>
+
+                {/* Financial Overview (Spend & Revenue) */}
+                <div className="grid grid-cols-1 gap-4">
+                    <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
+                        <div className="rounded-full bg-blue-50 p-3">
+                            <Wallet className="h-5 w-5 text-blue-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">REVENUE</p>
+                            <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.revenue)}</p>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
+                        <div className="rounded-full bg-orange-50 p-3">
+                            <Banknote className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">SPEND</p>
+                            <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.totalSpend)}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- Funnel Metrics --- */}
+            <div>
+                <h3 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                    <Target className="h-4 w-4 text-gray-400" /> Performa Funnel
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatCard title="LEADS" value={data.stats.totalLeads.toString()} icon={<Users className="h-4 w-4 text-blue-500" />} />
+                    <StatCard title="SALES" value={data.stats.totalSales.toString()} icon={<Target className="h-4 w-4 text-emerald-500" />} />
+                    <StatCard title="CPL" value={`Rp ${data.stats.cpl.toLocaleString('id-ID')}`} />
+                    <StatCard title="CLOSING RATE" value={`${data.stats.closingRate}%`} />
+                </div>
             </div>
 
             {/* Chart Section */}
@@ -389,12 +470,15 @@ function ReportsContent({ data }: ContentProps) {
     )
 }
 
-function StatCard({ title, value }: { title: string; value: string }) {
+function StatCard({ title, value, valueColor, icon }: { title: string; value: string; valueColor?: string; icon?: React.ReactNode }) {
     return (
         <Card className="rounded-2xl border-none shadow-sm h-32 flex flex-col justify-center">
             <CardContent className="p-4">
-                <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">{title}</p>
-                <p className="mt-2 text-xl font-bold">{value}</p>
+                <div className="flex items-center gap-2">
+                    {icon && <div className="rounded-md bg-gray-50 p-1.5">{icon}</div>}
+                    <p className="text-xs font-bold uppercase text-gray-400 tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">{title}</p>
+                </div>
+                <p className={`mt-3 text-xl font-bold ${valueColor || ""}`}>{value}</p>
             </CardContent>
         </Card>
     )

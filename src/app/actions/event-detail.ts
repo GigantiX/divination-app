@@ -16,6 +16,7 @@ export interface EventDetailBatch {
     name: string
     startDate: string
     endDate: string | null // Null = ongoing batch
+    price: number
 }
 
 export interface EventDetailStats {
@@ -23,6 +24,10 @@ export interface EventDetailStats {
     totalLeads: number
     totalSales: number
     cpl: number // Cost Per Lead
+    closingRate: number // Closing Rate %
+    revenue: number // Sales × Batch Price
+    profitLoss: number // Revenue - Spend
+    roas: number // Return on Ad Spend (Revenue / Spend)
 }
 
 export interface EventDetailReport {
@@ -120,7 +125,7 @@ export async function getEventDetail(
     // Get all batches for this event
     const { data: batches } = await supabase
         .from('batches')
-        .select('id, name, start_date, end_date')
+        .select('id, name, start_date, end_date, price')
         .eq('event_id', eventId)
         .order('start_date', { ascending: false })
 
@@ -129,6 +134,7 @@ export async function getEventDetail(
         name: b.name,
         startDate: b.start_date,
         endDate: b.end_date,
+        price: Number(b.price || 0),
     }))
 
     // Determine current batch (latest or specified)
@@ -195,7 +201,11 @@ export async function getEventDetail(
     }
 
     // Calculate overall stats for current batch
-    let stats: EventDetailStats = { totalSpend: 0, totalLeads: 0, totalSales: 0, cpl: 0 }
+    const currentBatchPrice = mappedBatches.find(b => b.id === currentBatchId)?.price ?? 0
+    let stats: EventDetailStats = {
+        totalSpend: 0, totalLeads: 0, totalSales: 0,
+        cpl: 0, closingRate: 0, revenue: 0, profitLoss: 0, roas: 0,
+    }
 
     if (currentBatchId) {
         const { data: allReports } = await supabase
@@ -218,11 +228,18 @@ export async function getEventDetail(
                 { spend: 0, leads: 0, sales: 0 }
             )
 
+            const revenue = totals.sales * currentBatchPrice
+            const profitLoss = revenue - totals.spend
+
             stats = {
                 totalSpend: totals.spend,
                 totalLeads: totals.leads,
                 totalSales: totals.sales,
                 cpl: totals.leads > 0 ? Math.round(totals.spend / totals.leads) : 0,
+                closingRate: totals.leads > 0 ? Math.round((totals.sales / totals.leads) * 10000) / 100 : 0,
+                revenue,
+                profitLoss,
+                roas: totals.spend > 0 ? Math.round((revenue / totals.spend) * 100) / 100 : 0,
             }
         }
     }

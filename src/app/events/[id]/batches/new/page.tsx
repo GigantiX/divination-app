@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
-import { ChevronLeft, Calendar, Hash, FileText, Loader2, Check } from "lucide-react"
+import { ChevronLeft, Calendar, Hash, FileText, Loader2, Check, Banknote } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,7 @@ export default function NewBatchPage() {
         name: "",
         startDate: todayDate,
         endDate: "",
+        price: "",
         notes: ""
     })
 
@@ -63,6 +64,7 @@ export default function NewBatchPage() {
             name: formData.name,
             startDate: formData.startDate,
             endDate: isOngoing ? null : formData.endDate || null,
+            price: formData.price ? Number(formData.price.replace(/\D/g, '')) : 0,
             notes: formData.notes || undefined,
         })
 
@@ -86,6 +88,18 @@ export default function NewBatchPage() {
         if (!dateStr) return "Sekarang"
         const date = new Date(dateStr)
         return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    }
+
+    const formatRupiah = (value: string) => {
+        const number = value.replace(/\D/g, '')
+        if (!number) return ''
+        return Number(number).toLocaleString('id-ID')
+    }
+
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/\D/g, '')
+        setFormData(prev => ({ ...prev, price: raw ? formatRupiah(raw) : '' }))
+        setError(null)
     }
 
     const isValid = formData.name.trim().length >= 1 && formData.startDate && (isOngoing || formData.endDate)
@@ -213,6 +227,32 @@ export default function NewBatchPage() {
                                         📅 {formData.name || "Batch Baru"}: {formatDisplayDate(formData.startDate)} - {isOngoing ? "Sekarang" : formatDisplayDate(formData.endDate)}
                                     </p>
                                 </div>
+                            </div>
+
+                            {/* Price Section */}
+                            <div className="space-y-2">
+                                <Label htmlFor="price" className="flex items-center gap-2">
+                                    <Banknote className="h-4 w-4 text-emerald-500" />
+                                    Harga Tiket (Opsional)
+                                </Label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+                                        Rp
+                                    </span>
+                                    <Input
+                                        id="price"
+                                        name="price"
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                        value={formData.price}
+                                        onChange={handlePriceChange}
+                                        className="h-12 pl-10"
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                    Harga tiket per orang untuk batch ini
+                                </p>
                             </div>
 
                             {/* Notes Section */}
