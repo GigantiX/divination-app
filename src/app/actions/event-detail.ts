@@ -23,7 +23,7 @@ export interface EventDetailStats {
     totalSpend: number
     totalLeads: number
     totalSales: number
-    cpl: number // Cost Per Lead
+    cpr: number // Cost Per Result (spend / sales)
     closingRate: number // Closing Rate %
     revenue: number // Sales × Batch Price
     profitLoss: number // Revenue - Spend
@@ -58,7 +58,7 @@ export interface EventDetailData {
         spend: number
         leads: number
         sales: number
-        cpl: number
+        cpr: number
         closingRate: number
         revenue: number
         profitLoss: number
@@ -211,7 +211,7 @@ export async function getEventDetail(
                 advertisers.push({
                     ...user,
                     ...advertiserStats,
-                    cpl: advertiserStats.leads > 0 ? Math.round(advertiserStats.spend / advertiserStats.leads) : 0,
+                    cpr: advertiserStats.sales > 0 ? Math.round(advertiserStats.spend / advertiserStats.sales) : 0,
                     closingRate: advertiserStats.leads > 0 ? Math.round((advertiserStats.sales / advertiserStats.leads) * 10000) / 100 : 0,
                     revenue: advRevenue,
                     profitLoss: advProfitLoss,
@@ -226,7 +226,7 @@ export async function getEventDetail(
     // Calculate overall stats for current batch
     let stats: EventDetailStats = {
         totalSpend: 0, totalLeads: 0, totalSales: 0,
-        cpl: 0, closingRate: 0, revenue: 0, profitLoss: 0, roas: 0,
+        cpr: 0, closingRate: 0, revenue: 0, profitLoss: 0, roas: 0,
     }
 
     if (currentBatchId) {
@@ -257,7 +257,7 @@ export async function getEventDetail(
                 totalSpend: totals.spend,
                 totalLeads: totals.leads,
                 totalSales: totals.sales,
-                cpl: totals.leads > 0 ? Math.round(totals.spend / totals.leads) : 0,
+                cpr: totals.sales > 0 ? Math.round(totals.spend / totals.sales) : 0,
                 closingRate: totals.leads > 0 ? Math.round((totals.sales / totals.leads) * 10000) / 100 : 0,
                 revenue,
                 profitLoss,
