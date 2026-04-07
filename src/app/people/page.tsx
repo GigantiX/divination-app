@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
-import { BottomNav } from "@/components/ui/bottom-nav"
+import { NavigationLayout } from "@/components/ui/nav-layout"
 import { RoleBadge } from "@/components/ui/role-badge"
 import { cn } from "@/lib/utils"
 import { getPeopleList, type PeopleMember } from "@/app/actions/people"
@@ -62,7 +62,7 @@ export default function PeopleManagementPage() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-background-secondary">
+        <NavigationLayout isAdmin={true}>
             {/* Header */}
             <div className="bg-white px-4 pt-6 pb-4">
                 <h1 className="text-2xl font-bold text-black">People</h1>
@@ -149,9 +149,7 @@ export default function PeopleManagementPage() {
                     ))
                 )}
             </div>
-
-            <BottomNav isAdmin />
-        </div>
+        </NavigationLayout>
     )
 }
 

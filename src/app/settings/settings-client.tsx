@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
-import { BottomNav } from "@/components/ui/bottom-nav"
+import { NavigationLayout } from "@/components/ui/nav-layout"
 import { logoutAction } from "@/app/actions/auth"
 import { updateEmoji, type UserProfile } from "@/app/actions/profile"
 import { getEmojisByCategory } from "@/lib/emojis"
@@ -56,7 +56,7 @@ export function SettingsClient({ profile }: SettingsClientProps) {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50">
+        <NavigationLayout isAdmin={profile.role === "admin" || profile.role === "developer"}>
             {/* Content */}
             <div className="flex-1 p-4 pb-24 md:max-w-2xl md:mx-auto md:w-full">
                 {/* Profile Card */}
@@ -155,8 +155,6 @@ export function SettingsClient({ profile }: SettingsClientProps) {
                     </CardContent>
                 </Card>
             </div>
-
-            <BottomNav isAdmin={profile.role === "admin" || profile.role === "developer"} />
 
             {/* Emoji Picker Modal */}
             {showEmojiPicker && (
@@ -277,6 +275,6 @@ export function SettingsClient({ profile }: SettingsClientProps) {
                     </div>
                 </div>
             )}
-        </div>
+        </NavigationLayout>
     )
 }

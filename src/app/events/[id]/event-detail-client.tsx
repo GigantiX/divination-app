@@ -266,170 +266,176 @@ interface ContentProps {
 
 function OverviewContent({ data, chartData }: ContentProps) {
     return (
-        <div className="space-y-6">
-            {/* --- Summary Highlights --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Profit & ROAS Highlight Card */}
-                <div className={`rounded-2xl border p-5 flex flex-col justify-between shadow-sm relative overflow-hidden ${data.stats.profitLoss >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"}`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <TrendingUp className={`w-16 h-16 ${data.stats.profitLoss >= 0 ? "text-emerald-500" : "text-red-500"}`} />
-                    </div>
-                    <div>
-                        <p className={`text-xs font-bold uppercase tracking-wider ${data.stats.profitLoss >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                            PROFIT / LOSS
-                        </p>
-                        <p className={`mt-1 text-2xl md:text-3xl font-bold ${data.stats.profitLoss >= 0 ? "text-emerald-700" : "text-red-700"}`}>
-                            {data.stats.profitLoss >= 0 ? "+" : ""}{formatCurrency(data.stats.profitLoss)}
-                        </p>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2">
-                        <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
-                            ROAS: {data.stats.roas}x
-                        </div>
-                    </div>
-                </div>
-
-                {/* Financial Overview (Spend & Revenue) */}
-                <div className="grid grid-cols-1 gap-4">
-                    <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
-                        <div className="rounded-full bg-blue-50 p-3">
-                            <Wallet className="h-5 w-5 text-blue-500" />
+        <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            {/* Left Column: Main Metrics & Charts */}
+            <div className="lg:col-span-8 space-y-6">
+                {/* --- Summary Highlights --- */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                    {/* Profit & ROAS Highlight Card */}
+                    <div className={`rounded-2xl border p-5 flex flex-col justify-between shadow-sm relative overflow-hidden ${data.stats.profitLoss >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"}`}>
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <TrendingUp className={`w-16 h-16 ${data.stats.profitLoss >= 0 ? "text-emerald-500" : "text-red-500"}`} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">REVENUE</p>
-                            <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.revenue)}</p>
+                            <p className={`text-xs font-bold uppercase tracking-wider ${data.stats.profitLoss >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                                PROFIT / LOSS
+                            </p>
+                            <p className={`mt-1 text-2xl md:text-3xl font-bold ${data.stats.profitLoss >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                                {data.stats.profitLoss >= 0 ? "+" : ""}{formatCurrency(data.stats.profitLoss)}
+                            </p>
                         </div>
-                    </div>
-                    <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
-                        <div className="rounded-full bg-orange-50 p-3">
-                            <Banknote className="h-5 w-5 text-orange-500" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">SPEND</p>
-                            <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.totalSpend)}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* --- Funnel Metrics --- */}
-            <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                    <Target className="h-4 w-4 text-gray-400" /> Performa Funnel
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard title="LEADS" value={data.stats.totalLeads.toString()} icon={<Users className="h-4 w-4 text-blue-500" />} />
-                    <StatCard title="SALES" value={data.stats.totalSales.toString()} icon={<Target className="h-4 w-4 text-emerald-500" />} />
-                    <StatCard title="CPL" value={`Rp ${data.stats.cpl.toLocaleString('id-ID')}`} />
-                    <StatCard title="CLOSING RATE" value={`${data.stats.closingRate}%`} />
-                </div>
-            </div>
-
-            {/* Chart Section */}
-            {chartData && (
-                <Card className="rounded-2xl border-none shadow-sm">
-                    <CardContent className="p-6">
-                        <div className="mb-6 flex items-baseline justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-500">Trend Lead</p>
-                                <h3 className="text-xl font-bold">7 Hari Terakhir</h3>
+                        <div className="mt-4 flex items-center gap-2">
+                            <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                                ROAS: {data.stats.roas}x
                             </div>
-                            <span className="text-sm font-medium text-blue-500">
-                                +{chartData.todayLeads || 0} hari ini
-                            </span>
                         </div>
-                        <div className="h-48 w-full">
-                            <LineChart labels={chartData.labels} leadsData={chartData.leadsData} salesData={chartData.salesData} />
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                    </div>
 
-            {/* Advertiser Section */}
-            <div>
-                <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-bold text-black">Advertiser</h3>
-                    {data.advertisers.length > 3 && (
-                        <button className="text-sm font-medium text-blue-500">Lihat Semua</button>
+                    {/* Financial Overview (Spend & Revenue) */}
+                    <div className="grid grid-cols-1 gap-4 lg:gap-6">
+                        <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
+                            <div className="rounded-full bg-blue-50 p-3">
+                                <Wallet className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">REVENUE</p>
+                                <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.revenue)}</p>
+                            </div>
+                        </div>
+                        <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
+                            <div className="rounded-full bg-orange-50 p-3">
+                                <Banknote className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">SPEND</p>
+                                <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.totalSpend)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- Funnel Metrics --- */}
+                <div>
+                    <h3 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                        <Target className="h-4 w-4 text-gray-400" /> Performa Funnel
+                    </h3>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                        <StatCard title="LEADS" value={data.stats.totalLeads.toString()} icon={<Users className="h-4 w-4 text-blue-500" />} />
+                        <StatCard title="SALES" value={data.stats.totalSales.toString()} icon={<Target className="h-4 w-4 text-emerald-500" />} />
+                        <StatCard title="CPL" value={`Rp ${data.stats.cpl.toLocaleString('id-ID')}`} />
+                        <StatCard title="CLOSING RATE" value={`${data.stats.closingRate}%`} />
+                    </div>
+                </div>
+
+                {/* Chart Section */}
+                {chartData && (
+                    <Card className="rounded-2xl border-none shadow-sm">
+                        <CardContent className="p-6">
+                            <div className="mb-6 flex items-baseline justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Trend Lead</p>
+                                    <h3 className="text-xl font-bold">7 Hari Terakhir</h3>
+                                </div>
+                                <span className="text-sm font-medium text-blue-500">
+                                    +{chartData.todayLeads || 0} hari ini
+                                </span>
+                            </div>
+                            <div className="h-48 w-full lg:h-64">
+                                <LineChart labels={chartData.labels} leadsData={chartData.leadsData} salesData={chartData.salesData} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            {/* Right Column: Sidebar (Advertiser & PIC) */}
+            <div className="lg:col-span-4 space-y-6">
+                {/* Advertiser Section */}
+                <div>
+                    <div className="mb-4 flex items-center justify-between">
+                        <h3 className="font-bold text-black">Advertiser</h3>
+                        {data.advertisers.length > 5 && (
+                            <button className="text-sm font-medium text-blue-500">Lihat Semua</button>
+                        )}
+                    </div>
+                    {data.advertisers.length > 0 ? (
+                        <div className="space-y-4">
+                            {data.advertisers.slice(0, 5).map((adv) => (
+                                <div key={adv.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+                                    {/* Header / Identity */}
+                                    <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/50 px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-white shadow-sm" />
+                                            <p className="font-semibold text-gray-900">{adv.name}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
+                                            <p className="font-bold text-gray-900">{formatCompact(adv.revenue)}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Metrics Body */}
+                                    <div className="p-4">
+                                        {/* Profit / ROAS row */}
+                                        <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
+                                                <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                    {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+                                                <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
+                                                <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Core Metrics Grid */}
+                                        <div className="grid grid-cols-4 gap-2 text-center divide-x divide-gray-100">
+                                            <div>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-blue-600">{formatCompact(adv.spend)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-violet-600">{adv.leads}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-emerald-500">{adv.sales}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Closing</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-gray-700">{adv.closingRate}%</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <EmptyState message="Belum ada advertiser ditugaskan" />
                     )}
                 </div>
-                {data.advertisers.length > 0 ? (
-                    <div className="space-y-4">
-                        {data.advertisers.slice(0, 5).map((adv) => (
-                            <div key={adv.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-                                {/* Header / Identity */}
-                                <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/50 px-4 py-3">
-                                    <div className="flex items-center gap-3">
-                                        <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-white shadow-sm" />
-                                        <p className="font-semibold text-gray-900">{adv.name}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
-                                        <p className="font-bold text-gray-900">{formatCompact(adv.revenue)}</p>
-                                    </div>
-                                </div>
 
-                                {/* Metrics Body */}
-                                <div className="p-4">
-                                    {/* Profit / ROAS row */}
-                                    <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
-                                            <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
-                                            <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
-                                            <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Core Metrics Grid */}
-                                    <div className="grid grid-cols-4 gap-2 text-center divide-x divide-gray-100">
-                                        <div>
-                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                            <p className="mt-1 text-xs sm:text-sm font-bold text-blue-600">{formatCompact(adv.spend)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
-                                            <p className="mt-1 text-xs sm:text-sm font-bold text-violet-600">{adv.leads}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
-                                            <p className="mt-1 text-xs sm:text-sm font-bold text-emerald-500">{adv.sales}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Closing</p>
-                                            <p className="mt-1 text-xs sm:text-sm font-bold text-gray-700">{adv.closingRate}%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                {/* PIC Section */}
+                <div>
+                    <div className="mb-4">
+                        <h3 className="font-bold text-black">PIC</h3>
                     </div>
-                ) : (
-                    <EmptyState message="Belum ada advertiser ditugaskan" />
-                )}
-            </div>
-
-            {/* PIC Section */}
-            <div>
-                <div className="mb-4">
-                    <h3 className="font-bold text-black">PIC</h3>
+                    {data.pics.length > 0 ? (
+                        <div className="space-y-3">
+                            {data.pics.map((pic) => (
+                                <div key={pic.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                                    <AvatarEmoji emoji={pic.emoji} size="sm" />
+                                    <p className="font-medium text-gray-900">{pic.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <EmptyState message="Belum ada PIC ditugaskan" />
+                    )}
                 </div>
-                {data.pics.length > 0 ? (
-                    <div className="space-y-3">
-                        {data.pics.map((pic) => (
-                            <div key={pic.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-                                <AvatarEmoji emoji={pic.emoji} size="sm" />
-                                <p className="font-medium text-gray-900">{pic.name}</p>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <EmptyState message="Belum ada PIC ditugaskan" />
-                )}
             </div>
         </div>
     )

@@ -8,7 +8,8 @@ import { Calendar, Plus, Inbox, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { BottomNav } from "@/components/ui/bottom-nav"
+import { NavigationLayout } from "@/components/ui/nav-layout"
+import { cn } from "@/lib/utils"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { RoleBadge } from "@/components/ui/role-badge"
 import { toggleEventStatus, type DashboardData, type DashboardEvent } from "@/app/actions/dashboard"
@@ -78,9 +79,9 @@ export function DashboardClient({ data }: DashboardClientProps) {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-background-secondary">
+        <NavigationLayout isAdmin={isAdmin}>
             {/* Header */}
-            <div className="sticky top-0 z-10 border-b bg-white px-6 py-4">
+            <div className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur-md px-6 py-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-black">DIVINATION</h1>
                     <Link href="/settings">
@@ -195,8 +196,6 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 )}
             </div>
 
-            <BottomNav isAdmin={isAdmin} />
-
             {/* Confirmation Modal */}
             {modalConfig.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -211,7 +210,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
                                     {modalConfig.eventName}
                                 </span>{" "}
                                 menjadi{" "}
-                                <span className={`font-bold ${modalConfig.currentStatus === "active" ? "text-red-500" : "text-green-500"}`}>
+                                <span className={cn("font-bold", modalConfig.currentStatus === "active" ? "text-red-500" : "text-emerald-500")}>
                                     {modalConfig.currentStatus === "active" ? "Inactive" : "Active"}
                                 </span>?
                             </p>
@@ -224,7 +223,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
                                     Batal
                                 </Button>
                                 <Button
-                                    className={modalConfig.currentStatus === "active" ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}
+                                    className={modalConfig.currentStatus === "active" ? "bg-red-500 hover:bg-red-600" : "bg-emerald-500 hover:bg-emerald-600"}
                                     onClick={confirmToggle}
                                     disabled={isToggling !== null}
                                 >
@@ -242,7 +241,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
                     </Card>
                 </div>
             )}
-        </div>
+        </NavigationLayout>
     )
 }
 
@@ -257,58 +256,75 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
     const isActive = event.status === "active"
 
     return (
-        <Link href={`/events/${event.id}`}>
-            <Card className={`overflow-hidden transition-all hover:shadow-md ${!isActive ? "opacity-70" : ""}`}>
+        <Link href={`/events/${event.id}`} className="block">
+            <Card className={cn(
+                "group overflow-hidden transition-all duration-300 border border-gray-100 bg-white hover:border-gray-200 hover:shadow-lg hover:-translate-y-0.5",
+                !isActive && "opacity-75 grayscale-[0.2]"
+            )}>
                 <CardContent className="p-0">
-                    <div className="flex items-center gap-4 p-4">
-                        {/* Event Logo */}
-                        <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                    <div className="flex items-center gap-5 p-5">
+                        {/* Premium Event Logo */}
+                        <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
                             {event.logo_url ? (
                                 <Image
                                     src={event.logo_url}
                                     alt={event.name}
                                     fill
                                     sizes="64px"
-                                    className="rounded-lg object-cover"
+                                    className="object-cover"
                                 />
                             ) : (
-                                <Calendar className="h-8 w-8 text-primary" />
+                                <Calendar className="h-7 w-7 text-primary/80 group-hover:text-primary transition-colors duration-300" />
                             )}
                         </div>
 
                         {/* Event Info */}
                         <div className="flex-1 min-w-0">
-                            <h4 className="truncate font-semibold text-text-primary">
+                            <h4 className="truncate text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">
                                 {event.name}
                             </h4>
-                            <p className="text-sm text-text-secondary">
-                                {event.batchCount} Batch{event.batchCount !== 1 ? "es" : ""}
-                            </p>
-
-                            {/* Status Toggle (Admin Only) */}
-                            {isAdmin && (
-                                <div className="mt-2 flex items-center gap-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            onToggleClick(event.id, event.status, event.name)
-                                        }}
-                                        disabled={isToggling}
-                                        aria-label={isActive ? "Deactivate event" : "Activate event"}
-                                        className={`relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center ${isToggling ? "opacity-50" : ""}`}
-                                    >
-                                        <span
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-red-500"}`}
-                                        >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"}`}
-                                            />
-                                        </span>
-                                    </button>
-                                    <span className={`text-xs font-medium ${isActive ? "text-green-600" : "text-red-500"}`}>
-                                        {isActive ? "Active" : "Inactive"}
+                            <div className="flex flex-col gap-1 mt-0.5">
+                                <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500">
+                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-[10px]">
+                                        {event.batchCount}
                                     </span>
+                                    {event.batchCount !== 1 ? "Batches" : "Batch"} total
                                 </div>
+                            </div>
+                        </div>
+                        
+                        {/* Status / Toggles */}
+                        <div className="flex flex-col items-end gap-2 ml-4">
+                            {isAdmin ? (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        onToggleClick(event.id, event.status, event.name)
+                                    }}
+                                    disabled={isToggling}
+                                    aria-label={isActive ? "Deactivate event" : "Activate event"}
+                                    title={isActive ? "Nonaktifkan Event" : "Aktifkan Event"}
+                                    className={cn(
+                                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                                        isActive ? "bg-emerald-500 hover:bg-emerald-400" : "bg-gray-200 hover:bg-gray-300",
+                                        isToggling && "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                                            isActive ? "translate-x-5" : "translate-x-0"
+                                        )}
+                                    />
+                                </button>
+                            ) : (
+                                <span className={cn(
+                                    "px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase",
+                                    isActive ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
+                                )}>
+                                    {isActive ? "Aktif" : "Selesai"}
+                                </span>
                             )}
                         </div>
                     </div>
