@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Settings } from "lucide-react"
+import { Home, Users, Settings, Grid3X3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface BottomNavProps {
@@ -21,6 +21,7 @@ export function BottomNav({ isAdmin = false }: BottomNavProps) {
 
     const navItems = [
         { href: "/dashboard", icon: Home, label: "Beranda" },
+        { href: "/apps", icon: Grid3X3, label: "Apps" },
         ...(isAdmin ? [{ href: "/people", icon: Users, label: "Orang" }] : []),
         { href: "/settings", icon: Settings, label: "Pengaturan" },
     ]
