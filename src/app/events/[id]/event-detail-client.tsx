@@ -280,7 +280,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                             <p className={`text-xs font-bold uppercase tracking-wider ${data.stats.profitLoss >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                                 PROFIT / LOSS
                             </p>
-                            <p className={`mt-1 text-2xl md:text-3xl font-bold ${data.stats.profitLoss >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                            <p className={`mt-1 text-xl font-bold leading-tight break-words md:text-2xl ${data.stats.profitLoss >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                                 {data.stats.profitLoss >= 0 ? "+" : ""}{formatCurrency(data.stats.profitLoss)}
                             </p>
                         </div>
@@ -299,7 +299,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                             </div>
                             <div>
                                 <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">REVENUE</p>
-                                <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.revenue)}</p>
+                                <p className="text-base font-bold leading-tight break-words text-gray-800 sm:text-lg">{formatCurrency(data.stats.revenue)}</p>
                             </div>
                         </div>
                         <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
@@ -308,7 +308,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                             </div>
                             <div>
                                 <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">SPEND</p>
-                                <p className="text-lg font-bold text-gray-800">{formatCurrency(data.stats.totalSpend)}</p>
+                                <p className="text-base font-bold leading-tight break-words text-gray-800 sm:text-lg">{formatCurrency(data.stats.totalSpend)}</p>
                             </div>
                         </div>
                     </div>
@@ -322,7 +322,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                         <StatCard title="LEADS" value={data.stats.totalLeads.toString()} icon={<Users className="h-4 w-4 text-blue-500" />} />
                         <StatCard title="SALES" value={data.stats.totalSales.toString()} icon={<Target className="h-4 w-4 text-emerald-500" />} />
-                        <StatCard title="CPL" value={`Rp ${data.stats.cpl.toLocaleString('id-ID')}`} />
+                        <StatCard title="CPR" value={`Rp ${data.stats.cpr.toLocaleString('id-ID')}`} />
                         <StatCard title="CLOSING RATE" value={`${data.stats.closingRate}%`} />
                     </div>
                 </div>
@@ -370,7 +370,9 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
-                                            <p className="font-bold text-gray-900">{formatCompact(adv.revenue)}</p>
+                                            <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
+                                                {formatCompact(adv.revenue)}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -378,9 +380,9 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                     <div className="p-4">
                                         {/* Profit / ROAS row */}
                                         <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex min-w-0 items-center gap-2">
                                                 <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
-                                                <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                                                     {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
                                                 </p>
                                             </div>
@@ -391,10 +393,10 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         </div>
 
                                         {/* Core Metrics Grid */}
-                                        <div className="grid grid-cols-4 gap-2 text-center divide-x divide-gray-100">
+                                        <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                             <div>
                                                 <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                                <p className="mt-1 text-xs sm:text-sm font-bold text-blue-600">{formatCompact(adv.spend)}</p>
+                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCompact(adv.spend)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
@@ -522,9 +524,9 @@ function StatCard({ title, value, valueColor, icon }: { title: string; value: st
 
 function BadgeBox({ label, value }: { label: string; value: string }) {
     return (
-        <div className="min-w-[80px] rounded-lg bg-gray-50 p-2">
+        <div className="min-w-[124px] rounded-lg bg-gray-50 p-2">
             <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
-            <p className="font-semibold">{value}</p>
+            <p className="text-sm font-semibold leading-tight">{value}</p>
         </div>
     )
 }
@@ -539,29 +541,11 @@ function EmptyState({ message }: { message: string }) {
 
 // Helper functions
 function formatCurrency(value: number): string {
-    if (value >= 1000000000) {
-        return `Rp ${(value / 1000000000).toFixed(1)}B`
-    }
-    if (value >= 1000000) {
-        return `Rp ${(value / 1000000).toFixed(1)}M`
-    }
-    if (value >= 1000) {
-        return `Rp ${(value / 1000).toFixed(0)}K`
-    }
     return `Rp ${value.toLocaleString('id-ID')}`
 }
 
 function formatCompact(value: number): string {
-    if (value >= 1000000000) {
-        return `${(value / 1000000000).toFixed(1)}B`
-    }
-    if (value >= 1000000) {
-        return `${(value / 1000000).toFixed(1)}M`
-    }
-    if (value >= 1000) {
-        return `${(value / 1000).toFixed(1)}K`
-    }
-    return value.toString()
+    return `Rp ${value.toLocaleString('id-ID')}`
 }
 
 function formatDate(dateStr: string): string {

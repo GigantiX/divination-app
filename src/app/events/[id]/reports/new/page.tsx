@@ -347,7 +347,7 @@ export default function NewReportPage() {
                                             <span className="absolute right-3 top-1/2 translate-y-[-35%] text-gray-400 font-medium">%</span>
                                         </div>
                                     )}
-                                    <p className="text-xs text-gray-400">
+                                    <p className="break-words text-xs leading-relaxed text-gray-400">
                                         Pajak akan ditambahkan ke Ad Spend{spendNum > 0 ? `: Rp ${formatCurrency(spendNum.toString())} + ${taxPct}% = Rp ${formatCurrency(spendWithTax.toString())}` : ""}
                                     </p>
                                 </div>
@@ -418,10 +418,10 @@ export default function NewReportPage() {
                             {(formData.spend || formData.leads) && (
                                 <div className="rounded-xl bg-gradient-to-r from-blue-50 to-violet-50 p-4">
                                     <p className="text-xs font-semibold text-gray-600 mb-2">PREVIEW</p>
-                                    <div className="flex items-center justify-between">
+                                    <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
                                         <div>
                                             <p className="text-sm text-gray-500">Total + Pajak</p>
-                                            <p className="text-lg font-bold text-blue-600">
+                                            <p className="break-words text-base font-bold leading-tight text-blue-600 sm:text-lg">
                                                 {spendWithTax > 0
                                                     ? `Rp ${formatCurrency(spendWithTax.toString())}`
                                                     : '-'
@@ -429,17 +429,17 @@ export default function NewReportPage() {
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-500">CPL</p>
-                                            <p className="text-lg font-bold text-violet-600">
-                                                {spendWithTax > 0 && leadsNum > 0
-                                                    ? `Rp ${formatCurrency(Math.round(spendWithTax / leadsNum).toString())}`
+                                            <p className="text-sm text-gray-500">CPR</p>
+                                            <p className="break-words text-base font-bold leading-tight text-violet-600 sm:text-lg">
+                                                {spendWithTax > 0 && salesNum > 0
+                                                    ? `Rp ${formatCurrency(Math.round(spendWithTax / salesNum).toString())}`
                                                     : '-'
                                                 }
                                             </p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-left sm:text-right">
                                             <p className="text-sm text-gray-500">Conv. Rate</p>
-                                            <p className="text-lg font-bold text-emerald-500">
+                                            <p className="text-base font-bold leading-tight text-emerald-500 sm:text-lg">
                                                 {leadsNum > 0 && salesNum >= 0
                                                     ? `${((salesNum / leadsNum) * 100).toFixed(1)}%`
                                                     : '-'
