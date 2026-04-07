@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { cn } from "@/lib/utils"
-import { getEventChartData, type EventDetailData } from "@/app/actions/event-detail"
+import { getEventChartData, type ChartRange, type EventDetailData } from "@/app/actions/event-detail"
 
 const LineChart = dynamic(() => import("./line-chart"), {
     ssr: false,
@@ -48,6 +48,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     const [selectedBatch, setSelectedBatch] = React.useState(data.currentBatchId || "")
     const [isMenuOpen, setIsMenuOpen] = React.useState(false)
     const [isBatchLoading, setIsBatchLoading] = React.useState(false)
+    const [chartRange, setChartRange] = React.useState<ChartRange>("7d")
     const menuRef = React.useRef<HTMLDivElement>(null)
 
     // Chart data state
@@ -71,13 +72,18 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
 
     // Fetch chart data when batch changes
     React.useEffect(() => {
-        if (selectedBatch) {
-            getEventChartData(selectedBatch).then((result) => {
-                setChartData(result)
-                setIsBatchLoading(false)
-            })
+        if (!selectedBatch) {
+            setChartData(null)
+            setIsBatchLoading(false)
+            return
         }
-    }, [selectedBatch])
+
+        setIsBatchLoading(true)
+        getEventChartData(selectedBatch, chartRange).then((result) => {
+            setChartData(result)
+            setIsBatchLoading(false)
+        })
+    }, [selectedBatch, chartRange])
 
     // Handle batch change
     const handleBatchChange = (newBatchId: string) => {
@@ -236,7 +242,12 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 )}
                 {activeTab === "overview" ? (
-                    <OverviewContent data={data} chartData={chartData} />
+                    <OverviewContent
+                        data={data}
+                        chartData={chartData}
+                        chartRange={chartRange}
+                        onChartRangeChange={setChartRange}
+                    />
                 ) : (
                     <ReportsContent data={data} />
                 )}
@@ -262,9 +273,23 @@ interface ContentProps {
         salesData: number[]
         todayLeads: number
     } | null
+    chartRange?: ChartRange
+    onChartRangeChange?: (range: ChartRange) => void
 }
 
-function OverviewContent({ data, chartData }: ContentProps) {
+function OverviewContent({ data, chartData, chartRange = "7d", onChartRangeChange }: ContentProps) {
+    const chartRangeOptions: { value: ChartRange; label: string }[] = [
+        { value: "7d", label: "7 Hari" },
+        { value: "30d", label: "30 Hari" },
+        { value: "all", label: "Semua" },
+    ]
+
+    const chartTitle = chartRange === "7d"
+        ? "7 Hari Terakhir"
+        : chartRange === "30d"
+            ? "30 Hari Terakhir"
+            : "Semua Waktu"
+
     return (
         <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
             {/* Left Column: Main Metrics & Charts */}
@@ -331,10 +356,27 @@ function OverviewContent({ data, chartData }: ContentProps) {
                 {chartData && (
                     <Card className="rounded-2xl border-none shadow-sm">
                         <CardContent className="p-6">
-                            <div className="mb-6 flex items-baseline justify-between">
+                            <div className="mb-4 flex flex-wrap gap-2">
+                                {chartRangeOptions.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => onChartRangeChange?.(option.value)}
+                                        className={cn(
+                                            "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                                            chartRange === option.value
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        )}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="mb-6 flex items-baseline justify-between gap-4">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Trend Lead</p>
-                                    <h3 className="text-xl font-bold">7 Hari Terakhir</h3>
+                                    <p className="text-sm font-medium text-gray-500">Trend Leads & Sales</p>
+                                    <h3 className="text-xl font-bold">{chartTitle}</h3>
                                 </div>
                                 <span className="text-sm font-medium text-blue-500">
                                     +{chartData.todayLeads || 0} hari ini
