@@ -101,9 +101,10 @@ export function getFacebookOAuthConfig() {
     const appId = process.env.FACEBOOK_APP_ID
     const appSecret = process.env.FACEBOOK_APP_SECRET
     const appBaseUrl = process.env.APP_BASE_URL
+    const configId = process.env.FACEBOOK_CONFIG_ID
     const redirectUri = process.env.FACEBOOK_REDIRECT_URI || (appBaseUrl ? `${appBaseUrl}/api/facebook/callback` : undefined)
 
-    if (!appId || !appSecret || !redirectUri) {
+    if (!appId || !appSecret || !redirectUri || !configId) {
         return null
     }
 
@@ -111,6 +112,6 @@ export function getFacebookOAuthConfig() {
         appId,
         appSecret,
         redirectUri,
-        scope: 'public_profile,email',
+        configId,
     }
 }

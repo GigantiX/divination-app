@@ -20,9 +20,9 @@ export async function GET() {
     const oauthUrl = new URL('https://www.facebook.com/v20.0/dialog/oauth')
     oauthUrl.searchParams.set('client_id', config.appId)
     oauthUrl.searchParams.set('redirect_uri', config.redirectUri)
-    oauthUrl.searchParams.set('scope', config.scope)
     oauthUrl.searchParams.set('state', state)
     oauthUrl.searchParams.set('response_type', 'code')
+    oauthUrl.searchParams.set('config_id', config.configId)
 
     return NextResponse.redirect(oauthUrl)
 }
