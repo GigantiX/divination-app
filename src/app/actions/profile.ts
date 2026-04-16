@@ -12,6 +12,12 @@ export interface UserProfile {
     role: string
 }
 
+export interface FacebookConnectionStatus {
+    connected: boolean
+    connectedAt: string | null
+    facebookEmail: string | null
+}
+
 /**
  * Get current user's profile from database
  */
@@ -35,6 +41,66 @@ export async function getProfile(): Promise<UserProfile | null> {
     }
 
     return profile as UserProfile
+}
+
+/**
+ * Get current user's Facebook connection status
+ */
+export async function getFacebookConnectionStatus(): Promise<FacebookConnectionStatus | null> {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+        return null
+    }
+
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+        .from('oauth_identities')
+        .select('connected_at, provider_email')
+        .eq('user_id', session.user.id)
+        .eq('provider', 'facebook')
+        .maybeSingle()
+
+    if (error) {
+        console.error('Error fetching Facebook connection status:', error)
+        return { connected: false, connectedAt: null, facebookEmail: null }
+    }
+
+    if (!data) {
+        return { connected: false, connectedAt: null, facebookEmail: null }
+    }
+
+    return {
+        connected: true,
+        connectedAt: data.connected_at || null,
+        facebookEmail: data.provider_email || null,
+    }
+}
+
+/**
+ * Disconnect Facebook account from current user
+ */
+export async function disconnectFacebookAction() {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+        return { error: 'Tidak terautentikasi' }
+    }
+
+    const supabase = createAdminClient()
+    const { error } = await supabase
+        .from('oauth_identities')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('provider', 'facebook')
+
+    if (error) {
+        console.error('Error disconnecting Facebook:', error)
+        return { error: 'Gagal memutuskan koneksi Facebook' }
+    }
+
+    revalidatePath('/settings')
+    return { success: true }
 }
 
 /**

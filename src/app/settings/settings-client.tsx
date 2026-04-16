@@ -18,18 +18,21 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { NavigationLayout } from "@/components/ui/nav-layout"
 import { logoutAction } from "@/app/actions/auth"
-import { updateEmoji, type UserProfile } from "@/app/actions/profile"
+import { disconnectFacebookAction, updateEmoji, type FacebookConnectionStatus, type UserProfile } from "@/app/actions/profile"
 import { getEmojisByCategory } from "@/lib/emojis"
 
 interface SettingsClientProps {
     profile: UserProfile
+    facebookConnection: FacebookConnectionStatus | null
 }
 
-export function SettingsClient({ profile }: SettingsClientProps) {
+export function SettingsClient({ profile, facebookConnection }: SettingsClientProps) {
     const [showLogoutDialog, setShowLogoutDialog] = React.useState(false)
     const [showEmojiPicker, setShowEmojiPicker] = React.useState(false)
     const [isLoggingOut, setIsLoggingOut] = React.useState(false)
     const [isSavingEmoji, setIsSavingEmoji] = React.useState(false)
+    const [isDisconnectingFacebook, setIsDisconnectingFacebook] = React.useState(false)
+    const [facebookMessage, setFacebookMessage] = React.useState<string | null>(null)
     const [selectedEmoji, setSelectedEmoji] = React.useState(profile.emoji || "😀")
     const [activeCategory, setActiveCategory] = React.useState<"faces" | "animals" | "objects">("faces")
 
@@ -54,6 +57,51 @@ export function SettingsClient({ profile }: SettingsClientProps) {
         setIsSavingEmoji(false)
         setShowEmojiPicker(false)
     }
+
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const fbStatus = params.get('fb')
+
+        if (fbStatus === 'connected') {
+            setFacebookMessage('Akun Facebook berhasil terhubung.')
+        } else if (fbStatus === 'already-linked') {
+            setFacebookMessage('Akun Facebook ini sudah terhubung ke user lain.')
+        } else if (fbStatus === 'disconnected') {
+            setFacebookMessage('Koneksi Facebook berhasil diputuskan.')
+        } else if (fbStatus === 'error') {
+            setFacebookMessage('Gagal menghubungkan Facebook. Silakan coba lagi.')
+        }
+
+        if (fbStatus) {
+            window.history.replaceState({}, '', '/settings')
+        }
+    }, [])
+
+    const handleDisconnectFacebook = async () => {
+        setIsDisconnectingFacebook(true)
+        setFacebookMessage(null)
+
+        const result = await disconnectFacebookAction()
+        if (result.error) {
+            setFacebookMessage(result.error)
+            setIsDisconnectingFacebook(false)
+            return
+        }
+
+        window.location.href = '/settings?fb=disconnected'
+    }
+
+    const handleConnectFacebook = () => {
+        window.location.href = '/api/facebook/connect'
+    }
+
+    const connectedDate = facebookConnection?.connectedAt
+        ? new Date(facebookConnection.connectedAt).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        })
+        : null
 
     return (
         <NavigationLayout isAdmin={profile.role === "admin" || profile.role === "developer"}>
@@ -98,6 +146,55 @@ export function SettingsClient({ profile }: SettingsClientProps) {
                 {/* Menu Items */}
                 <Card className="border-none shadow-sm mb-4">
                     <CardContent className="p-0">
+                        {/* Facebook Connect */}
+                        <div className="border-b border-gray-100 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
+                                        <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                            <path d="M22 12.07C22 6.503 17.523 2 12 2S2 6.503 2 12.07c0 5.017 3.657 9.18 8.438 9.93v-7.02H7.898v-2.91h2.54V9.845c0-2.52 1.492-3.914 3.778-3.914 1.095 0 2.238.197 2.238.197v2.475h-1.26c-1.242 0-1.629.775-1.629 1.57v1.886h2.773l-.443 2.91h-2.33V22c4.781-.75 8.438-4.913 8.438-9.93Z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-gray-900">Connect Facebook</p>
+                                        <p className="text-xs text-gray-500">
+                                            {facebookConnection?.connected
+                                                ? `Terhubung${facebookConnection.facebookEmail ? ` sebagai ${facebookConnection.facebookEmail}` : ''}${connectedDate ? ` sejak ${connectedDate}` : ''}`
+                                                : 'Hubungkan akun Facebook untuk integrasi aplikasi'
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                {facebookConnection?.connected ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleDisconnectFacebook}
+                                        disabled={isDisconnectingFacebook}
+                                        className="h-9 rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                    >
+                                        {isDisconnectingFacebook ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Memutuskan...
+                                            </>
+                                        ) : (
+                                            'Disconnect'
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={handleConnectFacebook}
+                                        className="h-9 rounded-lg bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        Connect
+                                    </Button>
+                                )}
+                            </div>
+                            {facebookMessage && (
+                                <p className="mt-2 text-xs text-gray-500">{facebookMessage}</p>
+                            )}
+                        </div>
+
                         {/* Change Emoji */}
                         <button
                             onClick={() => setShowEmojiPicker(true)}
