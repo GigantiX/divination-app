@@ -23,6 +23,7 @@ export async function GET() {
     oauthUrl.searchParams.set('state', state)
     oauthUrl.searchParams.set('response_type', 'code')
     oauthUrl.searchParams.set('config_id', config.configId)
+    oauthUrl.searchParams.set('scope', 'ads_read')
 
     return NextResponse.redirect(oauthUrl)
 }

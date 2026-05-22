@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
-import { ChevronLeft, Calendar, DollarSign, Users, ShoppingCart, FileText, Loader2, Check, Percent } from "lucide-react"
+import { ChevronLeft, Calendar, DollarSign, Users, ShoppingCart, FileText, Loader2, Check, Percent, RefreshCw, Facebook } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { createReport } from "@/app/actions/reports"
 import { getBatch } from "@/app/actions/batches"
+import { getFacebookAdAccounts, getFacebookAdsSpend } from "@/app/actions/facebook-ads"
+import type { FacebookAdAccount } from "@/app/actions/facebook-ads"
 
 type DateOption = "today" | "yesterday" | "custom"
 
@@ -57,12 +59,35 @@ export default function NewReportPage() {
         }
     }, [batchId])
 
+    // Fetch Facebook ad accounts on mount
+    React.useEffect(() => {
+        getFacebookAdAccounts().then(result => {
+            setFbLoadingAccounts(false)
+            if (result.success && result.adAccounts && result.adAccounts.length > 0) {
+                setFbAdAccounts(result.adAccounts)
+            } else if (result.error) {
+                // Only show error if token expired (user needs to reconnect)
+                if (result.tokenExpired) {
+                    setFbError(result.error)
+                }
+            }
+        })
+    }, [])
+
     const [formData, setFormData] = React.useState({
         spend: "",
         leads: "",
         sales: "",
         notes: ""
     })
+
+    // Facebook Ads integration
+    const [fbAdAccounts, setFbAdAccounts] = React.useState<FacebookAdAccount[]>([])
+    const [fbSelectedAccount, setFbSelectedAccount] = React.useState("")
+    const [fbLoadingAccounts, setFbLoadingAccounts] = React.useState(true)
+    const [fbFetchSpendLoading, setFbFetchSpendLoading] = React.useState(false)
+    const [fbError, setFbError] = React.useState<string | null>(null)
+    const [fbSpendSuccess, setFbSpendSuccess] = React.useState(false)
 
     type TaxOption = "4" | "11" | "custom"
     const [taxOption, setTaxOption] = React.useState<TaxOption>("11")
@@ -108,6 +133,36 @@ export default function NewReportPage() {
 
     const parseCurrency = (value: string): number => {
         return parseInt(value.replace(/\./g, '') || '0', 10)
+    }
+
+    const handleGetAdsSpend = async () => {
+        if (!fbSelectedAccount) return
+
+        setFbFetchSpendLoading(true)
+        setFbError(null)
+        setFbSpendSuccess(false)
+
+        const reportDate = getReportDate()
+        const result = await getFacebookAdsSpend(fbSelectedAccount, reportDate)
+
+        if (result.success && result.spend !== undefined) {
+            // Format the spend value and auto-fill the field
+            const spendValue = Math.round(result.spend).toString()
+            setFormData(prev => ({ ...prev, spend: formatCurrency(spendValue) }))
+            setFbSpendSuccess(true)
+            setError(null)
+        } else if (result.tokenExpired) {
+            setFbError(result.error || 'Token Facebook telah kedaluwarsa. Silakan hubungkan ulang.')
+        } else {
+            // No data or error — show message but don't block
+            if (result.spend === 0 && result.success) {
+                setFbError('Tidak ada data spend untuk tanggal ini. Silakan masukkan secara manual.')
+            } else {
+                setFbError(result.error || 'Gagal mengambil data spend')
+            }
+        }
+
+        setFbFetchSpendLoading(false)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -277,6 +332,98 @@ export default function NewReportPage() {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Facebook Ads Spend Fetcher */}
+                            {fbLoadingAccounts && (
+                                <div className="flex items-center gap-2 py-2">
+                                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                    <span className="text-sm text-gray-400">Memeriksa koneksi Facebook...</span>
+                                </div>
+                            )}
+                            {fbLoadingAccounts === false && (
+                                <div className="space-y-3">
+                                    {fbError && fbError.includes('kedaluwarsa') && (
+                                        <div className="rounded-lg bg-yellow-50 p-4 text-sm text-yellow-700">
+                                            <p className="mb-2">{fbError}</p>
+                                            <Link
+                                                href="/settings"
+                                                className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium"
+                                            >
+                                                <RefreshCw className="h-3.5 w-3.5" />
+                                                Hubungkan Ulang di Pengaturan
+                                            </Link>
+                                        </div>
+                                    )}
+
+                                    {fbAdAccounts.length > 0 && (
+                                        <div className="space-y-3">
+                                            <Label className="flex items-center gap-2">
+                                                <Facebook className="h-4 w-4 text-blue-600" />
+                                                Akun Iklan Facebook
+                                            </Label>
+
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={fbSelectedAccount}
+                                                    onChange={(e) => {
+                                                        setFbSelectedAccount(e.target.value)
+                                                        setFbSpendSuccess(false)
+                                                        setFbError(null)
+                                                    }}
+                                                    className="flex-1 h-11 rounded-md border border-input bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                                >
+                                                    <option value="">Pilih akun iklan...</option>
+                                                    {fbAdAccounts.map(acc => (
+                                                        <option key={acc.id} value={acc.id}>
+                                                            {acc.name} ({acc.currency})
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={handleGetAdsSpend}
+                                                    disabled={!fbSelectedAccount || fbFetchSpendLoading}
+                                                    className="h-11 px-4 whitespace-nowrap"
+                                                >
+                                                    {fbFetchSpendLoading ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <DollarSign className="h-4 w-4 mr-1" />
+                                                            Get Ads Spend
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+
+                                            {fbSpendSuccess && (
+                                                <div className="rounded-lg bg-green-50 p-3 flex items-center gap-2">
+                                                    <Check className="h-4 w-4 text-green-600" />
+                                                    <p className="text-sm text-green-700">
+                                                        Berhasil mengambil data spend dari Facebook
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {fbError && !fbError.includes('kedaluwarsa') && (
+                                                <div className="rounded-lg bg-yellow-50 p-3">
+                                                    <p className="text-sm text-yellow-700">{fbError}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {fbAdAccounts.length === 0 && !fbError && (
+                                        <div className="rounded-lg bg-gray-50 p-3">
+                                            <p className="text-sm text-gray-500">
+                                                Tidak ditemukan akun iklan Facebook. Silakan masukkan Ad Spend secara manual.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Metrics Section */}
                             <div className="space-y-4">

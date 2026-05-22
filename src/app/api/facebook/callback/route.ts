@@ -10,6 +10,12 @@ type FacebookTokenResponse = {
     expires_in: number
 }
 
+type FacebookLongLivedTokenResponse = {
+    access_token: string
+    token_type: string
+    expires_in: number
+}
+
 type FacebookMeResponse = {
     id: string
     name?: string
@@ -63,9 +69,34 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/settings?fb=error', appBaseUrl))
     }
 
+    // Exchange short-lived token for long-lived token (60 days)
+    const longLivedTokenUrl = new URL('https://graph.facebook.com/v20.0/oauth/access_token')
+    longLivedTokenUrl.searchParams.set('grant_type', 'fb_exchange_token')
+    longLivedTokenUrl.searchParams.set('client_id', config.appId)
+    longLivedTokenUrl.searchParams.set('client_secret', config.appSecret)
+    longLivedTokenUrl.searchParams.set('fb_exchange_token', tokenData.access_token)
+
+    const longLivedTokenRes = await fetch(longLivedTokenUrl.toString(), { method: 'GET' })
+
+    let accessToken = tokenData.access_token
+    let tokenExpiresAt: string | null = null
+
+    if (longLivedTokenRes.ok) {
+        const longLivedData = await longLivedTokenRes.json() as FacebookLongLivedTokenResponse
+        if (longLivedData.access_token) {
+            accessToken = longLivedData.access_token
+            // Calculate expiration date from expires_in (seconds)
+            if (longLivedData.expires_in) {
+                const expiresAt = new Date()
+                expiresAt.setSeconds(expiresAt.getSeconds() + longLivedData.expires_in)
+                tokenExpiresAt = expiresAt.toISOString()
+            }
+        }
+    }
+
     const meUrl = new URL('https://graph.facebook.com/me')
     meUrl.searchParams.set('fields', 'id,name,email')
-    meUrl.searchParams.set('access_token', tokenData.access_token)
+    meUrl.searchParams.set('access_token', accessToken)
 
     const meRes = await fetch(meUrl.toString(), { method: 'GET' })
     if (!meRes.ok) {
@@ -103,6 +134,8 @@ export async function GET(request: NextRequest) {
                 provider_user_id: meData.id,
                 provider_email: meData.email || null,
                 provider_name: meData.name || null,
+                access_token: accessToken,
+                token_expires_at: tokenExpiresAt,
                 connected_at: new Date().toISOString(),
             },
             { onConflict: 'user_id,provider' }
