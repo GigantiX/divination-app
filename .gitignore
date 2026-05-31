@@ -38,3 +38,28 @@ next-env.d.ts
 # Misc
 *.log
 .vercel
+
+# AI Skills
+.agents/
+skills-lock.json
+
+# Python Env
+venv/
+
+# Added by code-review-graph
+.code-review-graph/
+
+#Manual added for code-review-graph
+.claude/
+.gemini/
+.github/
+.kiro/
+.qoder/
+.cursorrules
+.mcp.json
+.opencode.json
+.windsurfrules
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+QODER.md

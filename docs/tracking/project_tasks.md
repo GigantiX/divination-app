@@ -77,12 +77,6 @@
 - [x] Delete confirmation dialog
 - [x] Navigation back to correct batch
 
-## People Management (Next)
-- [ ] View list of all users (Admin/Dev)
-- [ ] User detail page
-- [ ] Assign role (Admin/Dev)
-- [ ] Assign to events
-
 ## Pending Database Migrations
 Run in Supabase SQL Editor:
 - [x] `20260207_add_password_hash.sql`
@@ -90,9 +84,3 @@ Run in Supabase SQL Editor:
 - [x] `20260207_add_emoji_avatar.sql`
 - [x] `20260210_storage_bucket.sql`
 - [x] `20260210_batch_nullable_end_date.sql`
-
-## Future Enhancements
-- [ ] Change password functionality
-- [ ] Help center content
-- [ ] Event settings page
-- [ ] Delete event/batch
