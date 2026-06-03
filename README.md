@@ -99,6 +99,8 @@ FACEBOOK_CONFIG_ID=your_configuration_id
 APP_BASE_URL=http://localhost:3000
 ```
 
+> **Note:** Ignore `DATABASE_URL`/`DIRECT_URL` in `.env.example` unless you are running external database migrations directly. They are unused by the Next.js application itself.
+
 ### 4. Create First Account
 
 ```bash
@@ -139,7 +141,11 @@ src/
 │   ├── events/          # Event management and reporting
 │   ├── people/          # RBAC and user assignments
 │   ├── settings/        # Profile and integrations
-│   └── (auth)/          # Login and register pages
+│   ├── login/           # Login page
+│   ├── register/        # Registration page
+│   ├── error.tsx        # Root error boundary
+│   ├── global-error.tsx # Layout-level error boundary
+│   └── not-found.tsx    # Custom 404
 ├── components/ui/       # Reusable UI components (shadcn/ui & navigation layouts)
 ├── lib/
 │   ├── supabase/        # Supabase clients (admin, server, browser, JWT)
