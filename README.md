@@ -56,15 +56,23 @@ npm install
 ### 2. Set Up Supabase
 
 1. Create a new Supabase project
-2. Go to **SQL Editor** and run the migration files in order:
-   - `supabase/migrations/20260206_initial_schema.sql` — tables, RLS, indexes
-   - `supabase/migrations/20260210_storage_bucket.sql` — storage bucket for logos
-   - `supabase/migrations/20260218_report_tax_percentage.sql` — tax column
+2. Go to **SQL Editor** and run the migration files in chronological order:
+   - `supabase/migrations/20260206_initial_schema.sql` — Base tables, RLS, and indexes
+   - `supabase/migrations/20260207_remove_auth_users_fk.sql` — Removes auth.users FK constraint since we use credentials auth
+   - `supabase/migrations/20260207_add_password_hash.sql` — Adds password hashing field for credentials auth
+   - `supabase/migrations/20260207_add_emoji_avatar.sql` — Adds random emoji avatar field
+   - `supabase/migrations/20260210_storage_bucket.sql` — Creates bucket for media uploads
+   - `supabase/migrations/20260210_batch_nullable_end_date.sql` — Makes batch end date nullable
+   - `supabase/migrations/20260218_report_tax_percentage.sql` — Adds tax field to reports
+   - `supabase/migrations/20260303_batch_price.sql` — Adds price/cost tracking for batches
+   - `supabase/migrations/20260407_add_oauth_identities.sql` — Creates identity linking for Facebook connect
+   - `supabase/migrations/20260522_add_facebook_access_token.sql` — Adds access token columns for Facebook
+   - `supabase/migrations/20260603_budget_requests.sql` — Creates budget request workflow tables
 3. Go to **Settings → API** and copy your keys
 
 ### 3. Environment Variables
 
-Copy `.env.example` to `.env.local` and fill in:
+Copy `.env.example` to `.env.local` and fill in the required values:
 
 ```env
 # Supabase (from Settings → API → "API Keys" tab)
@@ -75,9 +83,15 @@ SUPABASE_SECRET_KEY=sb_secret_xxxxx
 # Auth.js
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=<run: openssl rand -base64 32>
+
+# Facebook Connect & Ads API (Optional, for Facebook spend auto-import)
+FACEBOOK_APP_ID=your_facebook_app_id
+FACEBOOK_APP_SECRET=your_facebook_app_secret
+FACEBOOK_CONFIG_ID=your_configuration_id
+APP_BASE_URL=http://localhost:3000
 ```
 
-> **Only these 5 variables are needed.** Ignore `DATABASE_URL`/`DIRECT_URL` in `.env.example` — they are unused.
+> **Note:** Ignore `DATABASE_URL`/`DIRECT_URL` in `.env.example` unless you are running external database migrations directly. They are unused by the Next.js application itself.
 
 ### 4. Create First Account
 
@@ -115,7 +129,13 @@ UPDATE profiles SET role = 'developer' WHERE username = 'your@email.com';
 src/
 ├── app/
 │   ├── actions/         # Server Actions (all backend logic)
-│   ├── api/auth/        # Auth.js route handler
+│   │   ├── budget.ts    # Budget request server actions
+│   │   ├── facebook-ads.ts # Facebook Ads Graph API actions
+│   │   └── ...
+│   ├── api/
+│   │   ├── auth/        # Auth.js route handler
+│   │   └── facebook/    # Facebook connection callback and OAuth connect routes
+│   ├── apps/            # Custom mini-apps (Budget Requests, Lead Database WIP)
 │   ├── dashboard/       # Main dashboard
 │   ├── events/          # Event pages (detail, edit, reports)
 │   ├── people/          # User management
@@ -125,13 +145,16 @@ src/
 │   ├── error.tsx        # Root error boundary
 │   ├── global-error.tsx # Layout-level error boundary
 │   └── not-found.tsx    # Custom 404
-├── components/ui/       # Reusable UI components (shadcn/ui)
+├── components/ui/       # Reusable UI components (shadcn/ui & navigation layouts)
 ├── lib/
-│   ├── supabase/        # Supabase clients (admin, server, browser)
-│   ├── image.ts         # Image compression utilities
+│   ├── supabase/        # Supabase clients (admin, server, browser, JWT)
+│   ├── facebook-oauth.ts # Facebook OAuth state helpers
+│   ├── image.ts         # Image utilities
+│   ├── image-compression.ts # Image compression helper
 │   ├── password.ts      # bcrypt helpers
 │   └── emojis.ts        # Emoji avatar system
 ├── types/               # TypeScript declarations
+├── auth.ts              # Auth.js core config (JWT, credentials logic)
 └── middleware.ts        # Auth route protection
 ```
 

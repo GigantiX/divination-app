@@ -14,6 +14,16 @@ This directory contains SQL migration files for the Divination Dashboard databas
 |------|-------------|
 | `20260206_initial_schema.sql` | Complete database schema with tables, ENUMs, RLS, functions, and indexes |
 | `20260206_seed_data.sql` | Sample data for development/testing (optional) |
+| `20260207_remove_auth_users_fk.sql` | Removes the foreign key to `auth.users` on `profiles.id` because we use Auth.js Credentials |
+| `20260207_add_password_hash.sql` | Adds `password_hash` column to the `profiles` table |
+| `20260207_add_emoji_avatar.sql` | Adds `emoji` column for profile avatars |
+| `20260210_storage_bucket.sql` | Configures the `uploads` storage bucket for logo uploads |
+| `20260210_batch_nullable_end_date.sql` | Makes the `end_date` column in `batches` table nullable |
+| `20260218_report_tax_percentage.sql` | Adds a `tax_percentage` column to the `reports` table |
+| `20260303_batch_price.sql` | Adds a `price` (cost) column to the `batches` table |
+| `20260407_add_oauth_identities.sql` | Creates the `oauth_identities` table for Facebook integration |
+| `20260522_add_facebook_access_token.sql` | Adds access token and expiration columns to `oauth_identities` |
+| `20260603_budget_requests.sql` | Creates the `budget_requests` table and its status enum |
 
 ## Running Migrations
 
@@ -127,7 +137,11 @@ DROP TYPE IF EXISTS user_role CASCADE;
 ## Next Steps
 
 After migrations:
-1. Create your first admin user via Supabase Auth
-2. Insert admin profile: `INSERT INTO profiles (id, username, full_name, role) VALUES (auth.uid(), 'admin', 'Admin User', 'admin');`
-3. Test auth in your Next.js app
-4. Start creating events and assigning users
+1. Start the Next.js development server: `npm run dev`
+2. Open `http://localhost:3000/register` in your browser and register an account (it gets created with `user` role)
+3. To promote your account to a Developer/Admin, run this in the Supabase SQL Editor:
+   ```sql
+   UPDATE profiles SET role = 'developer' WHERE username = 'your-email@example.com';
+   ```
+4. Log out of the web app and log back in for the role update to take effect
+5. You can now manage events, batches, users, and view reports!
