@@ -76,6 +76,33 @@ export function AppsClient({ profile }: AppsClientProps) {
                 <div className="space-y-3">
                     {features.map((feature) => {
                         const Icon = feature.icon
+                        
+                        // Handle real link for request budget
+                        if (feature.id === "request-budget") {
+                            return (
+                                <Link
+                                    key={feature.id}
+                                    href="/apps/request-budget"
+                                    className="w-full text-left block"
+                                >
+                                    <Card className="border-none shadow-sm transition-all hover:shadow-md">
+                                        <CardContent className="flex items-center justify-between p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", feature.iconBg)}>
+                                                    <Icon className={cn("h-6 w-6", feature.iconColor)} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-gray-900">{feature.title}</p>
+                                                    <p className="text-sm text-gray-500">{feature.description}</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            )
+                        }
+
                         return (
                             <button
                                 key={feature.id}
