@@ -27,7 +27,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             label: "Apps",
             subItems: [
                 { href: "/apps/request-budget", icon: WalletCards, label: "Request Budget" },
-                { href: "#", icon: Database, label: "Lead Database" }
+                { href: "/apps/lead-database", icon: Database, label: "Lead Database" }
             ]
         },
         ...(isAdmin ? [{ href: "/people", icon: Users, label: "Orang" }] : []),
