@@ -77,12 +77,22 @@ export function AppsClient({ profile }: AppsClientProps) {
                     {features.map((feature) => {
                         const Icon = feature.icon
                         
-                        // Handle real link for request budget
+                        // Determine the correct href based on feature id and role
+                        let featureHref: string | null = null
                         if (feature.id === "request-budget") {
+                            featureHref = "/apps/request-budget"
+                        } else if (feature.id === "lead-database") {
+                            featureHref = isAdmin
+                                ? "/apps/lead-database"
+                                : "/apps/lead-database/upload"
+                        }
+
+                        // Render as a link if the feature has a route
+                        if (featureHref) {
                             return (
                                 <Link
                                     key={feature.id}
-                                    href="/apps/request-budget"
+                                    href={featureHref}
                                     className="w-full text-left block"
                                 >
                                     <Card className="border-none shadow-sm transition-all hover:shadow-md">
@@ -103,6 +113,7 @@ export function AppsClient({ profile }: AppsClientProps) {
                             )
                         }
 
+                        // Fallback: WIP features
                         return (
                             <button
                                 key={feature.id}

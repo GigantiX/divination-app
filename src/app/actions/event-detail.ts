@@ -53,6 +53,7 @@ export interface EventDetailData {
     }
     batches: EventDetailBatch[]
     currentBatchId: string | null
+    range: DateRange
     stats: EventDetailStats
     advertisers: (EventDetailUser & {
         spend: number
@@ -79,7 +80,8 @@ export interface EventDetailData {
  */
 export async function getEventDetail(
     eventId: string,
-    batchId?: string
+    batchId?: string,
+    range: DateRange = 'today'
 ): Promise<EventDetailData | null> {
     const session = await auth()
 
@@ -149,6 +151,9 @@ export async function getEventDetail(
     // Determine current batch (latest or specified)
     const currentBatchId = batchId || (mappedBatches.length > 0 ? mappedBatches[0].id : null)
 
+    // Compute date range filter for all report queries
+    const dateFilter = getDateRangeFilter(range)
+
     // Get team assignments for this event
     const { data: assignments } = await supabase
         .from('event_assignments')
@@ -182,11 +187,16 @@ export async function getEventDetail(
                 let advertiserStats = { spend: 0, leads: 0, sales: 0 }
 
                 if (currentBatchId) {
-                    const { data: reports } = await supabase
+                    let reportsQuery = supabase
                         .from('reports')
                         .select('ads_spent, tax_percentage, leads_count, closing_count')
                         .eq('batch_id', currentBatchId)
                         .eq('user_id', profileData.id)
+
+                    if (dateFilter.gte) reportsQuery = reportsQuery.gte('report_date', dateFilter.gte)
+                    if (dateFilter.lte) reportsQuery = reportsQuery.lte('report_date', dateFilter.lte)
+
+                    const { data: reports } = await reportsQuery
 
                     if (reports) {
                         advertiserStats = reports.reduce(
@@ -230,10 +240,15 @@ export async function getEventDetail(
     }
 
     if (currentBatchId) {
-        const { data: allReports } = await supabase
+        let allReportsQuery = supabase
             .from('reports')
             .select('ads_spent, tax_percentage, leads_count, closing_count')
             .eq('batch_id', currentBatchId)
+
+        if (dateFilter.gte) allReportsQuery = allReportsQuery.gte('report_date', dateFilter.gte)
+        if (dateFilter.lte) allReportsQuery = allReportsQuery.lte('report_date', dateFilter.lte)
+
+        const { data: allReports } = await allReportsQuery
 
         if (allReports) {
             const totals = allReports.reduce(
@@ -270,7 +285,7 @@ export async function getEventDetail(
     let reports: EventDetailReport[] = []
 
     if (currentBatchId) {
-        const { data: reportData } = await supabase
+        let reportsQuery = supabase
             .from('reports')
             .select(`
                 id,
@@ -285,6 +300,11 @@ export async function getEventDetail(
             `)
             .eq('batch_id', currentBatchId)
             .order('report_date', { ascending: false })
+
+        if (dateFilter.gte) reportsQuery = reportsQuery.gte('report_date', dateFilter.gte)
+        if (dateFilter.lte) reportsQuery = reportsQuery.lte('report_date', dateFilter.lte)
+
+        const { data: reportData } = await reportsQuery
 
         if (reportData) {
             reports = reportData.map((r) => {
@@ -314,6 +334,7 @@ export async function getEventDetail(
         event,
         batches: mappedBatches,
         currentBatchId,
+        range,
         stats,
         advertisers,
         pics,
@@ -326,12 +347,45 @@ export async function getEventDetail(
     }
 }
 
-export type ChartRange = '7d' | '30d' | 'all'
+export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'all'
+
+function getDateRangeFilter(range: DateRange): { gte?: string; lte?: string } {
+    const now = new Date()
+
+    const toDateString = (d: Date) => {
+        const year = d.getFullYear()
+        const month = `${d.getMonth() + 1}`.padStart(2, '0')
+        const day = `${d.getDate()}`.padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
+    switch (range) {
+        case 'today':
+            return { gte: toDateString(now), lte: toDateString(now) }
+        case 'yesterday': {
+            const yesterday = new Date(now)
+            yesterday.setDate(now.getDate() - 1)
+            return { gte: toDateString(yesterday), lte: toDateString(yesterday) }
+        }
+        case '7d': {
+            const start7d = new Date(now)
+            start7d.setDate(now.getDate() - 6)
+            return { gte: toDateString(start7d), lte: toDateString(now) }
+        }
+        case '30d': {
+            const start30d = new Date(now)
+            start30d.setDate(now.getDate() - 29)
+            return { gte: toDateString(start30d), lte: toDateString(now) }
+        }
+        case 'all':
+            return {}
+    }
+}
 
 /**
  * Get chart data for the event detail chart.
  */
-export async function getEventChartData(batchId: string, range: ChartRange = '7d') {
+export async function getEventChartData(batchId: string, range: DateRange = 'today') {
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -349,39 +403,18 @@ export async function getEventChartData(batchId: string, range: ChartRange = '7d
         return `${year}-${month}-${day}`
     }
 
+    const dateFilter = getDateRangeFilter(range)
+
     let reportsQuery = supabase
         .from('reports')
         .select('report_date, leads_count, closing_count')
         .eq('batch_id', batchId)
         .order('report_date', { ascending: true })
 
-    if (range === '30d') {
-        const start30d = new Date(today)
-        start30d.setDate(today.getDate() - 29)
-        reportsQuery = reportsQuery
-            .gte('report_date', toDateString(start30d))
-            .lte('report_date', toDateString(today))
-    } else if (range === '7d') {
-        const start7d = new Date(today)
-        start7d.setDate(today.getDate() - 6)
-        reportsQuery = reportsQuery
-            .gte('report_date', toDateString(start7d))
-            .lte('report_date', toDateString(today))
-    }
+    if (dateFilter.gte) reportsQuery = reportsQuery.gte('report_date', dateFilter.gte)
+    if (dateFilter.lte) reportsQuery = reportsQuery.lte('report_date', dateFilter.lte)
 
     const { data: reports } = await reportsQuery
-
-    const parseDateString = (dateStr: string) => {
-        const [year, month, day] = dateStr.split('-').map(Number)
-        return new Date(year, (month || 1) - 1, day || 1)
-    }
-
-    const formatLabel = (date: Date, totalDays: number) => {
-        if (totalDays <= 7) {
-            return date.toLocaleDateString('id-ID', { weekday: 'short' }).toUpperCase()
-        }
-        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-    }
 
     const aggregatedByDate = new Map<string, { leads: number; sales: number }>()
     for (const report of reports || []) {
@@ -393,38 +426,62 @@ export async function getEventChartData(batchId: string, range: ChartRange = '7d
         })
     }
 
-    let startDate = new Date(today)
-    let endDate = new Date(today)
+    let labels: string[]
+    let leadsData: number[]
+    let salesData: number[]
 
-    if (range === '30d') {
-        startDate.setDate(today.getDate() - 29)
-    } else if (range === 'all') {
-        if ((reports || []).length > 0) {
-            startDate = parseDateString(reports![0].report_date)
-            endDate = parseDateString(reports![reports!.length - 1].report_date)
-        }
+    if (range === 'today' || range === 'yesterday') {
+        const singleDate = range === 'today' ? today : (() => { const d = new Date(today); d.setDate(today.getDate() - 1); return d })()
+        const dateKey = toDateString(singleDate)
+        const dayData = aggregatedByDate.get(dateKey)
+        labels = [range === 'today' ? 'HARI INI' : 'KEMARIN']
+        leadsData = [dayData?.leads || 0]
+        salesData = [dayData?.sales || 0]
     } else {
-        startDate.setDate(today.getDate() - 6)
-    }
+        const parseDateString = (dateStr: string) => {
+            const [year, month, day] = dateStr.split('-').map(Number)
+            return new Date(year, (month || 1) - 1, day || 1)
+        }
 
-    if (endDate < startDate) {
-        endDate = new Date(startDate)
-    }
+        const formatLabel = (date: Date, totalDays: number) => {
+            if (totalDays <= 7) {
+                return date.toLocaleDateString('id-ID', { weekday: 'short' }).toUpperCase()
+            }
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+        }
 
-    const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / 86400000) + 1
-    const labels: string[] = []
-    const leadsData: number[] = []
-    const salesData: number[] = []
+        let startDate = new Date(today)
+        let endDate = new Date(today)
 
-    for (let i = 0; i < totalDays; i++) {
-        const currentDate = new Date(startDate)
-        currentDate.setDate(startDate.getDate() + i)
-        const dateKey = toDateString(currentDate)
-        const currentTotals = aggregatedByDate.get(dateKey)
+        if (range === '30d') {
+            startDate.setDate(today.getDate() - 29)
+        } else if (range === 'all') {
+            if ((reports || []).length > 0) {
+                startDate = parseDateString(reports![0].report_date)
+                endDate = parseDateString(reports![reports!.length - 1].report_date)
+            }
+        } else {
+            startDate.setDate(today.getDate() - 6)
+        }
 
-        labels.push(formatLabel(currentDate, totalDays))
-        leadsData.push(currentTotals?.leads || 0)
-        salesData.push(currentTotals?.sales || 0)
+        if (endDate < startDate) {
+            endDate = new Date(startDate)
+        }
+
+        const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / 86400000) + 1
+        labels = []
+        leadsData = []
+        salesData = []
+
+        for (let i = 0; i < totalDays; i++) {
+            const currentDate = new Date(startDate)
+            currentDate.setDate(startDate.getDate() + i)
+            const dateKey = toDateString(currentDate)
+            const currentTotals = aggregatedByDate.get(dateKey)
+            labels.push(formatLabel(currentDate, totalDays))
+            leadsData.push(currentTotals?.leads || 0)
+            salesData.push(currentTotals?.sales || 0)
+        }
     }
 
     const todayDateKey = toDateString(today)
