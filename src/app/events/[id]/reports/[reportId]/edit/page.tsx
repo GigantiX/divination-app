@@ -166,7 +166,6 @@ export default function EditReportPage() {
 
         setTimeout(() => {
             router.push(`/events/${eventId}?batch=${batchId}`)
-            router.refresh()
         }, 1000)
     }
 
@@ -184,7 +183,6 @@ export default function EditReportPage() {
         }
 
         router.push(`/events/${eventId}?batch=${batchId}`)
-        router.refresh()
     }
 
     const leadsNum = parseInt(formData.leads || "0", 10)

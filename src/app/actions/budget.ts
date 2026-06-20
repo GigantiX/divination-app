@@ -227,6 +227,7 @@ export async function uploadBudgetProof(formData: FormData): Promise<{ url?: str
         .from('uploads')
         .upload(filename, file, {
             contentType: file.type,
+            cacheControl: '31536000',
             upsert: false,
         })
 

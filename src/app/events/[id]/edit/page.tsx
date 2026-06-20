@@ -129,7 +129,6 @@ export default function EditEventPage() {
 
         setTimeout(() => {
             router.push(`/events/${eventId}`)
-            router.refresh()
         }, 1000)
     }
 

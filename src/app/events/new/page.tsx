@@ -112,7 +112,6 @@ export default function NewEventPage() {
         // Redirect to dashboard after brief success message
         setTimeout(() => {
             router.push("/dashboard")
-            router.refresh()
         }, 1000)
     }
 

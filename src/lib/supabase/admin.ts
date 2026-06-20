@@ -1,11 +1,12 @@
+import { cache } from 'react'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Admin Supabase client that bypasses RLS
- * Used for: registration, admin operations, background jobs
- * NEVER expose this on the client side!
+ * Admin Supabase client that bypasses RLS.
+ * Wrapped with React.cache() to deduplicate across multiple
+ * server actions/components within the same request.
  */
-export function createAdminClient() {
+export const createAdminClient = cache(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY
 
@@ -19,4 +20,4 @@ export function createAdminClient() {
             persistSession: false,
         },
     })
-}
+})
