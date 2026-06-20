@@ -26,7 +26,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { cn } from "@/lib/utils"
-import { getEventChartData, type ChartRange, type EventDetailData } from "@/app/actions/event-detail"
+import { Sidebar } from "@/components/ui/sidebar"
+import { getEventChartData, type DateRange, type EventDetailData } from "@/app/actions/event-detail"
 
 const LineChart = dynamic(() => import("./line-chart"), {
     ssr: false,
@@ -48,8 +49,10 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     const [selectedBatch, setSelectedBatch] = React.useState(data.currentBatchId || "")
     const [isMenuOpen, setIsMenuOpen] = React.useState(false)
     const [isBatchLoading, setIsBatchLoading] = React.useState(false)
-    const [chartRange, setChartRange] = React.useState<ChartRange>("7d")
     const menuRef = React.useRef<HTMLDivElement>(null)
+    const pendingNavigationRef = React.useRef(false)
+
+    const isAdmin = data.userRole === 'admin' || data.userRole === 'developer'
 
     // Chart data state
     const [chartData, setChartData] = React.useState<{
@@ -70,27 +73,50 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // Fetch chart data when batch changes
+    // Sync selectedBatch when server data arrives with a new currentBatchId,
+    // and clear the loading state when the server responds to a user navigation.
     React.useEffect(() => {
-        if (!selectedBatch) {
-            setChartData(null)
+        if (data.currentBatchId && data.currentBatchId !== selectedBatch) {
+            setSelectedBatch(data.currentBatchId)
+        }
+        if (pendingNavigationRef.current) {
+            pendingNavigationRef.current = false
             setIsBatchLoading(false)
+        }
+    }, [data])
+
+    // Fetch chart data when batch or range changes
+    React.useEffect(() => {
+        if (!selectedBatch || !data.range) {
+            setChartData(null)
             return
         }
 
         setIsBatchLoading(true)
-        getEventChartData(selectedBatch, chartRange).then((result) => {
+        getEventChartData(selectedBatch, data.range).then((result) => {
             setChartData(result)
-            setIsBatchLoading(false)
+            if (!pendingNavigationRef.current) {
+                setIsBatchLoading(false)
+            }
         })
-    }, [selectedBatch, chartRange])
+    }, [selectedBatch, data.range])
 
     // Handle batch change
     const handleBatchChange = (newBatchId: string) => {
+        pendingNavigationRef.current = true
         setIsBatchLoading(true)
         setSelectedBatch(newBatchId)
         const params = new URLSearchParams(searchParams.toString())
         params.set('batch', newBatchId)
+        router.push(`/events/${data.event.id}?${params.toString()}`)
+    }
+
+    // Handle time range change
+    const handleRangeChange = (newRange: DateRange) => {
+        pendingNavigationRef.current = true
+        setIsBatchLoading(true)
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('range', newRange)
         router.push(`/events/${data.event.id}?${params.toString()}`)
     }
 
@@ -100,7 +126,9 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
         : "Pilih Batch"
 
     return (
-        <div className="flex min-h-screen flex-col bg-background-secondary pb-20">
+        <div className="flex min-h-screen bg-background-secondary">
+            <Sidebar isAdmin={isAdmin} />
+            <div className="flex-1 flex flex-col min-w-0 pb-20 md:pl-64">
             {/* Header */}
             <div className="sticky top-0 z-10 bg-white shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3">
@@ -204,6 +232,38 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 )}
 
+                {/* Time Range Selector */}
+                {data.batches.length > 0 && selectedBatch && (
+                    <div className="px-4 pb-4">
+                        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                            {((
+                                [
+                                    { value: 'today' as const, label: 'Hari Ini' },
+                                    { value: 'yesterday' as const, label: 'Kemarin' },
+                                    { value: '7d' as const, label: '7 Hari' },
+                                    { value: '30d' as const, label: '30 Hari' },
+                                    { value: 'all' as const, label: 'Semua' },
+                                ]
+                            )).map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => handleRangeChange(option.value)}
+                                    disabled={data.range === option.value}
+                                    className={cn(
+                                        "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                                        data.range === option.value
+                                            ? "bg-primary text-white"
+                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    )}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Tabs */}
                 <div className="flex border-b px-4">
                     <button
@@ -245,8 +305,6 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     <OverviewContent
                         data={data}
                         chartData={chartData}
-                        chartRange={chartRange}
-                        onChartRangeChange={setChartRange}
                     />
                 ) : (
                     <ReportsContent data={data} />
@@ -261,6 +319,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </Button>
                 </Link>
             )}
+            </div>
         </div>
     )
 }
@@ -273,22 +332,17 @@ interface ContentProps {
         salesData: number[]
         todayLeads: number
     } | null
-    chartRange?: ChartRange
-    onChartRangeChange?: (range: ChartRange) => void
 }
 
-function OverviewContent({ data, chartData, chartRange = "7d", onChartRangeChange }: ContentProps) {
-    const chartRangeOptions: { value: ChartRange; label: string }[] = [
-        { value: "7d", label: "7 Hari" },
-        { value: "30d", label: "30 Hari" },
-        { value: "all", label: "Semua" },
-    ]
-
-    const chartTitle = chartRange === "7d"
-        ? "7 Hari Terakhir"
-        : chartRange === "30d"
-            ? "30 Hari Terakhir"
-            : "Semua Waktu"
+function OverviewContent({ data, chartData }: ContentProps) {
+    const rangeLabels: Record<DateRange, string> = {
+        today: 'Hari Ini',
+        yesterday: 'Kemarin',
+        '7d': '7 Hari Terakhir',
+        '30d': '30 Hari Terakhir',
+        all: 'Semua Waktu',
+    }
+    const chartTitle = rangeLabels[data.range] || 'Hari Ini'
 
     return (
         <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
@@ -356,23 +410,6 @@ function OverviewContent({ data, chartData, chartRange = "7d", onChartRangeChang
                 {chartData && (
                     <Card className="rounded-2xl border-none shadow-sm">
                         <CardContent className="p-6">
-                            <div className="mb-4 flex flex-wrap gap-2">
-                                {chartRangeOptions.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => onChartRangeChange?.(option.value)}
-                                        className={cn(
-                                            "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
-                                            chartRange === option.value
-                                                ? "bg-blue-100 text-blue-700"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
                             <div className="mb-6 flex items-baseline justify-between gap-4">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Trend Leads & Sales</p>
