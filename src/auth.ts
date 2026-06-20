@@ -1,9 +1,10 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import { cache } from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyPassword } from '@/lib/password'
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth: _auth, signIn, signOut } = NextAuth({
     providers: [
         Credentials({
             credentials: {
@@ -75,3 +76,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         error: '/login',
     },
 })
+
+/**
+ * Request-deduplicated auth wrapper.
+ * Prevents redundant cookie parsing when multiple server actions
+ * or server components call auth() within the same request.
+ */
+export const auth = cache(_auth)

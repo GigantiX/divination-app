@@ -43,7 +43,6 @@ export function EditProfileClient({ profile }: EditProfileClientProps) {
         // Redirect back after brief success message
         setTimeout(() => {
             router.push('/settings')
-            router.refresh()
         }, 1000)
     }
 

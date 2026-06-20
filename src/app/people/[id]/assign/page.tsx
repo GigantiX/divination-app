@@ -86,7 +86,6 @@ export default function AssignUserPage() {
         // Redirect back to user detail after short delay
         setTimeout(() => {
             router.push(`/people/${userId}`)
-            router.refresh()
         }, 1000)
     }
 

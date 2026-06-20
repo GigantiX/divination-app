@@ -209,7 +209,6 @@ export default function NewReportPage() {
         // Redirect to event detail after brief success message
         setTimeout(() => {
             router.push(`/events/${eventId}?batch=${batchId}`)
-            router.refresh()
         }, 1000)
     }
 
