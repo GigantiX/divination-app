@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Calendar, Plus, Inbox, Loader2 } from "lucide-react"
+import useSWR from "swr"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -12,7 +13,7 @@ import { NavigationLayout } from "@/components/ui/nav-layout"
 import { cn } from "@/lib/utils"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { RoleBadge } from "@/components/ui/role-badge"
-import { toggleEventStatus, type DashboardData, type DashboardEvent } from "@/app/actions/dashboard"
+import { toggleEventStatus, getDashboardData, type DashboardData, type DashboardEvent } from "@/app/actions/dashboard"
 
 interface DashboardClientProps {
     data: DashboardData
@@ -20,6 +21,13 @@ interface DashboardClientProps {
 
 export function DashboardClient({ data }: DashboardClientProps) {
     const router = useRouter()
+
+    const { mutate } = useSWR('/dashboard', getDashboardData, {
+        fallbackData: data,
+        revalidateOnFocus: false,
+        revalidateOnMount: false,
+    })
+
     const { user, activeEvents: initialActive, inactiveEvents: initialInactive } = data
 
     const [activeEvents, setActiveEvents] = React.useState(initialActive)
@@ -76,6 +84,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
         setIsToggling(null)
         setModalConfig({ isOpen: false, eventId: null, eventName: null, currentStatus: null })
+        mutate()
     }
 
     return (
