@@ -534,18 +534,33 @@ function ReportsContent({ data }: ContentProps) {
 
     // Build unique list of groups by advertisers
     const groups = data.advertisers.map(adv => {
+        const reports = data.reports.filter(r => r.reporter.id === adv.id)
+        
+        // Calculate all-time stats from all reports
+        const spend = reports.reduce((sum, r) => sum + r.spend, 0)
+        const leads = reports.reduce((sum, r) => sum + r.leads, 0)
+        const sales = reports.reduce((sum, r) => sum + r.sales, 0)
+        const closingRate = leads > 0 ? Math.round((sales / leads) * 10000) / 100 : 0
+        
+        // Find current batch price to calculate stats
+        const currentBatch = data.batches.find(b => b.id === data.currentBatchId)
+        const batchPrice = currentBatch ? currentBatch.price : 0
+        const revenue = sales * batchPrice
+        const profitLoss = revenue - spend
+        const roas = spend > 0 ? Math.round((revenue / spend) * 100) / 100 : 0
+
         return {
             id: adv.id,
             name: adv.name,
             emoji: adv.emoji,
-            spend: adv.spend,
-            leads: adv.leads,
-            sales: adv.sales,
-            closingRate: adv.closingRate,
-            revenue: adv.revenue,
-            profitLoss: adv.profitLoss,
-            roas: adv.roas,
-            reports: data.reports.filter(r => r.reporter.id === adv.id)
+            spend,
+            leads,
+            sales,
+            closingRate,
+            revenue,
+            profitLoss,
+            roas,
+            reports
         }
     })
 
