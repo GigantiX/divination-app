@@ -296,9 +296,6 @@ const _getEventDetail = async (
             .eq('batch_id', currentBatchId)
             .order('report_date', { ascending: false })
 
-        if (dateFilter.gte) reportsQuery = reportsQuery.gte('report_date', dateFilter.gte)
-        if (dateFilter.lte) reportsQuery = reportsQuery.lte('report_date', dateFilter.lte)
-
         const { data: reportData } = await reportsQuery
 
         if (reportData) {
@@ -356,7 +353,7 @@ export async function getEventDetail(
 
     return unstable_cache(
         (uid: string) => _getEventDetail(uid, eventId, batchId, range),
-        ['event-detail', eventId, batchId ?? '_', range, session.user.id],
+        ['event-detail-v2', eventId, batchId ?? '_', range, session.user.id],
         { tags: [`event-${eventId}`], revalidate: false }
     )(session.user.id)
 }

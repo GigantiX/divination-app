@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Settings, Grid3X3, WalletCards, Database } from "lucide-react"
+import { Home, Users, Settings, Grid3X3, WalletCards, Database, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -27,7 +27,8 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             label: "Apps",
             subItems: [
                 { href: "/apps/request-budget", icon: WalletCards, label: "Request Budget" },
-                { href: "/apps/lead-database", icon: Database, label: "Lead Database" }
+                { href: "/apps/lead-database", icon: Database, label: "Lead Database" },
+                { href: "/apps/event-calendar", icon: Calendar, label: "Event Calendar" }
             ]
         },
         ...(isAdmin ? [{ href: "/people", icon: Users, label: "Orang" }] : []),

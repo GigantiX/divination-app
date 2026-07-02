@@ -240,37 +240,6 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 )}
 
-                {/* Time Range Selector */}
-                {data.batches.length > 0 && selectedBatch && (
-                    <div className="px-4 pb-4">
-                        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                            {((
-                                [
-                                    { value: 'today' as const, label: 'Hari Ini' },
-                                    { value: 'yesterday' as const, label: 'Kemarin' },
-                                    { value: '7d' as const, label: '7 Hari' },
-                                    { value: '30d' as const, label: '30 Hari' },
-                                    { value: 'all' as const, label: 'Semua' },
-                                ]
-                            )).map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() => handleRangeChange(option.value)}
-                                    disabled={data.range === option.value}
-                                    className={cn(
-                                        "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
-                                        data.range === option.value
-                                            ? "bg-primary text-white"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* Tabs */}
                 <div className="flex border-b px-4">
@@ -310,10 +279,40 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 )}
                 {activeTab === "overview" ? (
-                    <OverviewContent
-                        data={data}
-                        chartData={chartData}
-                    />
+                    <div className="space-y-4">
+                        {data.batches.length > 0 && selectedBatch && (
+                            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                                {((
+                                    [
+                                        { value: 'today' as const, label: 'Hari Ini' },
+                                        { value: 'yesterday' as const, label: 'Kemarin' },
+                                        { value: '7d' as const, label: '7 Hari' },
+                                        { value: '30d' as const, label: '30 Hari' },
+                                        { value: 'all' as const, label: 'Semua' },
+                                    ]
+                                )).map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => handleRangeChange(option.value)}
+                                        disabled={data.range === option.value}
+                                        className={cn(
+                                            "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                                            data.range === option.value
+                                                ? "bg-primary text-white"
+                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        )}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <OverviewContent
+                            data={data}
+                            chartData={chartData}
+                        />
+                    </div>
                 ) : (
                     <ReportsContent data={data} />
                 )}
@@ -531,7 +530,85 @@ function OverviewContent({ data, chartData }: ContentProps) {
 }
 
 function ReportsContent({ data }: ContentProps) {
-    if (data.reports.length === 0) {
+    const [expandedAdvId, setExpandedAdvId] = React.useState<string | null>(null)
+
+    // Build unique list of groups by advertisers
+    const groups = data.advertisers.map(adv => {
+        const reports = data.reports.filter(r => r.reporter.id === adv.id)
+        
+        // Calculate all-time stats from all reports
+        const spend = reports.reduce((sum, r) => sum + r.spend, 0)
+        const leads = reports.reduce((sum, r) => sum + r.leads, 0)
+        const sales = reports.reduce((sum, r) => sum + r.sales, 0)
+        const closingRate = leads > 0 ? Math.round((sales / leads) * 10000) / 100 : 0
+        
+        // Find current batch price to calculate stats
+        const currentBatch = data.batches.find(b => b.id === data.currentBatchId)
+        const batchPrice = currentBatch ? currentBatch.price : 0
+        const revenue = sales * batchPrice
+        const profitLoss = revenue - spend
+        const roas = spend > 0 ? Math.round((revenue / spend) * 100) / 100 : 0
+
+        return {
+            id: adv.id,
+            name: adv.name,
+            emoji: adv.emoji,
+            spend,
+            leads,
+            sales,
+            closingRate,
+            revenue,
+            profitLoss,
+            roas,
+            reports
+        }
+    })
+
+    // Find any reports by other users who are not in the advertisers list
+    const advertiserIds = new Set(data.advertisers.map(a => a.id))
+    const otherReports = data.reports.filter(r => !advertiserIds.has(r.reporter.id))
+
+    if (otherReports.length > 0) {
+        const otherGroupsMap = new Map<string, typeof groups[number]>()
+        
+        // Find current batch price to calculate stats
+        const currentBatch = data.batches.find(b => b.id === data.currentBatchId)
+        const batchPrice = currentBatch ? currentBatch.price : 0
+
+        otherReports.forEach(report => {
+            const reporter = report.reporter
+            if (!otherGroupsMap.has(reporter.id)) {
+                otherGroupsMap.set(reporter.id, {
+                    id: reporter.id,
+                    name: `${reporter.name} (Lainnya)`,
+                    emoji: reporter.emoji,
+                    spend: 0,
+                    leads: 0,
+                    sales: 0,
+                    closingRate: 0,
+                    revenue: 0,
+                    profitLoss: 0,
+                    roas: 0,
+                    reports: []
+                })
+            }
+            const g = otherGroupsMap.get(reporter.id)!
+            g.reports.push(report)
+            g.spend += report.spend
+            g.leads += report.leads
+            g.sales += report.sales
+        })
+
+        otherGroupsMap.forEach(g => {
+            g.revenue = g.sales * batchPrice
+            g.profitLoss = g.revenue - g.spend
+            g.roas = g.spend > 0 ? Math.round((g.revenue / g.spend) * 100) / 100 : 0
+            g.closingRate = g.leads > 0 ? Math.round((g.sales / g.leads) * 10000) / 100 : 0
+            groups.push(g)
+        })
+    }
+
+    if (groups.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="mb-6 rounded-full bg-gray-100 p-6">
@@ -550,44 +627,128 @@ function ReportsContent({ data }: ContentProps) {
         )
     }
 
+    const handleToggleExpand = (id: string) => {
+        setExpandedAdvId(prev => prev === id ? null : id)
+    }
+
     return (
         <div className="space-y-4">
-            {data.reports.map((report) => (
-                <Card key={report.id} className="rounded-2xl border-none shadow-sm">
-                    <CardContent className="p-4">
-                        <div className="mb-4 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                                <Calendar className="h-5 w-5 text-blue-500" />
+            {groups.map((adv) => {
+                const isExpanded = expandedAdvId === adv.id
+                return (
+                    <div key={adv.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-all duration-200">
+                        {/* Header & Stats Summary */}
+                        <div
+                            onClick={() => handleToggleExpand(adv.id)}
+                            className="cursor-pointer hover:bg-gray-50/30 transition-colors"
+                        >
+                            {/* Identity Header */}
+                            <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/50 px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                    <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-200", isExpanded && "rotate-180")} />
+                                    <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-white shadow-sm" />
+                                    <p className="font-semibold text-gray-900">{adv.name}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
+                                    <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
+                                        {formatCompact(adv.revenue)}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="font-bold">{formatDate(report.date)}</h4>
-                                <p className="text-xs text-gray-500">Laporan Harian</p>
+
+                            {/* Metrics Body */}
+                            <div className="p-4">
+                                {/* Profit / ROAS row */}
+                                <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
+                                        <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+                                        <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
+                                        <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
+                                    </div>
+                                </div>
+
+                                {/* Core Metrics Grid */}
+                                <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
+                                    <div>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
+                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCompact(adv.spend)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
+                                        <p className="mt-1 text-xs sm:text-sm font-bold text-violet-600">{adv.leads}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
+                                        <p className="mt-1 text-xs sm:text-sm font-bold text-emerald-500">{adv.sales}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Closing</p>
+                                        <p className="mt-1 text-xs sm:text-sm font-bold text-gray-700">{adv.closingRate}%</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-                            <BadgeBox label="SPEND" value={formatCompact(report.spend)} />
-                            <BadgeBox label="LEADS" value={report.leads.toString()} />
-                            <BadgeBox label="SALES" value={report.sales.toString()} />
-                        </div>
+                        {/* Expanded Reports History */}
+                        {isExpanded && (
+                            <div className="border-t border-gray-100 bg-gray-50/50 p-4 space-y-3">
+                                <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    Riwayat Laporan ({adv.reports.length})
+                                </h5>
+                                {adv.reports.length > 0 ? (
+                                    adv.reports.map((report) => (
+                                        <Card key={report.id} className="rounded-xl border border-gray-100 bg-white shadow-sm">
+                                            <CardContent className="p-4">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
+                                                            <Calendar className="h-4 w-4 text-blue-500" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-sm font-bold">{formatDate(report.date)}</h4>
+                                                        </div>
+                                                    </div>
+                                                    {(data.canManageEvent || report.reporter.id === data.currentUserId) && (
+                                                        <Link
+                                                            href={`/events/${data.event.id}/reports/${report.id}/edit`}
+                                                            className="text-xs font-medium text-blue-500 hover:underline"
+                                                        >
+                                                            Edit
+                                                        </Link>
+                                                    )}
+                                                </div>
 
-                        <div className="flex items-center justify-between border-t pt-3">
-                            <div className="flex items-center gap-2">
-                                <AvatarEmoji emoji={report.reporter.emoji} size="sm" />
-                                <span className="text-xs text-gray-500">{report.reporter.name}</span>
+                                                <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+                                                    <BadgeBox label="SPEND" value={formatCompact(report.spend)} />
+                                                    <BadgeBox label="LEADS" value={report.leads.toString()} />
+                                                    <BadgeBox label="SALES" value={report.sales.toString()} />
+                                                </div>
+
+                                                {report.notes && (
+                                                    <div className="mt-3 bg-gray-50 rounded-lg p-2.5 text-xs text-gray-600 border border-gray-100">
+                                                        <p className="font-semibold text-gray-500 mb-0.5">Catatan:</p>
+                                                        {report.notes}
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6 text-sm text-gray-400">
+                                        Belum ada laporan harian untuk advertiser ini
+                                    </div>
+                                )}
                             </div>
-                            {(data.canManageEvent || report.reporter.id === data.currentUserId) && (
-                                <Link
-                                    href={`/events/${data.event.id}/reports/${report.id}/edit`}
-                                    className="text-sm font-medium text-blue-500"
-                                >
-                                    Edit
-                                </Link>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+                        )}
+                    </div>
+                )
+            })}
             <div className="pt-4 text-center">
                 <p className="text-sm text-gray-400">Akhir dari laporan</p>
             </div>
