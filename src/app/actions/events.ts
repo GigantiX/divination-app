@@ -3,7 +3,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 
 export interface CreateEventInput {
     name: string
@@ -66,8 +66,8 @@ export async function createEvent(input: CreateEventInput): Promise<EventResult>
     }
 
     // Revalidate dashboard to show new event
-    revalidatePath('/dashboard')
-
+    revalidateTag('dashboard', 'default')
+    // Redirect, etc. is handled client-side
     return { success: true, eventId: event.id }
 }
 
@@ -152,8 +152,8 @@ export async function updateEvent(eventId: string, input: Partial<CreateEventInp
         return { error: 'Gagal mengupdate event' }
     }
 
-    revalidatePath('/dashboard')
-    revalidatePath(`/events/${eventId}`)
+    revalidateTag('dashboard', 'default')
+    revalidateTag(`event-${eventId}`, 'default')
 
     return { success: true, eventId }
 }
@@ -191,7 +191,7 @@ export async function deleteEvent(eventId: string): Promise<EventResult> {
         return { error: 'Gagal menghapus event' }
     }
 
-    revalidatePath('/dashboard')
+    revalidateTag('dashboard', 'default')
 
     return { success: true }
 }

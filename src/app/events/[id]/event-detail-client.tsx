@@ -27,7 +27,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/ui/sidebar"
-import { getEventChartData, type DateRange, type EventDetailData } from "@/app/actions/event-detail"
+import { getEventChartData, getEventDetail, type DateRange, type EventDetailData } from "@/app/actions/event-detail"
+import useSWR from "swr"
 
 const LineChart = dynamic(() => import("./line-chart"), {
     ssr: false,
@@ -53,6 +54,13 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     const pendingNavigationRef = React.useRef(false)
 
     const isAdmin = data.userRole === 'admin' || data.userRole === 'developer'
+
+    const cacheKey = `/events/${data.event.id}?batch=${data.currentBatchId}&range=${data.range}`
+    useSWR(cacheKey, () => getEventDetail(data.event.id, data.currentBatchId ?? undefined, data.range), {
+        fallbackData: data,
+        revalidateOnFocus: false,
+        revalidateOnMount: false,
+    })
 
     // Chart data state
     const [chartData, setChartData] = React.useState<{

@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { unstable_cache } from 'next/cache'
 
 export interface DashboardUser {
     id: string
@@ -30,20 +31,14 @@ export interface DashboardData {
  * - Admin/Developer: sees all events
  * - User: sees only assigned events
  */
-export async function getDashboardData(): Promise<DashboardData | null> {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-        return null
-    }
-
+const _getDashboardData = async (userId: string): Promise<DashboardData | null> => {
     const supabase = createAdminClient()
 
     // Get user profile
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, full_name, emoji, role')
-        .eq('id', session.user.id)
+        .eq('id', userId)
         .single()
 
     if (profileError || !profile) {
@@ -105,7 +100,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
                     batches(id)
                 )
             `)
-            .eq('user_id', session.user.id)
+            .eq('user_id', userId)
 
         if (assignmentsError) {
             console.error('Error fetching assignments:', assignmentsError)
@@ -140,6 +135,21 @@ export async function getDashboardData(): Promise<DashboardData | null> {
         activeEvents,
         inactiveEvents,
     }
+}
+
+/**
+ * User-scoped cached wrapper — instant re-render for repeat visits.
+ * Busted by revalidateTag('dashboard') on any event mutation.
+ */
+export async function getDashboardData(): Promise<DashboardData | null> {
+    const session = await auth()
+    if (!session?.user?.id) return null
+
+    return unstable_cache(
+        _getDashboardData,
+        ['dashboard', session.user.id],
+        { tags: ['dashboard'], revalidate: false }
+    )(session.user.id)
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { unstable_cache } from 'next/cache'
 
 // Types for Event Detail
 export interface EventDetailUser {
@@ -75,27 +76,21 @@ export interface EventDetailData {
 }
 
 /**
- * Get detailed event data for the event detail page
- * Includes stats, team members, reports based on selected batch
+ * Inner function — receives userId from the cached wrapper.
  */
-export async function getEventDetail(
+const _getEventDetail = async (
+    userId: string,
     eventId: string,
     batchId?: string,
     range: DateRange = 'today'
-): Promise<EventDetailData | null> {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-        return null
-    }
-
+): Promise<EventDetailData | null> => {
     const supabase = createAdminClient()
 
     // Get user profile with role
     const { data: profile } = await supabase
         .from('profiles')
         .select('id, role')
-        .eq('id', session.user.id)
+        .eq('id', userId)
         .single()
 
     if (!profile) {
@@ -123,7 +118,7 @@ export async function getEventDetail(
             .from('event_assignments')
             .select('role')
             .eq('event_id', eventId)
-            .eq('user_id', session.user.id)
+            .eq('user_id', userId)
             .single()
 
         if (!assignment) {
@@ -339,12 +334,31 @@ export async function getEventDetail(
         advertisers,
         pics,
         reports,
-        currentUserId: session.user.id,
+        currentUserId: userId,
         userRole: profile.role as 'developer' | 'admin' | 'user',
         userEventRole,
         canManageEvent,
         canAddReport,
     }
+}
+
+/**
+ * User-scoped cached wrapper — instant re-render for repeat visits.
+ * Busted by revalidateTag('event-${eventId}') on batch/report mutations.
+ */
+export async function getEventDetail(
+    eventId: string,
+    batchId?: string,
+    range: DateRange = 'today'
+): Promise<EventDetailData | null> {
+    const session = await auth()
+    if (!session?.user?.id) return null
+
+    return unstable_cache(
+        (uid: string) => _getEventDetail(uid, eventId, batchId, range),
+        ['event-detail', eventId, batchId ?? '_', range, session.user.id],
+        { tags: [`event-${eventId}`], revalidate: false }
+    )(session.user.id)
 }
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'all'

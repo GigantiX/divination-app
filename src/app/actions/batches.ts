@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 
 export interface CreateBatchInput {
     eventId: string
@@ -117,7 +117,7 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
     }
 
     // Revalidate event detail page
-    revalidatePath(`/events/${input.eventId}`)
+    revalidateTag(`event-${input.eventId}`, 'default')
 
     return { success: true, batchId: batch.id }
 }
@@ -226,7 +226,7 @@ export async function updateBatch(
         return { error: 'Gagal mengupdate batch' }
     }
 
-    revalidatePath(`/events/${batch.event_id}`)
+    revalidateTag(`event-${batch.event_id}`, 'default')
 
     return { success: true, batchId }
 }
@@ -290,7 +290,7 @@ export async function deleteBatch(batchId: string): Promise<BatchResult> {
         return { error: 'Gagal menghapus batch' }
     }
 
-    revalidatePath(`/events/${batch.event_id}`)
+    revalidateTag(`event-${batch.event_id}`, 'default')
 
     return { success: true }
 }

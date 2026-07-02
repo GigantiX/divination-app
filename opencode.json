@@ -1,0 +1,5 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
+  "plugin": ["/Users/axelabs/src/ponytail/.opencode/plugins/ponytail.mjs"]
+}
