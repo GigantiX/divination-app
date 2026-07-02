@@ -240,37 +240,6 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 )}
 
-                {/* Time Range Selector */}
-                {data.batches.length > 0 && selectedBatch && (
-                    <div className="px-4 pb-4">
-                        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                            {((
-                                [
-                                    { value: 'today' as const, label: 'Hari Ini' },
-                                    { value: 'yesterday' as const, label: 'Kemarin' },
-                                    { value: '7d' as const, label: '7 Hari' },
-                                    { value: '30d' as const, label: '30 Hari' },
-                                    { value: 'all' as const, label: 'Semua' },
-                                ]
-                            )).map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() => handleRangeChange(option.value)}
-                                    disabled={data.range === option.value}
-                                    className={cn(
-                                        "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
-                                        data.range === option.value
-                                            ? "bg-primary text-white"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    )}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* Tabs */}
                 <div className="flex border-b px-4">
@@ -310,10 +279,40 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 )}
                 {activeTab === "overview" ? (
-                    <OverviewContent
-                        data={data}
-                        chartData={chartData}
-                    />
+                    <div className="space-y-4">
+                        {data.batches.length > 0 && selectedBatch && (
+                            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                                {((
+                                    [
+                                        { value: 'today' as const, label: 'Hari Ini' },
+                                        { value: 'yesterday' as const, label: 'Kemarin' },
+                                        { value: '7d' as const, label: '7 Hari' },
+                                        { value: '30d' as const, label: '30 Hari' },
+                                        { value: 'all' as const, label: 'Semua' },
+                                    ]
+                                )).map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => handleRangeChange(option.value)}
+                                        disabled={data.range === option.value}
+                                        className={cn(
+                                            "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                                            data.range === option.value
+                                                ? "bg-primary text-white"
+                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        )}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <OverviewContent
+                            data={data}
+                            chartData={chartData}
+                        />
+                    </div>
                 ) : (
                     <ReportsContent data={data} />
                 )}
