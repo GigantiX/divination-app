@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 
 export interface CreateReportInput {
     batchId: string
@@ -146,7 +146,7 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
     }
 
     // Revalidate event detail page
-    revalidatePath(`/events/${batch.event_id}`)
+    revalidateTag(`event-${batch.event_id}`, 'default')
 
     return { success: true, reportId: report.id }
 }
@@ -304,7 +304,7 @@ export async function updateReport(
     }
 
     if (batchData) {
-        revalidatePath(`/events/${batchData.event_id}`)
+        revalidateTag(`event-${batchData.event_id}`, 'default')
     }
 
     return { success: true, reportId }
@@ -365,7 +365,7 @@ export async function deleteReport(reportId: string): Promise<ReportResult> {
     }
 
     if (batchData) {
-        revalidatePath(`/events/${batchData.event_id}`)
+        revalidateTag(`event-${batchData.event_id}`, 'default')
     }
 
     return { success: true }
