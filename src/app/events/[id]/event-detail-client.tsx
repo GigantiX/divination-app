@@ -457,7 +457,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         <div className="text-right">
                                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
                                             <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
-                                                {formatCompact(adv.revenue)}
+                                                {formatCurrency(adv.revenue)}
                                             </p>
                                         </div>
                                     </div>
@@ -469,7 +469,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                             <div className="flex min-w-0 items-center gap-2">
                                                 <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
                                                 <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                    {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                                    {adv.profitLoss >= 0 ? "+" : ""}{formatCurrency(adv.profitLoss)}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
@@ -482,7 +482,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                             <div>
                                                 <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCompact(adv.spend)}</p>
+                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCurrency(adv.spend)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
@@ -652,7 +652,7 @@ function ReportsContent({ data }: ContentProps) {
                                 <div className="text-right">
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
                                     <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
-                                        {formatCompact(adv.revenue)}
+                                        {formatCurrency(adv.revenue)}
                                     </p>
                                 </div>
                             </div>
@@ -664,7 +664,7 @@ function ReportsContent({ data }: ContentProps) {
                                     <div className="flex min-w-0 items-center gap-2">
                                         <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
                                         <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                            {adv.profitLoss >= 0 ? "+" : ""}{formatCurrency(adv.profitLoss)}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
@@ -677,7 +677,7 @@ function ReportsContent({ data }: ContentProps) {
                                 <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                     <div>
                                         <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCompact(adv.spend)}</p>
+                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCurrency(adv.spend)}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
@@ -725,7 +725,7 @@ function ReportsContent({ data }: ContentProps) {
                                                 </div>
 
                                                 <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-                                                    <BadgeBox label="SPEND" value={formatCompact(report.spend)} />
+                                                    <BadgeBox label="SPEND" value={formatCurrency(report.spend)} />
                                                     <BadgeBox label="LEADS" value={report.leads.toString()} />
                                                     <BadgeBox label="SALES" value={report.sales.toString()} />
                                                 </div>
@@ -792,9 +792,6 @@ function formatCurrency(value: number): string {
     return `Rp ${value.toLocaleString('id-ID')}`
 }
 
-function formatCompact(value: number): string {
-    return `Rp ${value.toLocaleString('id-ID')}`
-}
 
 function formatDate(dateStr: string): string {
     const date = new Date(dateStr)
