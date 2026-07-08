@@ -73,6 +73,7 @@ export interface EventDetailData {
     currentUserId: string // Current logged-in user's ID
     canManageEvent: boolean // Can add batch, edit event, etc
     canAddReport: boolean // Can submit daily reports
+    canDeleteBatch: boolean // Admin, Developer, PIC only
 }
 
 /**
@@ -319,8 +320,9 @@ const _getEventDetail = async (
     }
 
     // Determine permissions
-    const canManageEvent = isAdminOrDev || userEventRole === 'pic'
+    const canManageEvent = isAdminOrDev || userEventRole === 'pic' || userEventRole === 'advertiser'
     const canAddReport = isAdminOrDev || userEventRole === 'advertiser'
+    const canDeleteBatch = isAdminOrDev || userEventRole === 'pic'
 
     return {
         event,
@@ -336,6 +338,7 @@ const _getEventDetail = async (
         userEventRole,
         canManageEvent,
         canAddReport,
+        canDeleteBatch,
     }
 }
 

@@ -53,7 +53,7 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
             .eq('user_id', session.user.id)
             .single()
 
-        if (!assignment || assignment.role !== 'pic') {
+        if (!assignment || (assignment.role !== 'pic' && assignment.role !== 'advertiser')) {
             return { error: 'Tidak memiliki akses untuk menambahkan batch' }
         }
     }
@@ -203,7 +203,7 @@ export async function updateBatch(
             .eq('user_id', session.user.id)
             .single()
 
-        if (!assignment || assignment.role !== 'pic') {
+        if (!assignment || (assignment.role !== 'pic' && assignment.role !== 'advertiser')) {
             return { error: 'Tidak memiliki akses' }
         }
     }
