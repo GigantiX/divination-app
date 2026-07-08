@@ -19,6 +19,7 @@ import {
     Wallet,
     Users,
     Target,
+    Trash2,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -28,6 +29,7 @@ import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/ui/sidebar"
 import { getEventChartData, getEventDetail, type DateRange, type EventDetailData } from "@/app/actions/event-detail"
+import { deleteBatch } from "@/app/actions/batches"
 import useSWR from "swr"
 
 const LineChart = dynamic(() => import("./line-chart"), {
@@ -50,6 +52,8 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     const [selectedBatch, setSelectedBatch] = React.useState(data.currentBatchId || "")
     const [isMenuOpen, setIsMenuOpen] = React.useState(false)
     const [isBatchLoading, setIsBatchLoading] = React.useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false)
+    const [isDeletingBatch, setIsDeletingBatch] = React.useState(false)
     const menuRef = React.useRef<HTMLDivElement>(null)
     const pendingNavigationRef = React.useRef(false)
 
@@ -133,6 +137,17 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
         ? `${selectedBatchData.name}`
         : "Pilih Batch"
 
+    const handleDeleteBatch = async () => {
+        if (!selectedBatch) return
+        setIsDeletingBatch(true)
+        const result = await deleteBatch(selectedBatch)
+        setIsDeletingBatch(false)
+        setIsDeleteModalOpen(false)
+        if (!result.error) {
+            router.push(`/events/${data.event.id}`)
+        }
+    }
+
     return (
         <div className="flex min-h-screen bg-background-secondary">
             <Sidebar isAdmin={isAdmin} />
@@ -178,6 +193,18 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                         <Pencil className="h-4 w-4 text-amber-500" />
                                         Edit Batch
                                     </Link>
+                                )}
+                                {data.canDeleteBatch && selectedBatch && (
+                                    <button
+                                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                        onClick={() => {
+                                            setIsMenuOpen(false)
+                                            setIsDeleteModalOpen(true)
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        Hapus Batch
+                                    </button>
                                 )}
                                 {(data.userRole === 'admin' || data.userRole === 'developer') && (
                                     <Link
@@ -326,6 +353,66 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </Button>
                 </Link>
             )}
+
+            {/* Delete Batch Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]">
+                    <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {/* Header */}
+                        <div className="bg-red-50 border-b border-red-100 px-6 py-4 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 shrink-0">
+                                <Trash2 className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900">Hapus Batch?</h3>
+                                <p className="text-xs text-red-600 font-medium mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="px-6 py-5 space-y-3">
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                                Kamu akan menghapus batch{" "}
+                                <span className="font-bold text-gray-900">"{selectedBatchData?.name}"</span>.
+                            </p>
+                            <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
+                                <p className="text-xs font-semibold text-red-600 leading-relaxed">
+                                    ⚠️ Semua laporan harian dalam batch ini akan ikut terhapus secara permanen.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="border-t bg-gray-50 px-6 py-4 flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-11 font-semibold"
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                disabled={isDeletingBatch}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                className="flex-1 h-11 bg-red-600 hover:bg-red-700 font-bold gap-2 text-white"
+                                onClick={handleDeleteBatch}
+                                disabled={isDeletingBatch}
+                            >
+                                {isDeletingBatch ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Menghapus...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4" />
+                                        Ya, Hapus
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
         </div>
     )
@@ -457,7 +544,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         <div className="text-right">
                                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
                                             <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
-                                                {formatCompact(adv.revenue)}
+                                                {formatCurrency(adv.revenue)}
                                             </p>
                                         </div>
                                     </div>
@@ -469,7 +556,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                             <div className="flex min-w-0 items-center gap-2">
                                                 <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
                                                 <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                                    {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                                    {adv.profitLoss >= 0 ? "+" : ""}{formatCurrency(adv.profitLoss)}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
@@ -482,7 +569,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                             <div>
                                                 <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCompact(adv.spend)}</p>
+                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCurrency(adv.spend)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
@@ -652,7 +739,7 @@ function ReportsContent({ data }: ContentProps) {
                                 <div className="text-right">
                                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
                                     <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
-                                        {formatCompact(adv.revenue)}
+                                        {formatCurrency(adv.revenue)}
                                     </p>
                                 </div>
                             </div>
@@ -664,7 +751,7 @@ function ReportsContent({ data }: ContentProps) {
                                     <div className="flex min-w-0 items-center gap-2">
                                         <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
                                         <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {adv.profitLoss >= 0 ? "+" : ""}{formatCompact(adv.profitLoss)}
+                                            {adv.profitLoss >= 0 ? "+" : ""}{formatCurrency(adv.profitLoss)}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
@@ -677,7 +764,7 @@ function ReportsContent({ data }: ContentProps) {
                                 <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                     <div>
                                         <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCompact(adv.spend)}</p>
+                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCurrency(adv.spend)}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
@@ -725,7 +812,7 @@ function ReportsContent({ data }: ContentProps) {
                                                 </div>
 
                                                 <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-                                                    <BadgeBox label="SPEND" value={formatCompact(report.spend)} />
+                                                    <BadgeBox label="SPEND" value={formatCurrency(report.spend)} />
                                                     <BadgeBox label="LEADS" value={report.leads.toString()} />
                                                     <BadgeBox label="SALES" value={report.sales.toString()} />
                                                 </div>
@@ -792,9 +879,6 @@ function formatCurrency(value: number): string {
     return `Rp ${value.toLocaleString('id-ID')}`
 }
 
-function formatCompact(value: number): string {
-    return `Rp ${value.toLocaleString('id-ID')}`
-}
 
 function formatDate(dateStr: string): string {
     const date = new Date(dateStr)

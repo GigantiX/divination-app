@@ -6,7 +6,10 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "build:cf": "opennextjs-cloudflare build",
+        "preview": "wrangler dev",
+        "deploy:cf": "npm run build:cf && wrangler deploy"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",
@@ -31,6 +34,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
+        "@opennextjs/cloudflare": "^1.20.1",
         "@types/bcryptjs": "^2.4.6",
         "@types/node": "^20",
         "@types/react": "^18",
@@ -40,6 +44,7 @@
         "eslint-config-next": "^16.1.6",
         "postcss": "^8",
         "tailwindcss": "^3.3.0",
-        "typescript": "^5"
+        "typescript": "^5",
+        "wrangler": "^4.107.0"
     }
 }
