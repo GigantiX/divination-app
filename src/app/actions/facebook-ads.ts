@@ -118,12 +118,14 @@ export async function getFacebookAdAccounts(): Promise<FacebookAdAccountsResult>
 }
 
 /**
- * Get the total ad spend for a specific date for a given ad account.
+ * Get the total ad spend for a specific date (or date range) for a given ad account.
  * The ad account ID should be in the format "act_XXXXX" or just the numeric ID.
+ * If endDate is provided, FB API returns the summed spend across the entire range.
  */
 export async function getFacebookAdsSpend(
     adAccountId: string,
-    date: string
+    date: string,
+    endDate?: string
 ): Promise<FacebookAdsSpendResult> {
     try {
         const tokenData = await getFacebookAccessToken()
@@ -146,7 +148,7 @@ export async function getFacebookAdsSpend(
         const url = new URL(`https://graph.facebook.com/v20.0/${accountId}/insights`)
         url.searchParams.set('fields', 'spend,account_currency')
         url.searchParams.set('level', 'account')
-        url.searchParams.set('time_range', JSON.stringify({ since: date, until: date }))
+        url.searchParams.set('time_range', JSON.stringify({ since: date, until: endDate ?? date }))
         url.searchParams.set('access_token', tokenData.accessToken)
 
         const res = await fetch(url.toString(), { method: 'GET' })

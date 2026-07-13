@@ -122,11 +122,16 @@ export default function NewReportPage() {
         }
     }
 
-    // For Facebook fetch — use single date or range start
-    const getReportDateForFb = () =>
-        dateOption === "range" && rangeDate?.from
-            ? dateToStr(rangeDate.from)
-            : getSingleReportDate()
+    // For Facebook fetch — returns start date + optional end date (for range mode)
+    const getReportDateForFb = () => {
+        if (dateOption === "range" && rangeDate?.from) {
+            return {
+                date: dateToStr(rangeDate.from),
+                endDate: rangeDate.to ? dateToStr(rangeDate.to) : undefined,
+            }
+        }
+        return { date: getSingleReportDate(), endDate: undefined }
+    }
 
     const formatDisplayDate = (dateStr: string) => {
         const date = strToDate(dateStr)
@@ -159,7 +164,8 @@ export default function NewReportPage() {
         setFbFetchSpendLoading(true)
         setFbError(null)
         setFbSpendSuccess(false)
-        const result = await getFacebookAdsSpend(fbSelectedAccount, getReportDateForFb())
+        const { date, endDate } = getReportDateForFb()
+        const result = await getFacebookAdsSpend(fbSelectedAccount, date, endDate)
         if (result.success && result.spend !== undefined) {
             const spendValue = Math.round(result.spend).toString()
             setFormData(prev => ({ ...prev, spend: formatCurrency(spendValue) }))
