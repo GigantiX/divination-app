@@ -10,7 +10,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
+import { DatePicker } from "@/components/ui/date-picker"
 import { createBatch } from "@/app/actions/batches"
+
+const strToDate = (s: string): Date => {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
+}
+const dateToStr = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 // Get today's date in Jakarta timezone (UTC+7)
 const getJakartaDate = () => {
@@ -39,6 +47,8 @@ export default function NewBatchPage() {
         price: "",
         notes: ""
     })
+    const [startDateObj, setStartDateObj] = React.useState<Date | undefined>(strToDate(todayDate))
+    const [endDateObj, setEndDateObj] = React.useState<Date | undefined>(undefined)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -49,7 +59,7 @@ export default function NewBatchPage() {
     const handleOngoingToggle = () => {
         setIsOngoing(!isOngoing)
         if (!isOngoing) {
-            // Switching to ongoing, clear end date
+            setEndDateObj(undefined)
             setFormData(prev => ({ ...prev, endDate: "" }))
         }
     }
@@ -80,6 +90,7 @@ export default function NewBatchPage() {
         // Redirect to event detail after brief success message
         setTimeout(() => {
             router.push(`/events/${eventId}?batch=${result.batchId}`)
+            router.refresh()
         }, 1000)
     }
 
@@ -172,51 +183,43 @@ export default function NewBatchPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Start Date */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="startDate" className="text-xs text-gray-500">
+                                        <Label className="text-xs text-gray-500">
                                             Tanggal Mulai *
                                         </Label>
-                                        <div
-                                            className="relative cursor-pointer"
-                                            onClick={() => (document.getElementById('startDate') as HTMLInputElement)?.showPicker?.()}
-                                        >
-                                            <Input
-                                                id="startDate"
-                                                name="startDate"
-                                                type="date"
-                                                value={formData.startDate}
-                                                onChange={(e) => {
-                                                    handleChange(e)
-                                                    if (!isOngoing && formData.endDate && e.target.value > formData.endDate) {
-                                                        setFormData(prev => ({ ...prev, endDate: "" }))
-                                                    }
-                                                }}
-                                                required
-                                                className="h-11 cursor-pointer"
-                                            />
-                                        </div>
+                                        <DatePicker
+                                            mode="single"
+                                            selected={startDateObj}
+                                            onSelect={(date) => {
+                                                setStartDateObj(date)
+                                                const str = date ? dateToStr(date) : ""
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    startDate: str,
+                                                    endDate: !isOngoing && prev.endDate && str > prev.endDate ? "" : prev.endDate,
+                                                }))
+                                                if (!isOngoing && endDateObj && date && date > endDateObj) {
+                                                    setEndDateObj(undefined)
+                                                }
+                                            }}
+                                        />
                                     </div>
 
                                     {/* End Date */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="endDate" className="text-xs text-gray-500">
+                                        <Label className="text-xs text-gray-500">
                                             Tanggal Selesai {isOngoing && "(Opsional)"}
                                         </Label>
-                                        <div
-                                            className={`relative ${isOngoing ? "opacity-50" : "cursor-pointer"}`}
-                                            onClick={() => !isOngoing && (document.getElementById('endDate') as HTMLInputElement)?.showPicker?.()}
-                                        >
-                                            <Input
-                                                id="endDate"
-                                                name="endDate"
-                                                type="date"
-                                                value={isOngoing ? "" : formData.endDate}
-                                                min={formData.startDate}
-                                                onChange={handleChange}
-                                                disabled={isOngoing}
-                                                placeholder={isOngoing ? "Aktif terus" : ""}
-                                                className={`h-11 ${isOngoing ? "bg-gray-100" : "cursor-pointer"}`}
-                                            />
-                                        </div>
+                                        <DatePicker
+                                            mode="single"
+                                            selected={endDateObj}
+                                            onSelect={(date) => {
+                                                setEndDateObj(date)
+                                                setFormData(prev => ({ ...prev, endDate: date ? dateToStr(date) : "" }))
+                                            }}
+                                            min={startDateObj}
+                                            placeholder={isOngoing ? "Aktif terus" : "Pilih tanggal"}
+                                            disabled={isOngoing}
+                                        />
                                     </div>
                                 </div>
 

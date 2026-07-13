@@ -25,6 +25,15 @@ import { type CalendarBatch, type CalendarEvent, createCalendarEvent, deleteCale
 import { cn } from "@/lib/utils"
 import { AppIcon } from "@/components/ui/app-icon"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
+import { DatePicker } from "@/components/ui/date-picker"
+import type { DateRange } from "react-day-picker"
+
+const strToDate = (s: string): Date => {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
+}
+const dateToStr = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 interface EventCalendarClientProps {
     profile: UserProfile
@@ -895,25 +904,35 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                         Beberapa Hari
                                     </button>
                                 </div>
-                                <div className={cn("grid gap-3", formIsRange ? "grid-cols-2" : "grid-cols-1")}>
-                                    <div>
-                                        <p className="text-xs text-gray-400 mb-1">{formIsRange ? "Mulai" : "Tanggal"}</p>
-                                        <input
-                                            type="date"
-                                            value={formStartDate}
-                                            onChange={e => setFormStartDate(e.target.value)}
-                                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
-                                        />
-                                    </div>
-                                    {formIsRange && (
+                                <div className={cn("space-y-2", formIsRange && "space-y-3")}>
+                                    {!formIsRange ? (
                                         <div>
-                                            <p className="text-xs text-gray-400 mb-1">Selesai</p>
-                                            <input
-                                                type="date"
-                                                value={formEndDate}
-                                                min={formStartDate}
-                                                onChange={e => setFormEndDate(e.target.value)}
-                                                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+                                            <p className="text-xs text-gray-400 mb-1">Tanggal</p>
+                                            <DatePicker
+                                                mode="single"
+                                                selected={formStartDate ? strToDate(formStartDate) : undefined}
+                                                onSelect={(date) => {
+                                                    setFormStartDate(date ? dateToStr(date) : "")
+                                                    setFormEndDate("")
+                                                }}
+                                                placeholder="Pilih tanggal"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="text-xs text-gray-400 mb-1">Pilih rentang tanggal</p>
+                                            <DatePicker
+                                                mode="range"
+                                                selected={
+                                                    formStartDate
+                                                        ? { from: strToDate(formStartDate), to: formEndDate ? strToDate(formEndDate) : undefined }
+                                                        : undefined
+                                                }
+                                                onSelect={(range: DateRange | undefined) => {
+                                                    setFormStartDate(range?.from ? dateToStr(range.from) : "")
+                                                    setFormEndDate(range?.to ? dateToStr(range.to) : "")
+                                                }}
+                                                placeholder="Pilih tanggal mulai – akhir"
                                             />
                                         </div>
                                     )}
