@@ -138,6 +138,7 @@ export default function EditBatchPage() {
 
         setTimeout(() => {
             router.push(`/events/${eventId}?batch=${batchId}`)
+            router.refresh()
         }, 1000)
     }
 

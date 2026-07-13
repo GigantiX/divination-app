@@ -90,6 +90,7 @@ export default function NewBatchPage() {
         // Redirect to event detail after brief success message
         setTimeout(() => {
             router.push(`/events/${eventId}?batch=${result.batchId}`)
+            router.refresh()
         }, 1000)
     }
 

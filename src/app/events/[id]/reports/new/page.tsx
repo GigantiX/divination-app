@@ -233,7 +233,10 @@ export default function NewReportPage() {
             setSuccessMsg(`${result.created} laporan berhasil dibuat!${skipNote}`)
             setSuccess(true)
             setIsLoading(false)
-            setTimeout(() => router.push(`/events/${eventId}?batch=${batchId}`), 1500)
+            setTimeout(() => {
+                router.push(`/events/${eventId}?batch=${batchId}`)
+                router.refresh()
+            }, 1500)
             return
         }
 
@@ -257,7 +260,10 @@ export default function NewReportPage() {
         setSuccessMsg("Laporan berhasil disimpan!")
         setSuccess(true)
         setIsLoading(false)
-        setTimeout(() => router.push(`/events/${eventId}?batch=${batchId}`), 1000)
+        setTimeout(() => {
+            router.push(`/events/${eventId}?batch=${batchId}`)
+            router.refresh()
+        }, 1000)
     }
 
     const reportDate = getSingleReportDate()
