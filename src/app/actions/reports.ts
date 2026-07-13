@@ -152,6 +152,126 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
 }
 
 /**
+ * Create a ranged report: divides spend/leads/sales equally per day.
+ * Each day in the range gets one report row. Existing dates are skipped.
+ */
+export interface CreateReportRangeInput {
+    batchId: string
+    startDate: string   // YYYY-MM-DD
+    endDate: string     // YYYY-MM-DD
+    totalLeadsCount: number
+    totalClosingCount: number
+    totalAdsSpent: number
+    taxPercentage: number
+    notes?: string
+}
+
+export interface RangeReportResult {
+    success?: boolean
+    error?: string
+    created: number
+    skipped: number
+}
+
+export async function createReportRange(input: CreateReportRangeInput): Promise<RangeReportResult> {
+    const session = await auth()
+    if (!session?.user?.id) return { error: 'Tidak terautentikasi', created: 0, skipped: 0 }
+
+    const supabase = createAdminClient()
+
+    // Auth check (same as createReport)
+    const role = await getUserProfileRole(supabase, session.user.id)
+    if (!role) return { error: 'Profil tidak ditemukan', created: 0, skipped: 0 }
+
+    const isAdminOrDev = role === 'admin' || role === 'developer'
+
+    const { data: batch } = await supabase
+        .from('batches')
+        .select('id, event_id')
+        .eq('id', input.batchId)
+        .single()
+
+    if (!batch) return { error: 'Batch tidak ditemukan', created: 0, skipped: 0 }
+
+    if (!isAdminOrDev) {
+        const assignmentRole = await getEventAssignmentRole(supabase, batch.event_id, session.user.id)
+        if (assignmentRole !== 'advertiser') {
+            return { error: 'Tidak memiliki akses untuk menambahkan laporan', created: 0, skipped: 0 }
+        }
+    }
+
+    // Build list of dates in the range
+    const start = new Date(input.startDate)
+    const end = new Date(input.endDate)
+    if (start > end) return { error: 'Tanggal mulai tidak boleh setelah tanggal akhir', created: 0, skipped: 0 }
+
+    const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
+    const today = jakartaNow.toISOString().split('T')[0]
+    if (input.endDate > today) return { error: 'Tanggal akhir tidak boleh di masa depan', created: 0, skipped: 0 }
+
+    const dates: string[] = []
+    const cursor = new Date(start)
+    while (cursor <= end) {
+        dates.push(cursor.toISOString().split('T')[0])
+        cursor.setDate(cursor.getDate() + 1)
+    }
+
+    const days = dates.length
+
+    // Divide spend/leads/sales equally; first day absorbs the remainder
+    const baseSpend = Math.floor(input.totalAdsSpent / days)
+    const baseLeads = Math.floor(input.totalLeadsCount / days)
+    const baseSales = Math.floor(input.totalClosingCount / days)
+
+    let created = 0
+    let skipped = 0
+
+    for (let i = 0; i < dates.length; i++) {
+        const date = dates[i]
+        const isFirst = i === 0
+
+        const daySpend  = isFirst ? input.totalAdsSpent - baseSpend * (days - 1) : baseSpend
+        const dayLeads  = isFirst ? input.totalLeadsCount - baseLeads * (days - 1) : baseLeads
+        // Sales per day, capped at leads per day
+        const rawSales  = isFirst ? input.totalClosingCount - baseSales * (days - 1) : baseSales
+        const daySales  = Math.min(rawSales, dayLeads)
+
+        // Skip if duplicate exists
+        const { data: existing } = await supabase
+            .from('reports')
+            .select('id')
+            .eq('batch_id', input.batchId)
+            .eq('user_id', session.user.id)
+            .eq('report_date', date)
+            .maybeSingle()
+
+        if (existing) { skipped++; continue }
+
+        const { error: insertError } = await supabase
+            .from('reports')
+            .insert({
+                batch_id: input.batchId,
+                user_id: session.user.id,
+                report_date: date,
+                leads_count: dayLeads,
+                closing_count: daySales,
+                ads_spent: daySpend,
+                tax_percentage: input.taxPercentage,
+                notes: input.notes?.trim() || null,
+            })
+
+        if (insertError) {
+            console.error('Error creating range report for', date, insertError)
+        } else {
+            created++
+        }
+    }
+
+    revalidateTag(`event-${batch.event_id}`, 'default')
+    return { success: true, created, skipped }
+}
+
+/**
  * Get report by ID
  */
 export async function getReport(reportId: string) {

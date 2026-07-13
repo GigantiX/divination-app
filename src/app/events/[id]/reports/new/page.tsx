@@ -4,19 +4,23 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
 import { ChevronLeft, Calendar, DollarSign, Users, ShoppingCart, FileText, Loader2, Check, Percent, RefreshCw, Facebook } from "lucide-react"
+import { format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+import type { DateRange } from "react-day-picker"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
-import { createReport } from "@/app/actions/reports"
+import { createReport, createReportRange } from "@/app/actions/reports"
 import { getBatch } from "@/app/actions/batches"
 import { getFacebookAdAccounts, getFacebookAdsSpend } from "@/app/actions/facebook-ads"
 import type { FacebookAdAccount } from "@/app/actions/facebook-ads"
 
-type DateOption = "today" | "yesterday" | "custom"
+type DateOption = "today" | "yesterday" | "custom" | "range"
 
 // Get today's date in Jakarta timezone (UTC+7)
 const getJakartaDate = () => {
@@ -33,6 +37,14 @@ const getYesterdayDate = () => {
     return today.toISOString().split('T')[0]
 }
 
+const strToDate = (s: string): Date => {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
+}
+
+const dateToStr = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
 export default function NewReportPage() {
     const router = useRouter()
     const params = useParams()
@@ -42,12 +54,15 @@ export default function NewReportPage() {
 
     const todayDate = getJakartaDate()
     const yesterdayDate = getYesterdayDate()
+    const todayDateObj = strToDate(todayDate)
 
     const [isLoading, setIsLoading] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
     const [success, setSuccess] = React.useState(false)
+    const [successMsg, setSuccessMsg] = React.useState<string>("")
     const [dateOption, setDateOption] = React.useState<DateOption>("today")
-    const [customDate, setCustomDate] = React.useState(todayDate)
+    const [customDate, setCustomDate] = React.useState<Date | undefined>(todayDateObj)
+    const [rangeDate, setRangeDate] = React.useState<DateRange | undefined>(undefined)
     const [batchName, setBatchName] = React.useState<string | null>(null)
 
     // Fetch batch name
@@ -66,7 +81,6 @@ export default function NewReportPage() {
             if (result.success && result.adAccounts && result.adAccounts.length > 0) {
                 setFbAdAccounts(result.adAccounts)
             } else if (result.error) {
-                // Only show error if token expired (user needs to reconnect)
                 if (result.tokenExpired) {
                     setFbError(result.error)
                 }
@@ -98,20 +112,25 @@ export default function NewReportPage() {
         return parseInt(taxOption)
     }
 
-    const getReportDate = () => {
+    // Returns a single YYYY-MM-DD string for single-date modes
+    const getSingleReportDate = () => {
         switch (dateOption) {
-            case "today":
-                return todayDate
-            case "yesterday":
-                return yesterdayDate
-            case "custom":
-                return customDate
+            case "today": return todayDate
+            case "yesterday": return yesterdayDate
+            case "custom": return customDate ? dateToStr(customDate) : todayDate
+            default: return todayDate
         }
     }
 
+    // For Facebook fetch — use single date or range start
+    const getReportDateForFb = () =>
+        dateOption === "range" && rangeDate?.from
+            ? dateToStr(rangeDate.from)
+            : getSingleReportDate()
+
     const formatDisplayDate = (dateStr: string) => {
-        const date = new Date(dateStr)
-        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        const date = strToDate(dateStr)
+        return format(date, "d MMM yyyy", { locale: idLocale })
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -137,16 +156,11 @@ export default function NewReportPage() {
 
     const handleGetAdsSpend = async () => {
         if (!fbSelectedAccount) return
-
         setFbFetchSpendLoading(true)
         setFbError(null)
         setFbSpendSuccess(false)
-
-        const reportDate = getReportDate()
-        const result = await getFacebookAdsSpend(fbSelectedAccount, reportDate)
-
+        const result = await getFacebookAdsSpend(fbSelectedAccount, getReportDateForFb())
         if (result.success && result.spend !== undefined) {
-            // Format the spend value and auto-fill the field
             const spendValue = Math.round(result.spend).toString()
             setFormData(prev => ({ ...prev, spend: formatCurrency(spendValue) }))
             setFbSpendSuccess(true)
@@ -154,14 +168,12 @@ export default function NewReportPage() {
         } else if (result.tokenExpired) {
             setFbError(result.error || 'Token Facebook telah kedaluwarsa. Silakan hubungkan ulang.')
         } else {
-            // No data or error — show message but don't block
             if (result.spend === 0 && result.success) {
                 setFbError('Tidak ada data spend untuk tanggal ini. Silakan masukkan secara manual.')
             } else {
                 setFbError(result.error || 'Gagal mengambil data spend')
             }
         }
-
         setFbFetchSpendLoading(false)
     }
 
@@ -176,7 +188,6 @@ export default function NewReportPage() {
             return
         }
 
-        const reportDate = getReportDate()
         const adsSpent = parseCurrency(formData.spend)
         const leadsCount = parseInt(formData.leads || '0', 10)
         const closingCount = parseInt(formData.sales || '0', 10)
@@ -187,9 +198,43 @@ export default function NewReportPage() {
             return
         }
 
+        // ── Range mode ────────────────────────────────────────────────────────
+        if (dateOption === "range") {
+            if (!rangeDate?.from || !rangeDate?.to) {
+                setError('Pilih tanggal mulai dan akhir untuk range laporan')
+                setIsLoading(false)
+                return
+            }
+
+            const result = await createReportRange({
+                batchId,
+                startDate: dateToStr(rangeDate.from),
+                endDate: dateToStr(rangeDate.to),
+                totalLeadsCount: leadsCount,
+                totalClosingCount: closingCount,
+                totalAdsSpent: adsSpent,
+                taxPercentage: getTaxPercentage(),
+                notes: formData.notes || undefined,
+            })
+
+            if (result.error) {
+                setError(result.error)
+                setIsLoading(false)
+                return
+            }
+
+            const skipNote = result.skipped > 0 ? ` (${result.skipped} tanggal dilewati karena sudah ada)` : ""
+            setSuccessMsg(`${result.created} laporan berhasil dibuat!${skipNote}`)
+            setSuccess(true)
+            setIsLoading(false)
+            setTimeout(() => router.push(`/events/${eventId}?batch=${batchId}`), 1500)
+            return
+        }
+
+        // ── Single date mode ──────────────────────────────────────────────────
         const result = await createReport({
             batchId,
-            reportDate,
+            reportDate: getSingleReportDate(),
             leadsCount,
             closingCount,
             adsSpent,
@@ -203,22 +248,32 @@ export default function NewReportPage() {
             return
         }
 
+        setSuccessMsg("Laporan berhasil disimpan!")
         setSuccess(true)
         setIsLoading(false)
-
-        // Redirect to event detail after brief success message
-        setTimeout(() => {
-            router.push(`/events/${eventId}?batch=${batchId}`)
-        }, 1000)
+        setTimeout(() => router.push(`/events/${eventId}?batch=${batchId}`), 1000)
     }
 
-    const reportDate = getReportDate()
+    const reportDate = getSingleReportDate()
     const leadsNum = parseInt(formData.leads || '0', 10)
     const salesNum = parseInt(formData.sales || '0', 10)
     const spendNum = parseCurrency(formData.spend)
     const taxPct = getTaxPercentage()
     const spendWithTax = Math.round(spendNum * (1 + taxPct / 100))
     const isValid = formData.spend && formData.leads && formData.sales && batchId
+
+    // Range date label
+    const rangeDaysCount =
+        rangeDate?.from && rangeDate?.to
+            ? Math.round((rangeDate.to.getTime() - rangeDate.from.getTime()) / 86400000) + 1
+            : null
+
+    const dateChips: { key: DateOption; label: string }[] = [
+        { key: "today", label: "Hari ini" },
+        { key: "yesterday", label: "Kemarin" },
+        { key: "custom", label: "Pilih Tanggal" },
+        { key: "range", label: "Range Tanggal" },
+    ]
 
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
@@ -265,71 +320,73 @@ export default function NewReportPage() {
                                     Tanggal Laporan
                                 </Label>
 
-                                {/* Date Chips */}
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setDateOption("today")}
-                                        className={cn(
-                                            "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                                            dateOption === "today"
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        Hari ini
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDateOption("yesterday")}
-                                        className={cn(
-                                            "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                                            dateOption === "yesterday"
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        Kemarin
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDateOption("custom")}
-                                        className={cn(
-                                            "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                                            dateOption === "custom"
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        )}
-                                    >
-                                        Pilih Tanggal
-                                    </button>
+                                {/* Date Chips — 2×2 grid on mobile */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    {dateChips.map(chip => (
+                                        <button
+                                            key={chip.key}
+                                            type="button"
+                                            onClick={() => setDateOption(chip.key)}
+                                            className={cn(
+                                                "rounded-full px-4 py-2 text-sm font-medium transition-all",
+                                                dateOption === chip.key
+                                                    ? chip.key === "range"
+                                                        ? "bg-violet-600 text-white shadow-sm"
+                                                        : "bg-primary text-white shadow-sm"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            )}
+                                        >
+                                            {chip.label}
+                                        </button>
+                                    ))}
                                 </div>
 
-                                {/* Custom Date Picker */}
+                                {/* Custom single date picker */}
                                 {dateOption === "custom" && (
-                                    <div className="pt-2">
-                                        <div
-                                            className="relative cursor-pointer"
-                                            onClick={() => (document.getElementById('customDate') as HTMLInputElement)?.showPicker?.()}
-                                        >
-                                            <Input
-                                                id="customDate"
-                                                type="date"
-                                                value={customDate}
-                                                max={todayDate}
-                                                onChange={(e) => setCustomDate(e.target.value)}
-                                                className="h-11 cursor-pointer"
-                                            />
-                                        </div>
+                                    <div className="pt-1">
+                                        <DatePicker
+                                            mode="single"
+                                            selected={customDate}
+                                            onSelect={setCustomDate}
+                                            max={todayDateObj}
+                                            placeholder="Pilih tanggal"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Range date picker */}
+                                {dateOption === "range" && (
+                                    <div className="pt-1 space-y-2">
+                                        <DatePicker
+                                            mode="range"
+                                            selected={rangeDate}
+                                            onSelect={setRangeDate}
+                                            max={todayDateObj}
+                                            placeholder="Pilih tanggal mulai – akhir"
+                                        />
+                                        {rangeDaysCount && (
+                                            <p className="text-xs text-violet-600 font-medium">
+                                                📆 {rangeDaysCount} hari dipilih — laporan akan dibagi rata per hari
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
                                 {/* Selected Date Display */}
-                                <div className="rounded-lg bg-blue-50 px-3 py-2">
-                                    <p className="text-xs text-blue-600">
-                                        📅 {formatDisplayDate(reportDate)}
-                                    </p>
-                                </div>
+                                {dateOption !== "range" && (
+                                    <div className="rounded-lg bg-blue-50 px-3 py-2">
+                                        <p className="text-xs text-blue-600">
+                                            📅 {formatDisplayDate(reportDate)}
+                                        </p>
+                                    </div>
+                                )}
+                                {dateOption === "range" && rangeDate?.from && rangeDate?.to && (
+                                    <div className="rounded-lg bg-violet-50 border border-violet-100 px-3 py-2">
+                                        <p className="text-xs text-violet-700 font-medium">
+                                            📅 {format(rangeDate.from, "d MMM yyyy", { locale: idLocale })} – {format(rangeDate.to, "d MMM yyyy", { locale: idLocale })}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Facebook Ads Spend Fetcher */}
@@ -427,14 +484,24 @@ export default function NewReportPage() {
                             {/* Metrics Section */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                    Metrik Performa
+                                    Metrik Performa{dateOption === "range" && rangeDaysCount ? ` (Total ${rangeDaysCount} Hari)` : ""}
                                 </h3>
+
+                                {/* Range info note */}
+                                {dateOption === "range" && rangeDaysCount && (
+                                    <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3">
+                                        <p className="text-xs text-violet-700 leading-relaxed">
+                                            💡 Masukkan total metrik untuk semua hari. Sistem akan membagi rata ke setiap hari
+                                            ({rangeDaysCount} laporan terpisah).
+                                        </p>
+                                    </div>
+                                )}
 
                                 {/* Spend Field */}
                                 <div className="space-y-2">
                                     <Label htmlFor="spend" className="flex items-center gap-2">
                                         <DollarSign className="h-4 w-4 text-blue-500" />
-                                        Ad Spend (IDR) *
+                                        Ad Spend (IDR) {dateOption === "range" ? "— Total" : "*"}
                                     </Label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
@@ -504,7 +571,7 @@ export default function NewReportPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="leads" className="flex items-center gap-2">
                                             <Users className="h-4 w-4 text-violet-500" />
-                                            Leads *
+                                            Leads {dateOption === "range" ? "(Total)" : "*"}
                                         </Label>
                                         <Input
                                             id="leads"
@@ -524,7 +591,7 @@ export default function NewReportPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="sales" className="flex items-center gap-2">
                                             <ShoppingCart className="h-4 w-4 text-emerald-500" />
-                                            Closing *
+                                            Closing {dateOption === "range" ? "(Total)" : "*"}
                                         </Label>
                                         <Input
                                             id="sales"
@@ -607,7 +674,7 @@ export default function NewReportPage() {
                             {success && (
                                 <div className="rounded-lg bg-green-50 p-4 flex items-center gap-2">
                                     <Check className="h-4 w-4 text-green-600" />
-                                    <p className="text-sm text-green-600">Laporan berhasil disimpan!</p>
+                                    <p className="text-sm text-green-600">{successMsg}</p>
                                 </div>
                             )}
 
@@ -627,6 +694,8 @@ export default function NewReportPage() {
                                         <Check className="mr-2 h-4 w-4" />
                                         Berhasil!
                                     </>
+                                ) : dateOption === "range" && rangeDaysCount ? (
+                                    `Simpan ${rangeDaysCount} Laporan`
                                 ) : (
                                     "Simpan Laporan"
                                 )}
