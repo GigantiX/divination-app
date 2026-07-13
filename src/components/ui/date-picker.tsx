@@ -97,11 +97,17 @@ export function DatePicker(props: DatePickerProps) {
     const { mode, selected, min, max, placeholder = "Pilih tanggal", className, disabled } = props
     const [open, setOpen] = React.useState(false)
     const containerRef = React.useRef<HTMLDivElement>(null)
+    // Suppresses the outside-click handler while the user is interacting with
+    // the calendar dropdown. Without this, React DOM reconciliation after
+    // onSelect can detach the clicked node, causing contains() to return false
+    // and close the picker prematurely.
+    const suppressCloseRef = React.useRef(false)
 
     // Close on outside click
     React.useEffect(() => {
         if (!open) return
         const handler = (e: MouseEvent) => {
+            if (suppressCloseRef.current) return
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 setOpen(false)
             }
@@ -153,6 +159,11 @@ export function DatePicker(props: DatePickerProps) {
             {/* Calendar Dropdown */}
             {open && (
                 <div
+                    // Hold the suppress flag for the entire mousedown→mouseup cycle so
+                    // the document handler never sees a click inside the calendar as
+                    // "outside" — even if React re-renders the DOM between the two events.
+                    onMouseDown={() => { suppressCloseRef.current = true }}
+                    onMouseUp={() => { setTimeout(() => { suppressCloseRef.current = false }, 0) }}
                     className={cn(
                         "absolute left-0 top-full z-50 mt-2 min-w-[280px]",
                         "rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl",
@@ -185,9 +196,16 @@ export function DatePicker(props: DatePickerProps) {
                             selected={selected as DateRange | undefined}
                             onSelect={(range) => {
                                 ;(props as DatePickerRangeProps).onSelect(range)
-                                // Close after full range is picked
-                                if (range?.from && range?.to) {
-                                    setTimeout(() => setOpen(false), 250)
+                                // Only auto-close when a genuine range is complete.
+                                // DayPicker v9 can fire { from: d, to: d } (same date) on a
+                                // single first click — we must NOT close in that case, otherwise
+                                // the picker shuts before the user can pick the second date.
+                                const from = range?.from
+                                const to = range?.to
+                                const isCompleteRange =
+                                    from && to && from.getTime() !== to.getTime()
+                                if (isCompleteRange) {
+                                    setTimeout(() => setOpen(false), 300)
                                 }
                             }}
                             disabled={disabledMatcher}
