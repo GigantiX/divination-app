@@ -29,6 +29,7 @@ export async function loginAction(formData: FormData) {
         if (error instanceof AuthError) {
             switch (error.type) {
                 case 'CredentialsSignin':
+                case 'CallbackRouteError':
                     return { error: 'Email atau password salah' }
                 default:
                     return { error: 'Terjadi kesalahan saat login' }

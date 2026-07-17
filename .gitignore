@@ -67,3 +67,10 @@ QODER.md
 
 #caveman
 agent/
+
+# Test coverage and reports
+coverage/
+playwright-report/
+test-results/
+playwright/.auth/
+.wrangler/

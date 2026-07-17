@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 interface AvatarEmojiProps extends React.HTMLAttributes<HTMLDivElement> {
-    emoji: string
+    emoji?: string
     size?: "sm" | "md" | "lg" | "xl"
 }
 

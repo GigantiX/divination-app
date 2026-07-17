@@ -168,6 +168,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                aria-label="More options"
                             >
                                 <MoreVertical className="h-5 w-5" />
                             </Button>
