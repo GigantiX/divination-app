@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowLeft, Check, X, Loader2, UploadCloud } from "lucide-react"
+import { ArrowLeft, Check, X, Loader2, UploadCloud, Download } from "lucide-react"
 
 import { NavigationLayout } from "@/components/ui/nav-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,6 +31,16 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
     const [proofPreview, setProofPreview] = React.useState<string | null>(null)
     const [isProcessing, setIsProcessing] = React.useState(false)
     const [errorMsg, setErrorMsg] = React.useState("")
+
+    const handleExport = (type: string, format: string) => {
+        const url = `/api/export?type=${type}&format=${format}`
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `${type}.${format}`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
 
     React.useEffect(() => {
         loadData()
@@ -112,14 +122,36 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
     return (
         <NavigationLayout isAdmin={isAdmin}>
             <div className="flex-1 p-4 pb-24 md:mx-auto md:w-full md:max-w-4xl md:p-6">
-                <div className="mb-6 flex items-center gap-3">
-                    <Link href="/apps/request-budget" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
-                        <ArrowLeft className="h-5 w-5 text-gray-600" />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Queue Request</h1>
-                        <p className="text-sm text-gray-500">Daftar antrian persetujuan budget iklan.</p>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <Link href="/apps/request-budget" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                            <ArrowLeft className="h-5 w-5 text-gray-600" />
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Queue Request</h1>
+                            <p className="text-sm text-gray-500">Daftar antrian persetujuan budget iklan.</p>
+                        </div>
                     </div>
+                    {isAdmin && (
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleExport("budget-history", "csv")}
+                                className="flex items-center gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            >
+                                <Download className="h-4 w-4" /> Export CSV
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleExport("budget-history", "xlsx")}
+                                className="flex items-center gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            >
+                                <Download className="h-4 w-4" /> Export Excel
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {loading ? (
