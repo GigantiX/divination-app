@@ -19,6 +19,7 @@ export class MockQueryBuilder {
   order = vi.fn().mockReturnThis();
   limit = vi.fn().mockReturnThis();
   range = vi.fn().mockReturnThis();
+  in = vi.fn().mockReturnThis();
 
   single = vi.fn().mockImplementation(async () => {
     const singleData = Array.isArray(this.data) ? this.data[0] : this.data;

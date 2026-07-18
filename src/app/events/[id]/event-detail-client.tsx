@@ -20,6 +20,8 @@ import {
     Users,
     Target,
     Trash2,
+    Download,
+    FileText,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -58,6 +60,17 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
     const pendingNavigationRef = React.useRef(false)
 
     const isAdmin = data.userRole === 'admin' || data.userRole === 'developer'
+
+    const handleExport = (type: string, format: string) => {
+        setIsMenuOpen(false)
+        const url = `/api/export?type=${type}&format=${format}&eventId=${data.event.id}&batchId=${selectedBatch || 'all'}`
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `${type}-${data.event.id}.${format}`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
 
     const cacheKey = `/events/${data.event.id}?batch=${data.currentBatchId}&range=${data.range}`
     useSWR(cacheKey, () => getEventDetail(data.event.id, data.currentBatchId ?? undefined, data.range), {
@@ -176,7 +189,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
 
                         {/* Dropdown Menu - Admin/PIC Only */}
                         {isMenuOpen && (
-                            <div className="absolute right-0 top-10 z-50 w-48 rounded-lg border bg-white py-1 shadow-lg">
+                            <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border bg-white py-1 shadow-lg">
                                 <Link
                                     href={`/events/${data.event.id}/batches/new`}
                                     className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -208,14 +221,60 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                     </button>
                                 )}
                                 {(data.userRole === 'admin' || data.userRole === 'developer') && (
-                                    <Link
-                                        href={`/events/${data.event.id}/edit`}
-                                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                        onClick={() => setIsMenuOpen(false)}
-                                    >
-                                        <Settings className="h-4 w-4 text-gray-500" />
-                                        Edit Event
-                                    </Link>
+                                    <>
+                                        <Link
+                                            href={`/events/${data.event.id}/edit`}
+                                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            <Settings className="h-4 w-4 text-gray-500" />
+                                            Edit Event
+                                        </Link>
+                                        <div className="h-px bg-gray-100 my-1" />
+                                        <div className="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Export</div>
+                                        
+                                        <div className="px-4 py-2 space-y-1.5 hover:bg-gray-50 transition-colors">
+                                            <div className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                                                <Layers className="h-3.5 w-3.5 text-emerald-500" />
+                                                Performance
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleExport("event-performance", "csv")}
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-emerald-50 text-emerald-700 rounded border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                                                >
+                                                    CSV
+                                                </button>
+                                                <button
+                                                    onClick={() => handleExport("event-performance", "xlsx")}
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-emerald-600 text-white rounded border border-emerald-700 hover:bg-emerald-700 transition-colors"
+                                                >
+                                                    Excel
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="px-4 py-2 space-y-1.5 hover:bg-gray-50 transition-colors">
+                                            <div className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                                                <FileText className="h-3.5 w-3.5 text-blue-500" />
+                                                Daily Log
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleExport("daily-reports", "csv")}
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-blue-50 text-blue-700 rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+                                                >
+                                                    CSV
+                                                </button>
+                                                <button
+                                                    onClick={() => handleExport("daily-reports", "xlsx")}
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-blue-600 text-white rounded border border-blue-700 hover:bg-blue-700 transition-colors"
+                                                >
+                                                    Excel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         )}
