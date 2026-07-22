@@ -146,6 +146,9 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
                                                 <StatusBadge status={req.status} />
                                             </div>
                                             <h3 className="font-semibold text-gray-900">{req.event_name || 'Unknown Event'}</h3>
+                                            {isAdmin && req.user_name && (
+                                                <p className="text-xs text-gray-500">Oleh: <span className="font-medium text-gray-700">{req.user_name}</span></p>
+                                            )}
                                             <p className="text-xl font-bold text-blue-600">{formatIDR(req.amount)}</p>
                                         </div>
                                         
