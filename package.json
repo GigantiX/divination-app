@@ -18,6 +18,8 @@
         "test:e2e:codegen": "playwright codegen http://localhost:3001"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1092.0",
+        "@aws-sdk/s3-request-presigner": "^3.1092.0",
         "@hookform/resolvers": "^5.2.2",
         "@radix-ui/react-slot": "^1.2.4",
         "@supabase/ssr": "^0.8.0",

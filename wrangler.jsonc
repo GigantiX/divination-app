@@ -7,5 +7,16 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "r2_buckets": [
+    {
+      "binding": "R2_UPLOADS",
+      "bucket_name": "divination-dashboard-storage"
+    }
+  ],
+  "vars": {
+    "R2_ACCOUNT_ID": "0afa06a1d7decb37095fa689067959a7",
+    "R2_BUCKET_NAME": "divination-dashboard-storage",
+    "NEXT_PUBLIC_R2_PUBLIC_URL": "https://pub-ef7ae372a1ef42e09300e683a85da4d7.r2.dev"
   }
 }

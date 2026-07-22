@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { uploadFile, deleteFile } from '@/lib/storage'
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -36,7 +37,7 @@ async function requireAdminOrDeveloper() {
 }
 
 /**
- * Upload an event logo to Supabase Storage
+ * Upload an event logo to Cloudflare R2 Storage (with legacy Supabase read compatibility)
  * @param formData - FormData with 'file' field containing the image blob
  * @param eventId - Event ID to associate the logo with (used for filename)
  * @returns URL of the uploaded image or error
@@ -51,7 +52,7 @@ export async function uploadEventLogo(
         return { error: access.error }
     }
 
-    const { supabase, userId } = access
+    const { userId } = access
 
     const file = formData.get('file') as Blob | null
 
@@ -76,40 +77,24 @@ export async function uploadEventLogo(
         return { error: 'Format file tidak didukung' }
     }
 
-    // Generate unique filename
+    // Generate unique filename key
     const timestamp = Date.now()
     const filename = `event-logos/${userId}/${eventId}-${timestamp}.${extension}`
 
-    // Delete old logo from storage before uploading new one
+    // Delete old logo from storage before uploading new one (handles both old Supabase and new R2)
     if (oldLogoUrl) {
-        const urlParts = oldLogoUrl.split('/uploads/')
-        if (urlParts.length >= 2) {
-            const oldFilename = decodeURIComponent(urlParts[1].split('?')[0])
-            // Best-effort delete — don't block upload if delete fails
-            await supabase.storage.from('uploads').remove([oldFilename]).catch(() => { })
-        }
+        await deleteFile(oldLogoUrl).catch(() => { })
     }
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(filename, file, {
-            contentType: file.type,
-            cacheControl: '31536000', // 1 year cache
-            upsert: false,
-        })
+    // Upload to R2 Storage
+    const { url, error: uploadError } = await uploadFile(file, filename)
 
-    if (uploadError) {
+    if (uploadError || !url) {
         console.error('Error uploading logo:', uploadError)
-        return { error: 'Gagal mengupload logo. Silakan coba lagi.' }
+        return { error: uploadError || 'Gagal mengupload logo. Silakan coba lagi.' }
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(filename)
-
-    return { url: urlData.publicUrl }
+    return { url }
 }
 
 /**
@@ -150,28 +135,11 @@ export async function deleteEventLogo(
         return { error: access.error }
     }
 
-    const { supabase, userId } = access
-
-    // Extract filename from URL
-    const urlParts = logoUrl.split('/uploads/')
-    if (urlParts.length < 2) {
-        return { error: 'URL logo tidak valid' }
-    }
-
-    const filename = decodeURIComponent(urlParts[1].split('?')[0])
-
-    if (!filename.startsWith(`event-logos/${userId}/`)) {
-        return { error: 'Tidak memiliki akses untuk menghapus file ini' }
-    }
-
-    const { error } = await supabase.storage
-        .from('uploads')
-        .remove([filename])
-
-    if (error) {
-        console.error('Error deleting logo:', error)
-        return { error: 'Gagal menghapus logo' }
+    const res = await deleteFile(logoUrl)
+    if (res.error) {
+        return { error: res.error }
     }
 
     return { success: true }
 }
+

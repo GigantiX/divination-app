@@ -2,6 +2,16 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { uploadFile } from '@/lib/storage'
+
+const ALLOWED_PROOF_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const MAX_PROOF_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+
+const PROOF_EXTENSION_BY_TYPE: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+}
 
 export type BudgetRequest = {
     id: string
@@ -21,7 +31,15 @@ export async function getBudgetRequests(): Promise<{ data?: BudgetRequest[], err
 
     const supabase = createAdminClient()
 
-    const { data, error } = await supabase
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'developer'
+
+    let query = supabase
         .from('budget_requests')
         .select(`
             id,
@@ -31,10 +49,15 @@ export async function getBudgetRequests(): Promise<{ data?: BudgetRequest[], err
             status,
             proof_image_url,
             created_at,
-            events ( name )
+            events ( name ),
+            profiles ( full_name )
         `)
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
+
+    if (!isAdmin) {
+        query = query.eq('user_id', session.user.id)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
         console.error('Error fetching budget requests:', error)
@@ -44,6 +67,7 @@ export async function getBudgetRequests(): Promise<{ data?: BudgetRequest[], err
     const formattedData = data.map((item: any) => ({
         ...item,
         event_name: item.events?.name,
+        user_name: item.profiles?.full_name,
     }))
 
     return { data: formattedData }
@@ -219,20 +243,24 @@ export async function uploadBudgetProof(formData: FormData): Promise<{ url?: str
     const file = formData.get('file') as Blob | null
     if (!file) return { error: 'File tidak ditemukan' }
 
+    if (!ALLOWED_PROOF_TYPES.has(file.type)) {
+        return { error: 'Format file tidak didukung. Gunakan JPG, PNG, atau WebP.' }
+    }
+
+    if (file.size > MAX_PROOF_SIZE_BYTES) {
+        return { error: 'Ukuran file terlalu besar. Maksimal 5MB.' }
+    }
+
+    const extension = PROOF_EXTENSION_BY_TYPE[file.type]
+    if (!extension) {
+        return { error: 'Format file tidak didukung' }
+    }
+
     const timestamp = Date.now()
-    const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'png'
     const filename = `budget-proofs/${session.user.id}-${timestamp}.${extension}`
 
-    const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(filename, file, {
-            contentType: file.type,
-            cacheControl: '31536000',
-            upsert: false,
-        })
+    const { url, error: uploadError } = await uploadFile(file, filename)
+    if (uploadError || !url) return { error: uploadError || 'Gagal mengupload bukti transfer' }
 
-    if (uploadError) return { error: 'Gagal mengupload bukti transfer' }
-
-    const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(filename)
-    return { url: urlData.publicUrl }
+    return { url }
 }
