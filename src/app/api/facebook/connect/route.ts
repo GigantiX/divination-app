@@ -1,18 +1,21 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 import { auth } from '@/auth'
 import { createFacebookOAuthState, getFacebookOAuthConfig } from '@/lib/facebook-oauth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const requestOrigin = request.nextUrl.origin
+    const appBaseUrl = process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || requestOrigin
+
     const session = await auth()
 
     if (!session?.user?.id) {
-        return NextResponse.redirect(new URL('/login', process.env.APP_BASE_URL || 'http://localhost:3000'))
+        return NextResponse.redirect(new URL('/login', appBaseUrl))
     }
 
-    const config = getFacebookOAuthConfig()
+    const config = getFacebookOAuthConfig(requestOrigin)
     if (!config) {
-        return NextResponse.redirect(new URL('/settings?fb=error', process.env.APP_BASE_URL || 'http://localhost:3000'))
+        return NextResponse.redirect(new URL('/settings?fb=error', appBaseUrl))
     }
 
     const state = createFacebookOAuthState(session.user.id)

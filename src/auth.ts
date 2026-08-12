@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyPassword } from '@/lib/password'
 
 export const { handlers, auth: _auth, signIn, signOut } = NextAuth({
+    trustHost: true,
     providers: [
         Credentials({
             credentials: {
