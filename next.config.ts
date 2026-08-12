@@ -5,15 +5,25 @@ const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : ""
 
 const nextConfig: NextConfig = {
     images: {
-        remotePatterns: supabaseHostname
-            ? [
-                {
-                    protocol: "https",
-                    hostname: supabaseHostname,
-                    pathname: "/storage/v1/object/public/**",
-                },
-            ]
-            : [],
+        unoptimized: true,
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "*.r2.dev",
+            },
+            {
+                protocol: "https",
+                hostname: "*.supabase.co",
+            },
+            ...(supabaseHostname
+                ? [
+                    {
+                        protocol: "https" as const,
+                        hostname: supabaseHostname,
+                    },
+                ]
+                : []),
+        ],
     },
     async headers() {
         return [
