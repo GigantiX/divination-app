@@ -363,33 +363,47 @@ export async function getEventDetail(
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'all'
 
-function getDateRangeFilter(range: DateRange): { gte?: string; lte?: string } {
-    const now = new Date()
+const BUSINESS_TIME_ZONE = 'Asia/Jakarta'
 
-    const toDateString = (d: Date) => {
-        const year = d.getFullYear()
-        const month = `${d.getMonth() + 1}`.padStart(2, '0')
-        const day = `${d.getDate()}`.padStart(2, '0')
-        return `${year}-${month}-${day}`
-    }
+function getJakartaDateString(date = new Date()): string {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: BUSINESS_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date)
+}
+
+function parseDateString(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number)
+    return new Date(Date.UTC(year, month - 1, day))
+}
+
+function dateStringFromUtcDate(date: Date): string {
+    return date.toISOString().split('T')[0]
+}
+
+function shiftDateString(dateString: string, days: number): string {
+    const date = parseDateString(dateString)
+    date.setUTCDate(date.getUTCDate() + days)
+    return dateStringFromUtcDate(date)
+}
+
+function getDateRangeFilter(range: DateRange): { gte?: string; lte?: string } {
+    const today = getJakartaDateString()
 
     switch (range) {
         case 'today':
-            return { gte: toDateString(now), lte: toDateString(now) }
+            return { gte: today, lte: today }
         case 'yesterday': {
-            const yesterday = new Date(now)
-            yesterday.setDate(now.getDate() - 1)
-            return { gte: toDateString(yesterday), lte: toDateString(yesterday) }
+            const yesterday = shiftDateString(today, -1)
+            return { gte: yesterday, lte: yesterday }
         }
         case '7d': {
-            const start7d = new Date(now)
-            start7d.setDate(now.getDate() - 6)
-            return { gte: toDateString(start7d), lte: toDateString(now) }
+            return { gte: shiftDateString(today, -6), lte: today }
         }
         case '30d': {
-            const start30d = new Date(now)
-            start30d.setDate(now.getDate() - 29)
-            return { gte: toDateString(start30d), lte: toDateString(now) }
+            return { gte: shiftDateString(today, -29), lte: today }
         }
         case 'all':
             return {}
@@ -408,14 +422,7 @@ export async function getEventChartData(batchId: string, range: DateRange = 'tod
 
     const supabase = createAdminClient()
 
-    const today = new Date()
-
-    const toDateString = (date: Date) => {
-        const year = date.getFullYear()
-        const month = `${date.getMonth() + 1}`.padStart(2, '0')
-        const day = `${date.getDate()}`.padStart(2, '0')
-        return `${year}-${month}-${day}`
-    }
+    const today = getJakartaDateString()
 
     const dateFilter = getDateRangeFilter(range)
 
@@ -445,18 +452,12 @@ export async function getEventChartData(batchId: string, range: DateRange = 'tod
     let salesData: number[]
 
     if (range === 'today' || range === 'yesterday') {
-        const singleDate = range === 'today' ? today : (() => { const d = new Date(today); d.setDate(today.getDate() - 1); return d })()
-        const dateKey = toDateString(singleDate)
+        const dateKey = range === 'today' ? today : shiftDateString(today, -1)
         const dayData = aggregatedByDate.get(dateKey)
         labels = [range === 'today' ? 'HARI INI' : 'KEMARIN']
         leadsData = [dayData?.leads || 0]
         salesData = [dayData?.sales || 0]
     } else {
-        const parseDateString = (dateStr: string) => {
-            const [year, month, day] = dateStr.split('-').map(Number)
-            return new Date(year, (month || 1) - 1, day || 1)
-        }
-
         const formatLabel = (date: Date, totalDays: number) => {
             if (totalDays <= 7) {
                 return date.toLocaleDateString('id-ID', { weekday: 'short' }).toUpperCase()
@@ -464,18 +465,18 @@ export async function getEventChartData(batchId: string, range: DateRange = 'tod
             return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
         }
 
-        let startDate = new Date(today)
-        let endDate = new Date(today)
+        let startDate = parseDateString(today)
+        let endDate = parseDateString(today)
 
         if (range === '30d') {
-            startDate.setDate(today.getDate() - 29)
+            startDate = parseDateString(shiftDateString(today, -29))
         } else if (range === 'all') {
             if ((reports || []).length > 0) {
                 startDate = parseDateString(reports![0].report_date)
                 endDate = parseDateString(reports![reports!.length - 1].report_date)
             }
         } else {
-            startDate.setDate(today.getDate() - 6)
+            startDate = parseDateString(shiftDateString(today, -6))
         }
 
         if (endDate < startDate) {
@@ -489,8 +490,8 @@ export async function getEventChartData(batchId: string, range: DateRange = 'tod
 
         for (let i = 0; i < totalDays; i++) {
             const currentDate = new Date(startDate)
-            currentDate.setDate(startDate.getDate() + i)
-            const dateKey = toDateString(currentDate)
+            currentDate.setUTCDate(startDate.getUTCDate() + i)
+            const dateKey = dateStringFromUtcDate(currentDate)
             const currentTotals = aggregatedByDate.get(dateKey)
             labels.push(formatLabel(currentDate, totalDays))
             leadsData.push(currentTotals?.leads || 0)
@@ -498,8 +499,7 @@ export async function getEventChartData(batchId: string, range: DateRange = 'tod
         }
     }
 
-    const todayDateKey = toDateString(today)
-    const todayLeads = aggregatedByDate.get(todayDateKey)?.leads || 0
+    const todayLeads = aggregatedByDate.get(today)?.leads || 0
 
     return {
         labels,

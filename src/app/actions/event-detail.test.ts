@@ -232,12 +232,26 @@ describe('event-detail server actions', () => {
   });
 
   describe('getEventChartData', () => {
+    const jakartaDate = () => new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+
+    const shiftDate = (dateString: string, days: number) => {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      date.setUTCDate(date.getUTCDate() + days);
+      return date.toISOString().split('T')[0];
+    };
+
     it('should return correct chart aggregations', async () => {
       vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: 'user-1' },
       } as any);
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = jakartaDate();
 
       vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
         if (table === 'reports') {
@@ -258,9 +272,7 @@ describe('event-detail server actions', () => {
     it('should return yesterday chart data', async () => {
       vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const yesterdayStr = shiftDate(jakartaDate(), -1);
 
       vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
         if (table === 'reports') {
