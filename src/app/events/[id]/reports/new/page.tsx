@@ -17,8 +17,8 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import { createReport, createReportRange } from "@/app/actions/reports"
 import { getBatch } from "@/app/actions/batches"
-import { getFacebookAdAccounts, getFacebookAdsSpend } from "@/app/actions/facebook-ads"
-import type { FacebookAdAccount } from "@/app/actions/facebook-ads"
+import { getFacebookAdAccounts, getFacebookAdsSpend, getFacebookCampaigns } from "@/app/actions/facebook-ads"
+import type { FacebookAdAccount, FacebookCampaign } from "@/app/actions/facebook-ads"
 
 type DateOption = "today" | "yesterday" | "custom" | "range"
 
@@ -98,6 +98,12 @@ export default function NewReportPage() {
     // Facebook Ads integration
     const [fbAdAccounts, setFbAdAccounts] = React.useState<FacebookAdAccount[]>([])
     const [fbSelectedAccount, setFbSelectedAccount] = React.useState("")
+    const [fbSpendMode, setFbSpendMode] = React.useState<"account" | "campaign">("account")
+    const [fbCampaigns, setFbCampaigns] = React.useState<FacebookCampaign[]>([])
+    const [fbSelectedCampaign, setFbSelectedCampaign] = React.useState("")
+    const [fbCampaignSearch, setFbCampaignSearch] = React.useState("")
+    const [fbCampaignsLoadedFor, setFbCampaignsLoadedFor] = React.useState("")
+    const [fbLoadingCampaigns, setFbLoadingCampaigns] = React.useState(false)
     const [fbLoadingAccounts, setFbLoadingAccounts] = React.useState(true)
     const [fbFetchSpendLoading, setFbFetchSpendLoading] = React.useState(false)
     const [fbError, setFbError] = React.useState<string | null>(null)
@@ -165,7 +171,12 @@ export default function NewReportPage() {
         setFbError(null)
         setFbSpendSuccess(false)
         const { date, endDate } = getReportDateForFb()
-        const result = await getFacebookAdsSpend(fbSelectedAccount, date, endDate)
+        if (fbSpendMode === "campaign" && !fbSelectedCampaign) {
+            setFbError('Pilih campaign terlebih dahulu')
+            setFbFetchSpendLoading(false)
+            return
+        }
+        const result = await getFacebookAdsSpend(fbSelectedAccount, date, endDate, fbSpendMode === "campaign" ? fbSelectedCampaign : undefined)
         if (result.success && result.spend !== undefined) {
             const spendValue = Math.round(result.spend).toString()
             setFormData(prev => ({ ...prev, spend: formatCurrency(spendValue) }))
@@ -433,11 +444,16 @@ export default function NewReportPage() {
                                             <div className="flex gap-2">
                                                 <select
                                                     value={fbSelectedAccount}
-                                                    onChange={(e) => {
-                                                        setFbSelectedAccount(e.target.value)
-                                                        setFbSpendSuccess(false)
-                                                        setFbError(null)
-                                                    }}
+                                                     onChange={(e) => {
+                                                         setFbSelectedAccount(e.target.value)
+                                                         setFbSpendMode("account")
+                                                         setFbCampaigns([])
+                                                         setFbSelectedCampaign("")
+                                                         setFbCampaignSearch("")
+                                                         setFbCampaignsLoadedFor("")
+                                                         setFbSpendSuccess(false)
+                                                         setFbError(null)
+                                                     }}
                                                     className="flex-1 h-11 rounded-md border border-input bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                                                 >
                                                     <option value="">Pilih akun iklan...</option>
@@ -465,6 +481,69 @@ export default function NewReportPage() {
                                                     )}
                                                 </Button>
                                             </div>
+
+                                            <div className="flex gap-2">
+                                                 {(["account", "campaign"] as const).map(mode => (
+                                                     <button
+                                                         key={mode}
+                                                         type="button"
+                                                         disabled={mode === "campaign" && !fbSelectedAccount}
+                                                         onClick={async () => {
+                                                             if (mode === "campaign" && fbLoadingCampaigns) return
+                                                             setFbSpendMode(mode)
+                                                             setFbSpendSuccess(false)
+                                                             setFbError(null)
+                                                             if (mode === "campaign" && fbCampaignsLoadedFor !== fbSelectedAccount) {
+                                                                 setFbLoadingCampaigns(true)
+                                                                 const result = await getFacebookCampaigns(fbSelectedAccount)
+                                                                 setFbLoadingCampaigns(false)
+                                                                 if (result.success) {
+                                                                     setFbCampaigns(result.campaigns || [])
+                                                                     setFbCampaignsLoadedFor(fbSelectedAccount)
+                                                                 } else {
+                                                                     setFbError(result.error || 'Gagal mengambil data campaign')
+                                                                 }
+                                                             }
+                                                         }}
+                                                         className={cn(
+                                                             "flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all",
+                                                             fbSpendMode === mode ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                         )}
+                                                     >
+                                                         {mode === "account" ? "Entire ad account" : "Specific campaign"}
+                                                     </button>
+                                                 ))}
+                                             </div>
+
+                                            {fbSpendMode === "campaign" && (
+                                                 <div className="space-y-2 rounded-lg border bg-gray-50 p-3">
+                                                     {fbLoadingCampaigns ? (
+                                                         <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" />Memuat campaign...</div>
+                                                     ) : (
+                                                         <>
+                                                             <Input
+                                                                 value={fbCampaignSearch}
+                                                                 onChange={e => setFbCampaignSearch(e.target.value)}
+                                                                 placeholder="Cari nama campaign..."
+                                                                 className="h-10 bg-white"
+                                                             />
+                                                             <select
+                                                                 value={fbSelectedCampaign}
+                                                                 onChange={e => { setFbSelectedCampaign(e.target.value); setFbSpendSuccess(false); setFbError(null) }}
+                                                                 className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                                             >
+                                                                 <option value="">Pilih campaign...</option>
+                                                                 {fbCampaigns
+                                                                     .filter(c => `${c.name} ${c.id}`.toLowerCase().includes(fbCampaignSearch.toLowerCase()))
+                                                                     .map(c => (
+                                                                         <option key={c.id} value={c.id}>{c.name || "(Tanpa nama)"} ({c.id})</option>
+                                                                     ))}
+                                                             </select>
+                                                             {!fbCampaigns.length && <p className="text-xs text-gray-500">Tidak ditemukan campaign untuk akun ini.</p>}
+                                                         </>
+                                                     )}
+                                                 </div>
+                                             )}
 
                                             {fbSpendSuccess && (
                                                 <div className="rounded-lg bg-green-50 p-3 flex items-center gap-2">
@@ -720,7 +799,8 @@ export default function NewReportPage() {
                 <p className="mt-4 text-center text-xs text-gray-400">
                     Laporan disimpan ke batch yang sedang aktif
                 </p>
-            </div>
+                </div>
+
         </div>
     )
 }

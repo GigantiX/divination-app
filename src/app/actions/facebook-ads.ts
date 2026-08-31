@@ -29,6 +29,19 @@ export interface FacebookAdsSpendResult {
     tokenExpired?: boolean
 }
 
+export interface FacebookCampaign {
+    id: string
+    name: string
+    status: string
+}
+
+export interface FacebookCampaignsResult {
+    success: boolean
+    campaigns?: FacebookCampaign[]
+    error?: string
+    tokenExpired?: boolean
+}
+
 // ──────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────
@@ -117,6 +130,45 @@ export async function getFacebookAdAccounts(): Promise<FacebookAdAccountsResult>
     }
 }
 
+/** Get all campaigns for an ad account. Pagination is handled on the server. */
+export async function getFacebookCampaigns(adAccountId: string): Promise<FacebookCampaignsResult> {
+    try {
+        const tokenData = await getFacebookAccessToken()
+        if (!tokenData) return { success: false, error: 'Akun Facebook belum terhubung' }
+        if (tokenData.tokenExpired) {
+            return { success: false, error: 'Token Facebook telah kedaluwarsa. Silakan hubungkan ulang.', tokenExpired: true }
+        }
+
+        const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
+        let nextUrl: string | null = `https://graph.facebook.com/v20.0/${accountId}/campaigns?fields=id,name,status&limit=100&access_token=${encodeURIComponent(tokenData.accessToken)}`
+        const campaigns: FacebookCampaign[] = []
+
+        // Defensive cap prevents an unexpected paging response from looping forever.
+        for (let page = 0; nextUrl && page < 100; page++) {
+            const res: Response = await fetch(nextUrl, { method: 'GET' })
+            const body: any = await res.json().catch(() => ({}))
+            if (!res.ok) {
+                if (body?.error?.code === 190 || body?.error?.code === 102) {
+                    return { success: false, error: 'Token Facebook telah kedaluwarsa. Silakan hubungkan ulang.', tokenExpired: true }
+                }
+                return { success: false, error: body?.error?.message || 'Gagal mengambil data campaign Facebook' }
+            }
+
+            campaigns.push(...(body.data || []).map((item: any) => ({
+                id: item.id,
+                name: item.name || '',
+                status: item.status || '',
+            })))
+            nextUrl = body.paging?.next || null
+        }
+
+        return { success: true, campaigns }
+    } catch (err) {
+        console.error('Error fetching Facebook campaigns:', err)
+        return { success: false, error: 'Terjadi kesalahan saat mengambil data campaign' }
+    }
+}
+
 /**
  * Get the total ad spend for a specific date (or date range) for a given ad account.
  * The ad account ID should be in the format "act_XXXXX" or just the numeric ID.
@@ -125,7 +177,8 @@ export async function getFacebookAdAccounts(): Promise<FacebookAdAccountsResult>
 export async function getFacebookAdsSpend(
     adAccountId: string,
     date: string,
-    endDate?: string
+    endDate?: string,
+    campaignId?: string
 ): Promise<FacebookAdsSpendResult> {
     try {
         const tokenData = await getFacebookAccessToken()
@@ -145,9 +198,9 @@ export async function getFacebookAdsSpend(
         // Normalize ad account ID: if it already starts with "act_", use as-is
         const accountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`
 
-        const url = new URL(`https://graph.facebook.com/v20.0/${accountId}/insights`)
+        const url = new URL(`https://graph.facebook.com/v20.0/${campaignId || accountId}/insights`)
         url.searchParams.set('fields', 'spend,account_currency')
-        url.searchParams.set('level', 'account')
+        if (!campaignId) url.searchParams.set('level', 'account')
         url.searchParams.set('time_range', JSON.stringify({ since: date, until: endDate ?? date }))
         url.searchParams.set('access_token', tokenData.accessToken)
 
