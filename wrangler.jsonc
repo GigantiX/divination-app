@@ -19,8 +19,10 @@
     "R2_BUCKET_NAME": "divination-dashboard-storage",
     "NEXT_PUBLIC_R2_PUBLIC_URL": "https://pub-ef7ae372a1ef42e09300e683a85da4d7.r2.dev",
     "AUTH_TRUST_HOST": "true",
-    "NEXTAUTH_URL": "https://divination-dashboard.divination.workers.dev",
-    "NEXT_PUBLIC_APP_URL": "https://divination-dashboard.divination.workers.dev",
-    "APP_BASE_URL": "https://divination-dashboard.divination.workers.dev"
+    "NEXTAUTH_URL": "https://divination.axelabs.my.id",
+    "NEXT_PUBLIC_APP_URL": "https://divination.axelabs.my.id",
+    "APP_BASE_URL": "https://divination.axelabs.my.id",
+    "FACEBOOK_APP_ID": "2025580961371089",
+    "FACEBOOK_CONFIG_ID": "953187420387318"
   }
 }
