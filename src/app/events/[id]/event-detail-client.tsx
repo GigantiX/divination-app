@@ -521,6 +521,9 @@ function OverviewContent({ data, chartData }: ContentProps) {
                             <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
                                 ROAS: {data.stats.roas}x
                             </div>
+                            <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                                P/L %: {data.stats.totalSpend > 0 ? Math.round((data.stats.profitLoss / data.stats.totalSpend) * 100) : 0}%
+                            </div>
                         </div>
                     </div>
 
@@ -622,6 +625,10 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                             <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
                                                 <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
                                                 <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
+                                                <p className="text-xs font-semibold text-gray-500 uppercase">P/L %:</p>
+                                                <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                    {adv.spend > 0 ? Math.round((adv.profitLoss / adv.spend) * 100) : 0}%
+                                                </p>
                                             </div>
                                         </div>
 
@@ -817,6 +824,10 @@ function ReportsContent({ data }: ContentProps) {
                                     <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
                                         <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
                                         <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase">P/L %:</p>
+                                        <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {adv.spend > 0 ? Math.round((adv.profitLoss / adv.spend) * 100) : 0}%
+                                        </p>
                                     </div>
                                 </div>
 
