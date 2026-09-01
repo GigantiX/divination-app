@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LoginPage from './page';
 import { loginAction } from '@/app/actions/auth';
@@ -38,10 +38,10 @@ describe('LoginPage integration test', () => {
   });
 
   it('displays error message on failed login', async () => {
-    vi.mocked(loginAction).mockImplementationOnce(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      return { error: 'Email atau password salah' };
-    });
+    let resolveLogin: (value: { error: string }) => void = () => {};
+    vi.mocked(loginAction).mockImplementationOnce(
+      () => new Promise((resolve) => { resolveLogin = resolve; })
+    );
     render(<LoginPage />);
 
     const emailInput = screen.getByLabelText(/Email/i);
@@ -52,9 +52,11 @@ describe('LoginPage integration test', () => {
     await userEvent.type(passwordInput, 'wrongpassword');
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(submitButton).toBeDisabled();
-      expect(screen.getByText('Memproses...')).toBeInTheDocument();
+    expect(submitButton).toBeDisabled();
+    expect(screen.getByText('Memproses...')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveLogin({ error: 'Email atau password salah' });
     });
 
     await waitFor(() => {
