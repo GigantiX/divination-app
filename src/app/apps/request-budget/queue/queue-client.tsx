@@ -124,12 +124,12 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
             <div className="flex-1 p-4 pb-24 md:mx-auto md:w-full md:max-w-4xl md:p-6">
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <Link href="/apps/request-budget" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
-                            <ArrowLeft className="h-5 w-5 text-gray-600" />
+                        <Link href="/apps/request-budget" className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors">
+                            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Queue Request</h1>
-                            <p className="text-sm text-gray-500">Daftar antrian persetujuan budget iklan.</p>
+                            <h1 className="text-2xl font-bold text-foreground">Queue Request</h1>
+                            <p className="text-sm text-muted-foreground">Daftar antrian persetujuan budget iklan.</p>
                         </div>
                     </div>
                     {isAdmin && (
@@ -138,7 +138,7 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleExport("budget-history", "csv")}
-                                className="flex items-center gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                className="flex items-center gap-1.5 border-success/30 text-success hover:bg-success/20"
                             >
                                 <Download className="h-4 w-4" /> Export CSV
                             </Button>
@@ -146,7 +146,7 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleExport("budget-history", "xlsx")}
-                                className="flex items-center gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                className="flex items-center gap-1.5 border-success/30 text-success hover:bg-success/20"
                             >
                                 <Download className="h-4 w-4" /> Export Excel
                             </Button>
@@ -156,40 +156,40 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
 
                 {loading ? (
                     <div className="flex justify-center p-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                 ) : queue.length === 0 ? (
-                    <div className="text-center p-12 bg-white rounded-xl border border-gray-200">
-                        <p className="text-gray-500">Tidak ada request budget yang pending.</p>
+                    <div className="text-center p-12 bg-card rounded-xl border border-border">
+                        <p className="text-muted-foreground">Tidak ada request budget yang pending.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {queue.map((req) => (
-                            <Card key={req.id} className="border-gray-200 shadow-sm overflow-hidden">
+                            <Card key={req.id} className="border-border shadow-sm overflow-hidden">
                                 <CardContent className="p-0">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
                                         <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                <span className="font-medium text-gray-900">{req.user_name}</span>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <span className="font-medium text-foreground">{req.user_name}</span>
                                                 <span>&bull;</span>
                                                 <span>{new Date(req.created_at).toLocaleDateString('id-ID', {
                                                     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
                                                 })}</span>
                                             </div>
-                                            <h3 className="font-semibold text-gray-900">{req.event_name}</h3>
-                                            <p className="text-xl font-bold text-blue-600">{formatIDR(req.amount)}</p>
+                                            <h3 className="font-semibold text-foreground">{req.event_name}</h3>
+                                            <p className="text-xl font-bold text-primary">{formatIDR(req.amount)}</p>
                                         </div>
                                         
                                         <div className="flex items-center gap-2 mt-2 sm:mt-0">
                                             <Button 
                                                 variant="outline" 
-                                                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                className="border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
                                                 onClick={() => handleReject(req.id)}
                                             >
                                                 <X className="h-4 w-4 mr-1" /> Tolak
                                             </Button>
                                             <Button 
-                                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                className="bg-success hover:bg-success/85 text-success-foreground"
                                                 onClick={() => setApprovingItem(req)}
                                             >
                                                 <Check className="h-4 w-4 mr-1" /> Setujui
@@ -205,7 +205,7 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
 
             {/* Approval Upload Modal */}
             {approvingItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
                     <Card className="w-full max-w-md border-none shadow-xl">
                         <CardContent className="p-0">
                             <div className="flex items-center justify-between border-b p-4">
@@ -217,19 +217,19 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
                                         setProofPreview(null)
                                         setErrorMsg("")
                                     }} 
-                                    className="text-gray-400 hover:text-gray-600"
+                                    className="text-muted-foreground hover:text-foreground"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
                             <div className="p-4 space-y-4">
-                                <div className="bg-gray-50 p-3 rounded-lg text-sm space-y-1 mb-2 border border-gray-100">
-                                    <p><span className="text-gray-500">Request:</span> <span className="font-semibold">{formatIDR(approvingItem.amount)}</span></p>
-                                    <p><span className="text-gray-500">Event:</span> {approvingItem.event_name}</p>
+                                <div className="bg-muted p-3 rounded-lg text-sm space-y-1 mb-2 border border-border">
+                                    <p><span className="text-muted-foreground">Request:</span> <span className="font-semibold">{formatIDR(approvingItem.amount)}</span></p>
+                                    <p><span className="text-muted-foreground">Event:</span> {approvingItem.event_name}</p>
                                 </div>
 
                                 {errorMsg && (
-                                    <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
+                                    <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-lg">
                                         {errorMsg}
                                     </div>
                                 )}
@@ -238,19 +238,19 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
                                     <label className="text-sm font-medium">Unggah Bukti Transfer</label>
                                     
                                     {!proofPreview ? (
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer bg-muted hover:bg-accent">
                                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                <UploadCloud className="w-8 h-8 mb-2 text-gray-400" />
-                                                <p className="text-sm text-gray-500"><span className="font-semibold">Klik untuk unggah</span> gambar</p>
+                                                <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                                <p className="text-sm text-muted-foreground"><span className="font-semibold">Klik untuk unggah</span> gambar</p>
                                             </div>
                                             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                         </label>
                                     ) : (
-                                        <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex justify-center">
+                                        <div className="relative rounded-lg overflow-hidden border border-border bg-muted flex justify-center">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={proofPreview} alt="Preview" className="max-h-48 object-contain" />
                                             <button 
-                                                className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                                                className="absolute top-2 right-2 bg-overlay/50 text-primary-foreground rounded-full p-1 hover:bg-overlay/70"
                                                 onClick={() => {
                                                     setProofFile(null)
                                                     setProofPreview(null)
@@ -276,7 +276,7 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
                                         Batal
                                     </Button>
                                     <Button 
-                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        className="flex-1 bg-success hover:bg-success/85 text-success-foreground"
                                         onClick={submitApproval}
                                         disabled={isProcessing || !proofFile}
                                     >

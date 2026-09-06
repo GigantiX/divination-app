@@ -4,22 +4,108 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    color-scheme: light;
+    --background: 210 40% 98%;
+    --background-secondary: 210 40% 98%;
+    --background-tertiary: 210 40% 96%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 221 83% 45%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 43%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 74% 42%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 213 89% 60%;
+    --surface: 0 0% 100%;
+    --surface-elevated: 0 0% 100%;
+    --surface-hover: 210 40% 96%;
+    --success: 142 72% 31%;
+    --success-foreground: 0 0% 100%;
+    --warning: 32 92% 35%;
+    --warning-foreground: 0 0% 100%;
+    --info: 213 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --overlay: 222 47% 11%;
+    --chart-leads: 213 89% 52%;
+    --chart-sales: 160 84% 32%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
     --radius: 0.75rem;
   }
  
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    color-scheme: dark;
+    --background: 222 32% 9%;
+    --background-secondary: 222 32% 9%;
+    --background-tertiary: 222 26% 13%;
+    --foreground: 210 40% 96%;
+    --card: 222 26% 13%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 24% 15%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 213 89% 64%;
+    --primary-foreground: 222 47% 11%;
+    --primary-hover: 213 89% 70%;
+    --secondary: 222 22% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 222 22% 18%;
+    --muted-foreground: 215 20% 70%;
+    --accent: 217 24% 20%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 68% 46%;
+    --border: 217 19% 25%;
+    --input: 217 19% 29%;
+    --ring: 213 89% 70%;
+    --surface: 222 26% 13%;
+    --surface-elevated: 222 24% 16%;
+    --surface-hover: 217 24% 20%;
+    --success: 142 54% 43%;
+    --success-foreground: 142 80% 8%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 32 92% 12%;
+    --info: 213 89% 68%;
+    --info-foreground: 216 48% 12%;
+    --overlay: 222 47% 3%;
+    --chart-leads: 213 89% 68%;
+    --chart-sales: 160 64% 48%;
+    --sidebar: 222 28% 11%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-accent: 217 24% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 19% 25%;
   }
 }
 
 @layer base {
   * {
-    @apply border-[#E2E8F0]; /* slate-200 */
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  ::selection {
+    @apply bg-primary/25 text-foreground;
+  }
+
+  :where(button, a, input, textarea, select, [role="button"]):focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 }

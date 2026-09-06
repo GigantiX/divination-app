@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { NavigationLayout } from "@/components/ui/nav-layout"
+import { ThemeSelector } from "@/components/ui/theme-selector"
 import { logoutAction } from "@/app/actions/auth"
 import { disconnectFacebookAction, updateEmoji, type FacebookConnectionStatus, type UserProfile } from "@/app/actions/profile"
 import { getEmojisByCategory } from "@/lib/emojis"
@@ -119,22 +120,22 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                                 <AvatarEmoji
                                     emoji={selectedEmoji}
                                     size="xl"
-                                    className="border-4 border-white shadow-lg transition-transform group-hover:scale-105"
+                                    className="border-4 border-card shadow-lg transition-transform group-hover:scale-105"
                                 />
-                                <div className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center border-2 border-white shadow-md">
-                                    <Smile className="h-4 w-4 text-white" />
+                                <div className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center border-2 border-card shadow-md">
+                                    <Smile className="h-4 w-4 text-primary-foreground" />
                                 </div>
                             </button>
 
                             {/* Name and Email */}
-                            <h2 className="text-xl font-bold text-gray-900 mb-1">{profile.full_name}</h2>
-                            <p className="text-gray-500 mb-4">{profile.username}</p>
+                            <h2 className="text-xl font-bold text-foreground mb-1">{profile.full_name}</h2>
+                            <p className="text-muted-foreground mb-4">{profile.username}</p>
 
                             {/* Edit Profile Button */}
                             <Link href="/settings/edit-profile">
                                 <Button
                                     variant="outline"
-                                    className="rounded-full px-6 text-gray-700 border-gray-300 hover:bg-gray-50"
+                                    className="rounded-full px-6 text-foreground border-border hover:bg-accent"
                                 >
                                     Edit Profil
                                 </Button>
@@ -143,21 +144,33 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                     </CardContent>
                 </Card>
 
+                <Card className="mb-4 border-none shadow-sm">
+                    <CardContent className="p-5">
+                        <div className="mb-4">
+                            <h2 className="font-semibold text-foreground">Tampilan</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Pilih tema terang, gelap, atau ikuti pengaturan perangkat Anda.
+                            </p>
+                        </div>
+                        <ThemeSelector />
+                    </CardContent>
+                </Card>
+
                 {/* Menu Items */}
                 <Card className="border-none shadow-sm mb-4">
                     <CardContent className="p-0">
                         {/* Facebook Connect */}
-                        <div className="border-b border-gray-100 p-4">
+                        <div className="border-b border-border p-4">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                                        <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                                        <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                             <path d="M22 12.07C22 6.503 17.523 2 12 2S2 6.503 2 12.07c0 5.017 3.657 9.18 8.438 9.93v-7.02H7.898v-2.91h2.54V9.845c0-2.52 1.492-3.914 3.778-3.914 1.095 0 2.238.197 2.238.197v2.475h-1.26c-1.242 0-1.629.775-1.629 1.57v1.886h2.773l-.443 2.91h-2.33V22c4.781-.75 8.438-4.913 8.438-9.93Z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="font-medium text-gray-900">Connect Facebook</p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="font-medium text-foreground">Connect Facebook</p>
+                                        <p className="text-xs text-muted-foreground">
                                             {facebookConnection?.connected
                                                 ? `Terhubung${facebookConnection.facebookEmail ? ` sebagai ${facebookConnection.facebookEmail}` : ''}${connectedDate ? ` sejak ${connectedDate}` : ''}`
                                                 : 'Hubungkan akun Facebook untuk integrasi aplikasi'
@@ -170,7 +183,7 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                                         variant="outline"
                                         onClick={handleDisconnectFacebook}
                                         disabled={isDisconnectingFacebook}
-                                        className="h-9 rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        className="h-9 rounded-lg border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
                                     >
                                         {isDisconnectingFacebook ? (
                                             <>
@@ -184,54 +197,54 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                                 ) : (
                                     <Button
                                         onClick={handleConnectFacebook}
-                                        className="h-9 rounded-lg bg-blue-600 hover:bg-blue-700"
+                                        className="h-9 rounded-lg bg-primary hover:bg-primary-hover"
                                     >
                                         Connect
                                     </Button>
                                 )}
                             </div>
                             {facebookMessage && (
-                                <p className="mt-2 text-xs text-gray-500">{facebookMessage}</p>
+                                <p className="mt-2 text-xs text-muted-foreground">{facebookMessage}</p>
                             )}
                         </div>
 
                         {/* Change Emoji */}
                         <button
                             onClick={() => setShowEmojiPicker(true)}
-                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 w-full text-left"
+                            className="flex items-center justify-between p-4 hover:bg-accent transition-colors cursor-pointer border-b border-border w-full text-left"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-50">
-                                    <Smile className="h-5 w-5 text-yellow-500" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning/15">
+                                    <Smile className="h-5 w-5 text-warning" />
                                 </div>
-                                <span className="font-medium text-gray-900">Ubah Emoji Profil</span>
+                                <span className="font-medium text-foreground">Ubah Emoji Profil</span>
                             </div>
-                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </button>
 
                         {/* Change Password */}
                         <Link href="/settings/change-password">
-                            <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
+                            <div className="flex items-center justify-between p-4 hover:bg-accent transition-colors cursor-pointer border-b border-border">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                                        <Lock className="h-5 w-5 text-blue-500" />
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                                        <Lock className="h-5 w-5 text-primary" />
                                     </div>
-                                    <span className="font-medium text-gray-900">Ubah Kata Sandi</span>
+                                    <span className="font-medium text-foreground">Ubah Kata Sandi</span>
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             </div>
                         </Link>
 
                         {/* Help Center */}
                         <Link href="/settings/help">
-                            <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <div className="flex items-center justify-between p-4 hover:bg-accent transition-colors cursor-pointer">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                                        <HelpCircle className="h-5 w-5 text-blue-500" />
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                                        <HelpCircle className="h-5 w-5 text-primary" />
                                     </div>
-                                    <span className="font-medium text-gray-900">Pusat Bantuan</span>
+                                    <span className="font-medium text-foreground">Pusat Bantuan</span>
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
                             </div>
                         </Link>
                     </CardContent>
@@ -242,12 +255,12 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                     <CardContent className="p-0">
                         <button
                             onClick={() => setShowLogoutDialog(true)}
-                            className="flex items-center gap-4 w-full p-4 hover:bg-red-50 transition-colors"
+                            className="flex items-center gap-4 w-full p-4 hover:bg-destructive/15 transition-colors"
                         >
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
-                                <Power className="h-5 w-5 text-red-500" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/15">
+                                <Power className="h-5 w-5 text-destructive" />
                             </div>
-                            <span className="font-medium text-red-500">Keluar</span>
+                            <span className="font-medium text-destructive">Keluar</span>
                         </button>
                     </CardContent>
                 </Card>
@@ -255,16 +268,16 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
 
             {/* Emoji Picker Modal */}
             {showEmojiPicker && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-t-3xl bg-white p-4 shadow-xl animate-in slide-in-from-bottom">
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/50">
+                    <div className="w-full max-w-md rounded-t-3xl bg-card p-4 shadow-xl animate-in slide-in-from-bottom">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-gray-900">Pilih Emoji</h3>
+                            <h3 className="text-lg font-bold text-foreground">Pilih Emoji</h3>
                             <button
                                 onClick={() => setShowEmojiPicker(false)}
-                                className="p-2 hover:bg-gray-100 rounded-full"
+                                className="p-2 hover:bg-accent rounded-full"
                             >
-                                <X className="h-5 w-5 text-gray-500" />
+                                <X className="h-5 w-5 text-muted-foreground" />
                             </button>
                         </div>
 
@@ -273,8 +286,8 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                             <button
                                 onClick={() => setActiveCategory("faces")}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "faces"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-accent"
                                     }`}
                             >
                                 😀 Wajah
@@ -282,8 +295,8 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                             <button
                                 onClick={() => setActiveCategory("animals")}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "animals"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-accent"
                                     }`}
                             >
                                 🐶 Hewan
@@ -291,8 +304,8 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                             <button
                                 onClick={() => setActiveCategory("objects")}
                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "objects"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-accent"
                                     }`}
                             >
                                 ⭐ Objek
@@ -306,7 +319,7 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                                     key={index}
                                     onClick={() => handleSelectEmoji(emoji)}
                                     disabled={isSavingEmoji}
-                                    className={`h-10 w-10 flex items-center justify-center text-2xl rounded-lg transition-all hover:bg-gray-100 hover:scale-110 ${selectedEmoji === emoji ? "bg-blue-100 ring-2 ring-blue-500" : ""
+                                    className={`h-10 w-10 flex items-center justify-center text-2xl rounded-lg transition-all hover:bg-accent hover:scale-110 ${selectedEmoji === emoji ? "bg-primary/15 ring-2 ring-primary" : ""
                                         } ${isSavingEmoji ? "opacity-50" : ""}`}
                                 >
                                     {emoji}
@@ -316,7 +329,7 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
 
                         {/* Loading indicator */}
                         {isSavingEmoji && (
-                            <div className="flex items-center justify-center gap-2 py-2 text-blue-500">
+                            <div className="flex items-center justify-center gap-2 py-2 text-primary">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 <span className="text-sm">Menyimpan...</span>
                             </div>
@@ -327,20 +340,20 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
 
             {/* Logout Confirmation Dialog */}
             {showLogoutDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
+                    <div className="w-full max-w-sm rounded-3xl bg-card p-6 shadow-xl">
                         {/* Icon */}
                         <div className="flex justify-center mb-4">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                                <LogOut className="h-8 w-8 text-red-500" />
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15">
+                                <LogOut className="h-8 w-8 text-destructive" />
                             </div>
                         </div>
 
                         {/* Title */}
-                        <h3 className="text-center text-xl font-bold text-gray-900 mb-2">
+                        <h3 className="text-center text-xl font-bold text-foreground mb-2">
                             Keluar dari Akun?
                         </h3>
-                        <p className="text-center text-gray-500 mb-6">
+                        <p className="text-center text-muted-foreground mb-6">
                             Anda akan keluar dari akun ini. Pastikan semua perubahan sudah tersimpan.
                         </p>
 
@@ -349,14 +362,14 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                             <Button
                                 variant="outline"
                                 onClick={() => setShowLogoutDialog(false)}
-                                className="h-12 rounded-xl border-gray-300 font-semibold"
+                                className="h-12 rounded-xl border-border font-semibold"
                                 disabled={isLoggingOut}
                             >
                                 Batal
                             </Button>
                             <Button
                                 onClick={handleLogout}
-                                className="h-12 rounded-xl bg-red-500 hover:bg-red-600 font-semibold"
+                                className="h-12 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive-hover font-semibold"
                                 disabled={isLoggingOut}
                             >
                                 {isLoggingOut ? (

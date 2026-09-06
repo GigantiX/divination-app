@@ -90,16 +90,16 @@ export default function AssignUserPage() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50">
+        <div className="flex min-h-screen flex-col bg-muted">
             {/* Header */}
-            <div className="bg-white px-4 py-4 shadow-sm">
+            <div className="bg-card px-4 py-4 shadow-sm">
                 <div className="flex items-center gap-3">
                     <Link href={`/people/${userId}`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <ChevronLeft className="h-6 w-6" />
                         </Button>
                     </Link>
-                    <h1 className="text-xl font-bold text-black">Tugaskan {userName}</h1>
+                    <h1 className="text-xl font-bold text-foreground">Tugaskan {userName}</h1>
                 </div>
             </div>
 
@@ -107,21 +107,21 @@ export default function AssignUserPage() {
             <div className="flex-1 p-4 md:max-w-2xl md:mx-auto md:w-full">
                 {/* Search Bar */}
                 <div className="relative mb-6">
-                    <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         type="text"
                         placeholder="Cari event..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-12 pl-11 rounded-xl bg-white border-gray-200"
+                        className="h-12 pl-11 rounded-xl bg-card border-border"
                     />
                 </div>
 
                 {/* Section Header */}
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-gray-900">Pilih Event</h2>
+                    <h2 className="text-lg font-bold text-foreground">Pilih Event</h2>
                     {!isLoading && (
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-muted-foreground">
                             Tersedia: {filteredEvents.length}
                         </span>
                     )}
@@ -132,16 +132,16 @@ export default function AssignUserPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="mt-3 text-sm text-gray-500">Memuat event...</p>
+                            <p className="mt-3 text-sm text-muted-foreground">Memuat event...</p>
                         </div>
                     ) : error && !isDialogOpen ? (
                         <div className="flex flex-col items-center justify-center py-12">
-                            <p className="text-red-500">{error}</p>
+                            <p className="text-destructive">{error}</p>
                         </div>
                     ) : filteredEvents.length === 0 ? (
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-8 text-center">
-                                <p className="text-gray-500">
+                                <p className="text-muted-foreground">
                                     {events.length === 0
                                         ? "Semua event sudah ditugaskan ke user ini"
                                         : "Event tidak ditemukan"
@@ -155,7 +155,7 @@ export default function AssignUserPage() {
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-4">
                                         {/* Event Logo */}
-                                        <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-2xl overflow-hidden">
+                                        <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-muted text-2xl overflow-hidden">
                                             {event.logoUrl ? (
                                                 <Image
                                                     src={event.logoUrl}
@@ -171,15 +171,15 @@ export default function AssignUserPage() {
 
                                         {/* Event Info */}
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-gray-900 mb-1">
+                                            <h3 className="font-semibold text-foreground mb-1">
                                                 {event.name}
                                             </h3>
-                                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                 <div className="flex items-center gap-1">
                                                     <Briefcase className="h-3.5 w-3.5" />
                                                     <span className={cn(
                                                         "font-medium",
-                                                        event.picCount === 0 && "text-orange-500"
+                                                        event.picCount === 0 && "text-warning"
                                                     )}>
                                                         {event.picCount} PIC
                                                     </span>
@@ -196,10 +196,10 @@ export default function AssignUserPage() {
                                         {/* Add Button */}
                                         <Button
                                             size="icon"
-                                            className="h-12 w-12 rounded-full bg-blue-500 hover:bg-blue-600 flex-shrink-0"
+                                            className="h-12 w-12 rounded-full bg-primary hover:bg-primary-hover flex-shrink-0"
                                             onClick={() => handleEventClick(event)}
                                         >
-                                            <Plus className="h-6 w-6 text-white" />
+                                            <Plus className="h-6 w-6 text-primary-foreground" />
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -211,19 +211,19 @@ export default function AssignUserPage() {
 
             {/* Role Selection Dialog */}
             {isDialogOpen && selectedEvent && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
+                    <div className="w-full max-w-sm rounded-3xl bg-card p-6 shadow-xl">
                         {/* Dialog Header */}
-                        <h3 className="text-center text-lg font-bold text-gray-900 mb-1">
+                        <h3 className="text-center text-lg font-bold text-foreground mb-1">
                             Pilih Peran untuk
                         </h3>
-                        <p className="text-center text-lg font-bold text-blue-500 mb-6">
+                        <p className="text-center text-lg font-bold text-primary mb-6">
                             {userName}
                         </p>
 
                         {/* Event Info */}
-                        <div className="flex items-center gap-3 mb-6 p-3 bg-gray-50 rounded-xl">
-                            <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xl overflow-hidden">
+                        <div className="flex items-center gap-3 mb-6 p-3 bg-muted rounded-xl">
+                            <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-muted text-xl overflow-hidden">
                                 {selectedEvent.logoUrl ? (
                                     <Image
                                         src={selectedEvent.logoUrl}
@@ -237,11 +237,11 @@ export default function AssignUserPage() {
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-gray-900 text-sm mb-1">
+                                <h4 className="font-semibold text-foreground text-sm mb-1">
                                     {selectedEvent.name}
                                 </h4>
-                                <p className="text-xs text-gray-500">
-                                    <span className={selectedEvent.picCount === 0 ? "text-orange-500" : ""}>
+                                <p className="text-xs text-muted-foreground">
+                                    <span className={selectedEvent.picCount === 0 ? "text-warning" : ""}>
                                         {selectedEvent.picCount} PIC
                                     </span>
                                     {" · "}
@@ -258,23 +258,23 @@ export default function AssignUserPage() {
                                 className={cn(
                                     "relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 transition-all",
                                     selectedRole === "pic"
-                                        ? "border-blue-500 bg-blue-50"
-                                        : "border-gray-200 bg-white hover:border-gray-300"
+                                        ? "border-primary/30 bg-primary/15"
+                                        : "border-border bg-card hover:border-border"
                                 )}
                             >
                                 <Briefcase className={cn(
                                     "h-8 w-8",
-                                    selectedRole === "pic" ? "text-blue-500" : "text-gray-400"
+                                    selectedRole === "pic" ? "text-primary" : "text-muted-foreground"
                                 )} />
                                 <span className={cn(
                                     "text-sm font-semibold",
-                                    selectedRole === "pic" ? "text-blue-500" : "text-gray-600"
+                                    selectedRole === "pic" ? "text-primary" : "text-muted-foreground"
                                 )}>
                                     PIC
                                 </span>
                                 {selectedRole === "pic" && (
-                                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500">
-                                        <Check className="h-4 w-4 text-white" />
+                                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
+                                        <Check className="h-4 w-4 text-primary-foreground" />
                                     </div>
                                 )}
                             </button>
@@ -285,23 +285,23 @@ export default function AssignUserPage() {
                                 className={cn(
                                     "relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 transition-all",
                                     selectedRole === "advertiser"
-                                        ? "border-blue-500 bg-blue-50"
-                                        : "border-gray-200 bg-white hover:border-gray-300"
+                                        ? "border-primary/30 bg-primary/15"
+                                        : "border-border bg-card hover:border-border"
                                 )}
                             >
                                 <Megaphone className={cn(
                                     "h-8 w-8",
-                                    selectedRole === "advertiser" ? "text-blue-500" : "text-gray-400"
+                                    selectedRole === "advertiser" ? "text-primary" : "text-muted-foreground"
                                 )} />
                                 <span className={cn(
                                     "text-sm font-semibold",
-                                    selectedRole === "advertiser" ? "text-blue-500" : "text-gray-600"
+                                    selectedRole === "advertiser" ? "text-primary" : "text-muted-foreground"
                                 )}>
                                     Advertiser
                                 </span>
                                 {selectedRole === "advertiser" && (
-                                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500">
-                                        <Check className="h-4 w-4 text-white" />
+                                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
+                                        <Check className="h-4 w-4 text-primary-foreground" />
                                     </div>
                                 )}
                             </button>
@@ -309,16 +309,16 @@ export default function AssignUserPage() {
 
                         {/* Error in dialog */}
                         {error && (
-                            <div className="mb-4 rounded-lg bg-red-50 px-4 py-3">
-                                <p className="text-sm text-red-600">{error}</p>
+                            <div className="mb-4 rounded-lg bg-destructive/15 px-4 py-3">
+                                <p className="text-sm text-destructive">{error}</p>
                             </div>
                         )}
 
                         {/* Success in dialog */}
                         {assignSuccess && (
-                            <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3">
-                                <Check className="h-4 w-4 text-green-600" />
-                                <p className="text-sm text-green-600">
+                            <div className="mb-4 flex items-center gap-2 rounded-lg bg-success/15 px-4 py-3">
+                                <Check className="h-4 w-4 text-success" />
+                                <p className="text-sm text-success">
                                     Berhasil ditugaskan!
                                 </p>
                             </div>
@@ -340,7 +340,7 @@ export default function AssignUserPage() {
                             </Button>
                             <Button
                                 onClick={handleConfirm}
-                                className="flex-1 h-12 rounded-2xl bg-blue-500 hover:bg-blue-600 text-base font-semibold"
+                                className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary-hover text-base font-semibold"
                                 disabled={isAssigning || assignSuccess}
                             >
                                 {isAssigning ? (

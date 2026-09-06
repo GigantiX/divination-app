@@ -85,16 +85,16 @@ export default function ChangePasswordPage() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-white">
+        <div className="flex min-h-screen flex-col bg-card">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white px-4 py-4 border-b">
+            <div className="sticky top-0 z-10 bg-card px-4 py-4 border-b">
                 <div className="flex items-center gap-3 md:max-w-2xl md:mx-auto">
                     <Link href="/settings">
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <ChevronLeft className="h-6 w-6" />
                         </Button>
                     </Link>
-                    <h1 className="text-lg font-bold text-black">Ubah Kata Sandi</h1>
+                    <h1 className="text-lg font-bold text-foreground">Ubah Kata Sandi</h1>
                 </div>
             </div>
 
@@ -103,9 +103,9 @@ export default function ChangePasswordPage() {
                 <div className="flex-1 p-4 md:max-w-2xl md:mx-auto md:w-full space-y-6">
                     {/* Success Message */}
                     {success && (
-                        <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3">
-                            <CheckCircle2 className="h-5 w-5 text-green-500" />
-                            <p className="text-sm font-medium text-green-700">
+                        <div className="flex items-center gap-2 rounded-xl bg-success/15 px-4 py-3">
+                            <CheckCircle2 className="h-5 w-5 text-success" />
+                            <p className="text-sm font-medium text-success">
                                 Kata sandi berhasil diubah! Mengalihkan...
                             </p>
                         </div>
@@ -113,13 +113,13 @@ export default function ChangePasswordPage() {
 
                     {/* Server Error */}
                     {serverError && (
-                        <div className="rounded-xl bg-red-50 px-4 py-3">
-                            <p className="text-sm font-medium text-red-600">{serverError}</p>
+                        <div className="rounded-xl bg-destructive/15 px-4 py-3">
+                            <p className="text-sm font-medium text-destructive">{serverError}</p>
                         </div>
                     )}
                     {/* Current Password */}
                     <div className="space-y-2">
-                        <Label htmlFor="currentPassword" className="text-sm font-medium text-gray-700">
+                        <Label htmlFor="currentPassword" className="text-sm font-medium text-foreground">
                             Kata Sandi Saat Ini
                         </Label>
                         <div className="relative">
@@ -129,24 +129,24 @@ export default function ChangePasswordPage() {
                                 placeholder="Masukkan kata sandi lama"
                                 value={formData.currentPassword}
                                 onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                                className="h-12 pr-12 rounded-2xl border-gray-200"
+                                className="h-12 pr-12 rounded-2xl border-border"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
                                 {showCurrentPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                             </button>
                         </div>
                         {errors.currentPassword && (
-                            <p className="text-sm text-red-500">{errors.currentPassword}</p>
+                            <p className="text-sm text-destructive">{errors.currentPassword}</p>
                         )}
                     </div>
 
                     {/* New Password */}
                     <div className="space-y-2">
-                        <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700">
+                        <Label htmlFor="newPassword" className="text-sm font-medium text-foreground">
                             Kata Sandi Baru
                         </Label>
                         <div className="relative">
@@ -156,28 +156,28 @@ export default function ChangePasswordPage() {
                                 placeholder="Buat kata sandi baru"
                                 value={formData.newPassword}
                                 onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                                className="h-12 pr-12 rounded-2xl border-gray-200"
+                                className="h-12 pr-12 rounded-2xl border-border"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowNewPassword(!showNewPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
                                 {showNewPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                             </button>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Info className="h-3.5 w-3.5" />
                             <span>Minimal 8 karakter</span>
                         </div>
                         {errors.newPassword && (
-                            <p className="text-sm text-red-500">{errors.newPassword}</p>
+                            <p className="text-sm text-destructive">{errors.newPassword}</p>
                         )}
                     </div>
 
                     {/* Confirm New Password */}
                     <div className="space-y-2">
-                        <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                        <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                             Konfirmasi Kata Sandi Baru
                         </Label>
                         <div className="relative">
@@ -187,28 +187,28 @@ export default function ChangePasswordPage() {
                                 placeholder="Ulangi kata sandi baru"
                                 value={formData.confirmPassword}
                                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                className="h-12 pr-12 rounded-2xl border-gray-200"
+                                className="h-12 pr-12 rounded-2xl border-border"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
                                 {showConfirmPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                             </button>
                         </div>
                         {errors.confirmPassword && (
-                            <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                            <p className="text-sm text-destructive">{errors.confirmPassword}</p>
                         )}
                     </div>
                 </div>
 
                 {/* Submit Button - Fixed at bottom */}
-                <div className="sticky bottom-0 p-4 bg-white border-t md:max-w-2xl md:mx-auto md:w-full">
+                <div className="sticky bottom-0 p-4 bg-card border-t md:max-w-2xl md:mx-auto md:w-full">
                     <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full h-14 rounded-2xl bg-blue-500 hover:bg-blue-600 text-base font-semibold"
+                        className="w-full h-14 rounded-2xl bg-primary hover:bg-primary-hover text-base font-semibold"
                     >
                         {isSubmitting ? (
                             <>

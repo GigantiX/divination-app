@@ -58,37 +58,37 @@ const dpClassNames = {
     month: "space-y-2",
     month_caption:
         "relative flex h-9 items-center justify-center px-10",
-    caption_label: "text-sm font-bold text-gray-900",
+    caption_label: "text-sm font-bold text-popover-foreground",
     nav: "absolute inset-x-0 top-0 flex h-9 items-center justify-between px-1",
     button_previous:
-        "flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none",
+        "flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
     button_next:
-        "flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none",
+        "flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
     month_grid: "w-full border-collapse",
     weekdays: "grid grid-cols-7 mb-1",
     weekday:
-        "text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 py-1",
+        "text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-1",
     weeks: "space-y-1",
     week: "grid grid-cols-7",
     // Day cell — also receives range_start / range_end / range_middle / selected / today / outside / disabled
     day: "relative flex items-center justify-center p-0 text-sm",
     day_button:
-        "h-9 w-9 flex items-center justify-center rounded-full font-medium text-gray-800 transition-colors hover:bg-violet-50 hover:text-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-1",
+        "h-9 w-9 flex items-center justify-center rounded-full font-medium text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
     // State classes applied to the `day` cell
     selected:
-        "[&>button]:!bg-violet-600 [&>button]:!text-white [&>button]:hover:!bg-violet-700",
-    today: "[&>button]:font-extrabold [&>button]:text-violet-600",
-    outside: "[&>button]:text-gray-300 [&>button]:hover:bg-transparent pointer-events-none",
+        "[&>button]:!bg-primary [&>button]:!text-primary-foreground [&>button]:hover:!bg-primary-hover",
+    today: "[&>button]:font-extrabold [&>button]:text-primary",
+    outside: "[&>button]:text-muted-foreground/50 [&>button]:hover:bg-transparent pointer-events-none",
     disabled: "[&>button]:opacity-30 pointer-events-none",
     focused: "",
     hidden: "invisible pointer-events-none",
     // Range states — applied to the `day` cell
     range_start:
-        "rounded-l-full bg-violet-100 [&>button]:!bg-violet-600 [&>button]:!text-white [&>button]:hover:!bg-violet-700",
+        "rounded-l-full bg-primary/15 [&>button]:!bg-primary [&>button]:!text-primary-foreground [&>button]:hover:!bg-primary-hover",
     range_end:
-        "rounded-r-full bg-violet-100 [&>button]:!bg-violet-600 [&>button]:!text-white [&>button]:hover:!bg-violet-700",
+        "rounded-r-full bg-primary/15 [&>button]:!bg-primary [&>button]:!text-primary-foreground [&>button]:hover:!bg-primary-hover",
     range_middle:
-        "bg-violet-100 rounded-none [&>button]:bg-transparent [&>button]:!text-violet-700 [&>button]:hover:bg-violet-200",
+        "bg-primary/15 rounded-none [&>button]:bg-transparent [&>button]:!text-primary [&>button]:hover:bg-primary/20",
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -142,23 +142,27 @@ export function DatePicker(props: DatePickerProps) {
                 type="button"
                 disabled={disabled}
                 onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                aria-haspopup="dialog"
                 className={cn(
-                    "flex h-11 w-full items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm font-medium transition-all",
-                    "hover:border-gray-300 hover:bg-gray-100",
-                    "focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-1",
-                    open && "border-violet-400 ring-2 ring-violet-200",
-                    !hasValue && "text-gray-400",
-                    hasValue && "text-gray-900",
+                    "flex h-11 w-full items-center gap-2.5 rounded-xl border border-input bg-background px-4 text-sm font-medium transition-all",
+                    "hover:border-ring hover:bg-accent",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                    open && "border-ring ring-2 ring-ring/20",
+                    !hasValue && "text-muted-foreground",
+                    hasValue && "text-foreground",
                     disabled && "opacity-50 cursor-not-allowed"
                 )}
             >
-                <CalendarIcon className="h-4 w-4 shrink-0 text-gray-400" />
+                <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="flex-1 text-left truncate">{displayText}</span>
             </button>
 
             {/* Calendar Dropdown */}
             {open && (
                 <div
+                    role="dialog"
+                    aria-label="Pilih tanggal"
                     // Hold the suppress flag for the entire mousedown→mouseup cycle so
                     // the document handler never sees a click inside the calendar as
                     // "outside" — even if React re-renders the DOM between the two events.
@@ -166,7 +170,7 @@ export function DatePicker(props: DatePickerProps) {
                     onMouseUp={() => { setTimeout(() => { suppressCloseRef.current = false }, 0) }}
                     className={cn(
                         "absolute left-0 top-full z-50 mt-2 min-w-[280px]",
-                        "rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl",
+                        "rounded-2xl border border-border bg-popover text-popover-foreground p-4 shadow-2xl",
                         "animate-in fade-in zoom-in-95 duration-150"
                     )}
                 >

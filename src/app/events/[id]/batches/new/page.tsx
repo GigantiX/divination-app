@@ -117,14 +117,14 @@ export default function NewBatchPage() {
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
             {/* Header */}
-            <div className="sticky top-0 z-10 border-b bg-white px-4 py-4">
+            <div className="sticky top-0 z-10 border-b bg-card px-4 py-4">
                 <div className="flex items-center">
                     <Link href={`/events/${eventId}`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 mr-2">
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
                     </Link>
-                    <h1 className="flex-1 text-center text-lg font-bold text-black pr-10">
+                    <h1 className="flex-1 text-center text-lg font-bold text-foreground pr-10">
                         Tambah Batch Baru
                     </h1>
                 </div>
@@ -138,7 +138,7 @@ export default function NewBatchPage() {
                             {/* Batch Name */}
                             <div className="space-y-2">
                                 <Label htmlFor="name" className="flex items-center gap-2">
-                                    <Hash className="h-4 w-4 text-blue-500" />
+                                    <Hash className="h-4 w-4 text-primary" />
                                     Nama Batch *
                                 </Label>
                                 <Input
@@ -156,25 +156,25 @@ export default function NewBatchPage() {
 
                             {/* Date Range Section */}
                             <div className="space-y-4">
-                                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-gray-500" />
+                                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
                                     Periode Batch
                                 </h3>
 
                                 {/* Ongoing Toggle */}
-                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-700">Batch Aktif Terus</p>
-                                        <p className="text-xs text-gray-500">Tanpa tanggal selesai</p>
+                                        <p className="text-sm font-medium text-foreground">Batch Aktif Terus</p>
+                                        <p className="text-xs text-muted-foreground">Tanpa tanggal selesai</p>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={handleOngoingToggle}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOngoing ? "bg-green-500" : "bg-gray-300"
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isOngoing ? "bg-success" : "bg-muted-foreground/20"
                                             }`}
                                     >
                                         <span
-                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isOngoing ? "translate-x-6" : "translate-x-1"
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${isOngoing ? "translate-x-6" : "translate-x-1"
                                                 }`}
                                         />
                                     </button>
@@ -183,7 +183,7 @@ export default function NewBatchPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     {/* Start Date */}
                                     <div className="space-y-2">
-                                        <Label className="text-xs text-gray-500">
+                                        <Label className="text-xs text-muted-foreground">
                                             Tanggal Mulai *
                                         </Label>
                                         <DatePicker
@@ -206,7 +206,7 @@ export default function NewBatchPage() {
 
                                     {/* End Date */}
                                     <div className="space-y-2">
-                                        <Label className="text-xs text-gray-500">
+                                        <Label className="text-xs text-muted-foreground">
                                             Tanggal Selesai {isOngoing && "(Opsional)"}
                                         </Label>
                                         <DatePicker
@@ -224,8 +224,8 @@ export default function NewBatchPage() {
                                 </div>
 
                                 {/* Period Preview */}
-                                <div className="rounded-lg bg-blue-50 px-3 py-2">
-                                    <p className="text-xs text-blue-600">
+                                <div className="rounded-lg bg-primary/15 px-3 py-2">
+                                    <p className="text-xs text-primary">
                                         📅 {formData.name || "Batch Baru"}: {formatDisplayDate(formData.startDate)} - {isOngoing ? "Sekarang" : formatDisplayDate(formData.endDate)}
                                     </p>
                                 </div>
@@ -234,11 +234,11 @@ export default function NewBatchPage() {
                             {/* Price Section */}
                             <div className="space-y-2">
                                 <Label htmlFor="price" className="flex items-center gap-2">
-                                    <Banknote className="h-4 w-4 text-emerald-500" />
+                                    <Banknote className="h-4 w-4 text-success" />
                                     Harga Tiket (Opsional)
                                 </Label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
                                         Rp
                                     </span>
                                     <Input
@@ -252,7 +252,7 @@ export default function NewBatchPage() {
                                         className="h-12 pl-10"
                                     />
                                 </div>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-muted-foreground">
                                     Harga tiket per orang untuk batch ini
                                 </p>
                             </div>
@@ -260,7 +260,7 @@ export default function NewBatchPage() {
                             {/* Notes Section */}
                             <div className="space-y-2">
                                 <Label htmlFor="notes" className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-gray-500" />
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
                                     Catatan (Opsional)
                                 </Label>
                                 <Textarea
@@ -276,16 +276,16 @@ export default function NewBatchPage() {
 
                             {/* Error Message */}
                             {error && (
-                                <div className="rounded-lg bg-red-50 p-4">
-                                    <p className="text-sm text-red-600">{error}</p>
+                                <div className="rounded-lg bg-destructive/15 p-4">
+                                    <p className="text-sm text-destructive">{error}</p>
                                 </div>
                             )}
 
                             {/* Success Message */}
                             {success && (
-                                <div className="rounded-lg bg-green-50 p-4 flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-600" />
-                                    <p className="text-sm text-green-600">Batch berhasil dibuat!</p>
+                                <div className="rounded-lg bg-success/15 p-4 flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-success" />
+                                    <p className="text-sm text-success">Batch berhasil dibuat!</p>
                                 </div>
                             )}
 
@@ -314,7 +314,7 @@ export default function NewBatchPage() {
                 </Card>
 
                 {/* Helper Text */}
-                <p className="mt-4 text-center text-xs text-gray-400">
+                <p className="mt-4 text-center text-xs text-muted-foreground">
                     Batch baru akan otomatis aktif setelah dibuat
                 </p>
             </div>

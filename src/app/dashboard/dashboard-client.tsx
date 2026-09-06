@@ -90,14 +90,14 @@ export function DashboardClient({ data }: DashboardClientProps) {
     return (
         <NavigationLayout isAdmin={isAdmin}>
             {/* Header */}
-            <div className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur-md px-6 py-4">
+            <div className="sticky top-0 z-10 border-b bg-card/80 backdrop-blur-md px-6 py-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-black">DIVINATION</h1>
+                    <h1 className="text-2xl font-bold text-foreground">DIVINATION</h1>
                     <Link href="/settings">
                         <AvatarEmoji
                             emoji={user.emoji}
                             size="md"
-                            className="border-2 border-white shadow-md"
+                            className="border-2 border-card shadow-md"
                         />
                     </Link>
                 </div>
@@ -107,10 +107,10 @@ export function DashboardClient({ data }: DashboardClientProps) {
             <div className="flex-1 p-6">
                 {/* Welcome Section with Role Badge */}
                 <div className="mb-8">
-                    <h2 className="text-2xl font-semibold text-text-primary">
+                    <h2 className="text-2xl font-semibold text-foreground">
                         Selamat datang,
                     </h2>
-                    <p className="text-2xl font-semibold text-text-primary mb-2">
+                    <p className="text-2xl font-semibold text-foreground mb-2">
                         {user.displayName} 👋
                     </p>
                     <RoleBadge role={user.role} />
@@ -119,13 +119,13 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 {/* Empty State for Unassigned Users */}
                 {!isAdmin && hasNoEvents && (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="mb-6 rounded-full bg-gray-100 p-6">
-                            <Inbox className="h-12 w-12 text-gray-400" />
+                        <div className="mb-6 rounded-full bg-muted p-6">
+                            <Inbox className="h-12 w-12 text-muted-foreground" />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        <h3 className="text-xl font-semibold text-foreground mb-2">
                             Belum Ada Event
                         </h3>
-                        <p className="text-gray-500 max-w-xs">
+                        <p className="text-muted-foreground max-w-xs">
                             Anda belum memiliki akses ke event apapun. Hubungi Admin untuk mendapatkan akses.
                         </p>
                     </div>
@@ -135,11 +135,11 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 {(isAdmin || activeEvents.length > 0) && (
                     <div className="mb-8">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-text-primary">
+                            <h3 className="text-lg font-semibold text-foreground">
                                 Active Events
                             </h3>
                             {isAdmin && (
-                                <span className="text-sm text-text-secondary">
+                                <span className="text-sm text-muted-foreground">
                                     {activeEvents.length} event{activeEvents.length !== 1 ? "s" : ""}
                                 </span>
                             )}
@@ -147,7 +147,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
                         {activeEvents.length === 0 ? (
                             <Card className="p-8 text-center">
-                                <p className="text-text-secondary">Tidak ada event aktif</p>
+                                <p className="text-muted-foreground">Tidak ada event aktif</p>
                             </Card>
                         ) : (
                             <div className="space-y-4">
@@ -182,10 +182,10 @@ export function DashboardClient({ data }: DashboardClientProps) {
                 {isAdmin && inactiveEvents.length > 0 && (
                     <div className="mb-8">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-text-secondary">
+                            <h3 className="text-lg font-semibold text-muted-foreground">
                                 Inactive Events
                             </h3>
-                            <span className="text-sm text-text-secondary">
+                            <span className="text-sm text-muted-foreground">
                                 {inactiveEvents.length} event{inactiveEvents.length !== 1 ? "s" : ""}
                             </span>
                         </div>
@@ -207,19 +207,19 @@ export function DashboardClient({ data }: DashboardClientProps) {
 
             {/* Confirmation Modal */}
             {modalConfig.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
                     <Card className="w-full max-w-sm">
                         <CardHeader>
                             <h3 className="text-lg font-semibold">Konfirmasi Perubahan</h3>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-text-secondary">
+                            <p className="text-muted-foreground">
                                 Apakah anda yakin ingin mengubah status event{" "}
-                                <span className="font-semibold text-text-primary">
+                                <span className="font-semibold text-foreground">
                                     {modalConfig.eventName}
                                 </span>{" "}
                                 menjadi{" "}
-                                <span className={cn("font-bold", modalConfig.currentStatus === "active" ? "text-red-500" : "text-emerald-500")}>
+                                <span className={cn("font-bold", modalConfig.currentStatus === "active" ? "text-destructive" : "text-success")}>
                                     {modalConfig.currentStatus === "active" ? "Inactive" : "Active"}
                                 </span>?
                             </p>
@@ -232,7 +232,7 @@ export function DashboardClient({ data }: DashboardClientProps) {
                                     Batal
                                 </Button>
                                 <Button
-                                    className={modalConfig.currentStatus === "active" ? "bg-red-500 hover:bg-red-600" : "bg-emerald-500 hover:bg-emerald-600"}
+                                    className={modalConfig.currentStatus === "active" ? "bg-destructive text-destructive-foreground hover:bg-destructive-hover" : "bg-success text-success-foreground hover:bg-success/85"}
                                     onClick={confirmToggle}
                                     disabled={isToggling !== null}
                                 >
@@ -267,7 +267,7 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
     return (
         <Link href={`/events/${event.id}`} className="block">
             <Card className={cn(
-                "group overflow-hidden transition-all duration-300 border border-gray-100 bg-white hover:border-gray-200 hover:shadow-lg hover:-translate-y-0.5",
+                "group overflow-hidden transition-all duration-300 border border-border bg-card hover:border-border hover:shadow-lg hover:-translate-y-0.5",
                 !isActive && "opacity-75 grayscale-[0.2]"
             )}>
                 <CardContent className="p-0">
@@ -289,12 +289,12 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
 
                         {/* Event Info */}
                         <div className="flex-1 min-w-0">
-                            <h4 className="truncate text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">
+                            <h4 className="truncate text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                                 {event.name}
                             </h4>
                             <div className="flex flex-col gap-1 mt-0.5">
-                                <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500">
-                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-[10px]">
+                                <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-muted text-muted-foreground text-[10px]">
                                         {event.batchCount}
                                     </span>
                                     {event.batchCount !== 1 ? "Batches" : "Batch"} total
@@ -316,13 +316,13 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
                                     title={isActive ? "Nonaktifkan Event" : "Aktifkan Event"}
                                     className={cn(
                                         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                                        isActive ? "bg-emerald-500 hover:bg-emerald-400" : "bg-gray-200 hover:bg-gray-300",
+                                        isActive ? "bg-success hover:bg-success/85" : "bg-muted-foreground/20 hover:bg-accent",
                                         isToggling && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     <span
                                         className={cn(
-                                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-card shadow ring-0 transition duration-200 ease-in-out",
                                             isActive ? "translate-x-5" : "translate-x-0"
                                         )}
                                     />
@@ -330,7 +330,7 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
                             ) : (
                                 <span className={cn(
                                     "px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase",
-                                    isActive ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
+                                    isActive ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
                                 )}>
                                     {isActive ? "Aktif" : "Selesai"}
                                 </span>

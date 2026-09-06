@@ -47,17 +47,17 @@ export function EditProfileClient({ profile }: EditProfileClientProps) {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50">
+        <div className="flex min-h-screen flex-col bg-muted">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white px-4 py-4 shadow-sm">
+            <div className="sticky top-0 z-10 bg-card px-4 py-4 shadow-sm">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-2 -ml-2 hover:bg-accent rounded-full transition-colors"
                     >
-                        <ArrowLeft className="h-5 w-5 text-gray-700" />
+                        <ArrowLeft className="h-5 w-5 text-foreground" />
                     </button>
-                    <h1 className="text-lg font-semibold text-gray-900">Edit Profil</h1>
+                    <h1 className="text-lg font-semibold text-foreground">Edit Profil</h1>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@ export function EditProfileClient({ profile }: EditProfileClientProps) {
                     <AvatarEmoji
                         emoji={profile.emoji || "😀"}
                         size="xl"
-                        className="border-4 border-white shadow-lg"
+                        className="border-4 border-card shadow-lg"
                     />
                 </div>
 
@@ -80,7 +80,7 @@ export function EditProfileClient({ profile }: EditProfileClientProps) {
                             <div>
                                 <label
                                     htmlFor="displayName"
-                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                    className="block text-sm font-medium text-foreground mb-2"
                                 >
                                     Nama Tampilan
                                 </label>
@@ -93,21 +93,21 @@ export function EditProfileClient({ profile }: EditProfileClientProps) {
                                     className="h-12 rounded-xl"
                                     maxLength={100}
                                 />
-                                <p className="mt-1 text-xs text-gray-500">
+                                <p className="mt-1 text-xs text-muted-foreground">
                                     Nama ini akan ditampilkan di profil Anda
                                 </p>
                             </div>
 
                             {/* Error Message */}
                             {error && (
-                                <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+                                <div className="p-3 rounded-lg bg-destructive/15 text-destructive text-sm">
                                     {error}
                                 </div>
                             )}
 
                             {/* Success Message */}
                             {success && (
-                                <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm flex items-center gap-2">
+                                <div className="p-3 rounded-lg bg-success/15 text-success text-sm flex items-center gap-2">
                                     <Check className="h-4 w-4" />
                                     Profil berhasil diperbarui!
                                 </div>
@@ -138,10 +138,10 @@ export function EditProfileClient({ profile }: EditProfileClientProps) {
                 </Card>
 
                 {/* Email Info (read-only) */}
-                <div className="mt-4 p-4 rounded-xl bg-gray-100">
-                    <p className="text-sm text-gray-500 mb-1">Email</p>
-                    <p className="text-gray-900 font-medium">{profile.username}</p>
-                    <p className="text-xs text-gray-400 mt-1">Email tidak dapat diubah</p>
+                <div className="mt-4 p-4 rounded-xl bg-muted">
+                    <p className="text-sm text-muted-foreground mb-1">Email</p>
+                    <p className="text-foreground font-medium">{profile.username}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Email tidak dapat diubah</p>
                 </div>
             </div>
         </div>

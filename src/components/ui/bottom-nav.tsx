@@ -27,7 +27,7 @@ export function BottomNav({ isAdmin = false }: BottomNavProps) {
     ]
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-white z-50">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-sidebar-border bg-sidebar text-sidebar-foreground z-50">
             <nav className="flex items-center justify-around py-3 max-w-2xl mx-auto">
                 {navItems.map((item) => {
                     const active = isActive(item.href)
@@ -38,7 +38,7 @@ export function BottomNav({ isAdmin = false }: BottomNavProps) {
                             href={item.href}
                             className={cn(
                                 "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 relative",
-                                active ? "text-primary" : "text-gray-400"
+                                active ? "text-primary" : "text-muted-foreground"
                             )}
                         >
                             <Icon className="h-6 w-6" />

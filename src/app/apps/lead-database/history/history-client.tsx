@@ -54,15 +54,15 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                 <div className="mb-6">
                     <Link
                         href="/apps/lead-database/upload"
-                        className="mb-3 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                        className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Kembali ke Upload
                     </Link>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-2xl font-bold text-foreground">
                         Riwayat Upload
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         Daftar kontak yang telah Anda upload sebelumnya.
                     </p>
                 </div>
@@ -70,19 +70,19 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                 {/* Content */}
                 {loading ? (
                     <div className="flex justify-center p-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                 ) : history.length === 0 ? (
-                    <div className="text-center p-12 bg-white rounded-xl border border-gray-100">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
-                            <PackageOpen className="h-8 w-8 text-gray-300" />
+                    <div className="text-center p-12 bg-card rounded-xl border border-border">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                            <PackageOpen className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <p className="font-medium text-gray-700">Belum ada riwayat upload</p>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="font-medium text-foreground">Belum ada riwayat upload</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Upload kontak peserta event untuk melihat riwayatnya di sini.
                         </p>
                         <Link href="/apps/lead-database/upload">
-                            <Button className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <Button className="mt-4 bg-success hover:bg-success/85 text-success-foreground">
                                 <Upload className="mr-2 h-4 w-4" />
                                 Upload Kontak
                             </Button>
@@ -93,20 +93,20 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                         {history.map((item) => (
                             <Card
                                 key={item.id}
-                                className="border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                                className="border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                             >
                                 <CardContent className="p-4 sm:p-5">
                                     {/* Top: Date + Event */}
                                     <div className="flex items-start justify-between gap-3 mb-3">
                                         <div className="min-w-0">
-                                            <h3 className="font-semibold text-gray-900 truncate">
+                                            <h3 className="font-semibold text-foreground truncate">
                                                 {item.event_name}
                                             </h3>
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-sm text-muted-foreground">
                                                 {item.batch_name}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md flex items-center gap-1">
+                                        <span className="shrink-0 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-md flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
                                             {formatDate(item.uploaded_at)}
                                         </span>
@@ -114,36 +114,36 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
 
                                     {/* Stats Row */}
                                     <div className="flex items-center gap-4 text-sm">
-                                        <div className="flex items-center gap-1.5 text-gray-700">
-                                            <Users className="h-3.5 w-3.5 text-gray-400" />
+                                        <div className="flex items-center gap-1.5 text-foreground">
+                                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
                                             <span className="font-semibold">{item.total_contacts}</span>
-                                            <span className="text-gray-500">total</span>
+                                            <span className="text-muted-foreground">total</span>
                                         </div>
-                                        <div className="h-4 w-px bg-gray-200" />
-                                        <div className="flex items-center gap-1.5 text-emerald-700">
-                                            <UserPlus className="h-3.5 w-3.5 text-emerald-500" />
+                                        <div className="h-4 w-px bg-muted-foreground/20" />
+                                        <div className="flex items-center gap-1.5 text-success">
+                                            <UserPlus className="h-3.5 w-3.5 text-success" />
                                             <span className="font-semibold">{item.new_leads}</span>
-                                            <span className="text-emerald-600">baru</span>
+                                            <span className="text-success">baru</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-blue-700">
-                                            <UserCheck className="h-3.5 w-3.5 text-blue-500" />
+                                        <div className="flex items-center gap-1.5 text-primary">
+                                            <UserCheck className="h-3.5 w-3.5 text-primary" />
                                             <span className="font-semibold">{item.existing_leads}</span>
-                                            <span className="text-blue-600">sudah ada</span>
+                                            <span className="text-primary">sudah ada</span>
                                         </div>
                                         {item.failed > 0 && (
-                                            <div className="flex items-center gap-1.5 text-red-700">
-                                                <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                                            <div className="flex items-center gap-1.5 text-destructive">
+                                                <AlertCircle className="h-3.5 w-3.5 text-destructive" />
                                                 <span className="font-semibold">{item.failed}</span>
-                                                <span className="text-red-600">gagal</span>
+                                                <span className="text-destructive">gagal</span>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Progress-like bar */}
-                                    <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                                    <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                         {item.new_leads > 0 && (
                                             <div
-                                                className="bg-emerald-500 transition-all"
+                                                className="bg-success transition-all"
                                                 style={{
                                                     width: `${(item.new_leads / item.total_contacts) * 100}%`,
                                                 }}
@@ -151,7 +151,7 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                                         )}
                                         {item.existing_leads > 0 && (
                                             <div
-                                                className="bg-blue-400 transition-all"
+                                                className="bg-primary transition-all"
                                                 style={{
                                                     width: `${(item.existing_leads / item.total_contacts) * 100}%`,
                                                 }}
@@ -159,7 +159,7 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                                         )}
                                         {item.failed > 0 && (
                                             <div
-                                                className="bg-red-400 transition-all"
+                                                className="bg-destructive transition-all"
                                                 style={{
                                                     width: `${(item.failed / item.total_contacts) * 100}%`,
                                                 }}

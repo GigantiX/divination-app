@@ -167,22 +167,22 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
         (scope === "batch" && selectedBatch)
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
             <Card className="w-full max-w-md border-none shadow-xl">
                 <CardContent className="p-0">
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                    <div className="flex items-center justify-between border-b border-border px-5 py-4">
                         <div className="flex items-center gap-2">
-                            <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
-                            <h2 className="text-lg font-bold text-gray-900">
+                            <FileSpreadsheet className="h-5 w-5 text-success" />
+                            <h2 className="text-lg font-bold text-foreground">
                                 Export Lead Database
                             </h2>
                         </div>
                         <button
                             onClick={onClose}
-                            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
+                            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent"
                         >
-                            <X className="h-5 w-5 text-gray-500" />
+                            <X className="h-5 w-5 text-muted-foreground" />
                         </button>
                     </div>
 
@@ -190,7 +190,7 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                     <div className="px-5 py-4 space-y-4">
                         {/* Scope selector */}
                         <div>
-                            <p className="mb-2 text-sm font-medium text-gray-700">
+                            <p className="mb-2 text-sm font-medium text-foreground">
                                 Pilih data yang akan di-export
                             </p>
                             <div className="flex gap-2">
@@ -207,8 +207,8 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                                         className={cn(
                                             "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
                                             scope === option.value
-                                                ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                                                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                                                ? "border-success/30 bg-success/15 text-success"
+                                                : "border-border bg-card text-muted-foreground hover:bg-accent"
                                         )}
                                     >
                                         {option.label}
@@ -220,13 +220,13 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                         {/* Event dropdown (for "Per Event" and "Per Batch") */}
                         {(scope === "event" || scope === "batch") && (
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                                <label className="mb-1.5 block text-sm font-medium text-foreground">
                                     Pilih Event
                                 </label>
                                 <select
                                     value={selectedEvent}
                                     onChange={(e) => setSelectedEvent(e.target.value)}
-                                    className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                                    className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-success/30 focus:outline-none focus:ring-2 focus:ring-success"
                                 >
                                     <option value="">-- Pilih Event --</option>
                                     {events.map((evt) => (
@@ -241,7 +241,7 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                         {/* Batch dropdown (for "Per Batch" only) */}
                         {scope === "batch" && selectedEvent && (
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                                <label className="mb-1.5 block text-sm font-medium text-foreground">
                                     Pilih Batch
                                 </label>
                                 <select
@@ -249,7 +249,7 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                                     onChange={(e) => setSelectedBatch(e.target.value)}
                                     disabled={batchesLoading}
                                     className={cn(
-                                        "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100",
+                                        "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-success/30 focus:outline-none focus:ring-2 focus:ring-success",
                                         batchesLoading && "opacity-50"
                                     )}
                                 >
@@ -266,9 +266,9 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                         )}
 
                         {/* Preview count */}
-                        <div className="rounded-lg bg-gray-50 px-4 py-3">
-                            <p className="text-sm text-gray-600">
-                                <span className="font-semibold text-gray-900">
+                        <div className="rounded-lg bg-muted px-4 py-3">
+                            <p className="text-sm text-muted-foreground">
+                                <span className="font-semibold text-foreground">
                                     {filteredLeads.length}
                                 </span>{" "}
                                 kontak akan di-export
@@ -277,7 +277,7 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center gap-3 border-t border-gray-100 px-5 py-4">
+                    <div className="flex items-center gap-3 border-t border-border px-5 py-4">
                         <Button
                             variant="outline"
                             className="flex-1"
@@ -286,7 +286,7 @@ export function ExportModal({ isOpen, onClose, events, leads }: ExportModalProps
                             Batal
                         </Button>
                         <Button
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                            className="flex-1 bg-success hover:bg-success/85 text-success-foreground gap-2"
                             onClick={handleExport}
                             disabled={!canExport || filteredLeads.length === 0}
                         >

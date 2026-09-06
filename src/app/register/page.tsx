@@ -48,7 +48,7 @@ export default function RegisterPage() {
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
             <div className="p-6 text-center">
-                <h1 className="text-3xl font-bold text-black tracking-tight">DIVINATION</h1>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight">DIVINATION</h1>
             </div>
             <div className="flex flex-1 items-center justify-center p-4">
                 <Card className="w-full max-w-md border-none shadow-lg sm:border-solid">
@@ -61,7 +61,7 @@ export default function RegisterPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                                <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                                     {error}
                                 </div>
                             )}
@@ -102,7 +102,7 @@ export default function RegisterPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         disabled={isLoading}
                                     >
                                         {showPassword ? (
@@ -128,7 +128,7 @@ export default function RegisterPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         disabled={isLoading}
                                     >
                                         {showConfirmPassword ? (
@@ -151,7 +151,7 @@ export default function RegisterPage() {
                                     "Daftar"
                                 )}
                             </Button>
-                            <div className="text-center text-sm text-text-secondary">
+                            <div className="text-center text-sm text-muted-foreground">
                                 Sudah punya akun?{" "}
                                 <Link href="/login" className="font-semibold text-primary hover:underline">
                                     Masuk

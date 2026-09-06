@@ -12,7 +12,9 @@ import {
     Filler,
     ScriptableContext,
 } from "chart.js"
+import * as React from "react"
 import { Line } from "react-chartjs-2"
+import { useTheme } from "@/components/theme-provider"
 
 ChartJS.register(
     CategoryScale,
@@ -25,7 +27,22 @@ ChartJS.register(
     Filler
 )
 
-const chartOptions = {
+type ChartColors = {
+    foreground: string
+    mutedForeground: string
+    border: string
+    popover: string
+    leads: string
+    sales: string
+}
+
+function getToken(name: string, alpha?: number) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    return `hsl(${value}${alpha === undefined ? "" : ` / ${alpha}`})`
+}
+
+function createChartOptions(colors: ChartColors) {
+    return {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -35,10 +52,10 @@ const chartOptions = {
         tooltip: {
             mode: "index" as const,
             intersect: false,
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            titleColor: "#000",
-            bodyColor: "#000",
-            borderColor: "#e5e7eb",
+            backgroundColor: colors.popover,
+            titleColor: colors.foreground,
+            bodyColor: colors.foreground,
+            borderColor: colors.border,
             borderWidth: 1,
             padding: 10,
             displayColors: false,
@@ -50,7 +67,7 @@ const chartOptions = {
                 display: false,
             },
             ticks: {
-                color: "#9ca3af",
+                color: colors.mutedForeground,
                 font: {
                     size: 10,
                 },
@@ -60,10 +77,10 @@ const chartOptions = {
             display: true,
             min: 0,
             grid: {
-                color: "#f3f4f6",
+                color: colors.border,
             },
             ticks: {
-                color: "#9ca3af",
+                color: colors.mutedForeground,
                 font: {
                     size: 10,
                 },
@@ -75,6 +92,7 @@ const chartOptions = {
         axis: "x" as const,
         intersect: false,
     },
+    }
 }
 
 interface LineChartProps {
@@ -84,47 +102,57 @@ interface LineChartProps {
 }
 
 export default function LineChart({ labels, leadsData, salesData }: LineChartProps) {
-    const data = {
+    const { resolvedTheme } = useTheme()
+    const colors = React.useMemo<ChartColors>(() => ({
+        foreground: getToken("--foreground"),
+        mutedForeground: getToken("--muted-foreground"),
+        border: getToken("--border"),
+        popover: getToken("--popover", 0.96),
+        leads: getToken("--chart-leads"),
+        sales: getToken("--chart-sales"),
+    }), [resolvedTheme])
+    const options = React.useMemo(() => createChartOptions(colors), [colors])
+    const data = React.useMemo(() => ({
         labels,
         datasets: [
             {
                 fill: true,
                 label: "Leads",
                 data: leadsData,
-                borderColor: "#3b82f6",
+                borderColor: colors.leads,
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200)
-                    gradient.addColorStop(0, "rgba(59, 130, 246, 0.5)")
-                    gradient.addColorStop(1, "rgba(59, 130, 246, 0.0)")
+                    gradient.addColorStop(0, getToken("--chart-leads", 0.5))
+                    gradient.addColorStop(1, getToken("--chart-leads", 0))
                     return gradient
                 },
                 tension: 0.4,
                 pointRadius: 0,
                 pointHoverRadius: 6,
-                pointBackgroundColor: "#3b82f6",
+                pointBackgroundColor: colors.leads,
                 borderWidth: 2,
             },
             {
                 fill: true,
                 label: "Sales",
                 data: salesData,
-                borderColor: "#10b981",
+                borderColor: colors.sales,
                 backgroundColor: (context: ScriptableContext<"line">) => {
                     const ctx = context.chart.ctx
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200)
-                    gradient.addColorStop(0, "rgba(16, 185, 129, 0.5)")
-                    gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)")
+                    gradient.addColorStop(0, getToken("--chart-sales", 0.5))
+                    gradient.addColorStop(1, getToken("--chart-sales", 0))
                     return gradient
                 },
                 tension: 0.4,
                 pointRadius: 0,
                 pointHoverRadius: 6,
-                pointBackgroundColor: "#10b981",
+                pointBackgroundColor: colors.sales,
                 borderWidth: 2,
             },
         ],
-    }
+    }), [colors, labels, leadsData, salesData])
 
-    return <Line options={chartOptions} data={data} />
+    return <Line options={options} data={data} />
 }

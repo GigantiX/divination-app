@@ -30,24 +30,24 @@ const features: Feature[] = [
         title: "Request Budget",
         description: "Form request budget iklan untuk Advertiser",
         icon: WalletCards,
-        iconColor: "text-blue-600",
-        iconBg: "bg-blue-100",
+        iconColor: "text-primary",
+        iconBg: "bg-primary/15",
     },
     {
         id: "lead-database",
         title: "Lead Database",
         description: "Upload kontak peserta Webinar, Seminar hingga Workshop",
         icon: Database,
-        iconColor: "text-emerald-600",
-        iconBg: "bg-emerald-100",
+        iconColor: "text-success",
+        iconBg: "bg-success/15",
     },
     {
         id: "event-calendar",
         title: "Event Calendar",
         description: "Kalender jadwal event dan batch terintegrasi",
         icon: Calendar,
-        iconColor: "text-violet-600",
-        iconBg: "bg-violet-100",
+        iconColor: "text-primary",
+        iconBg: "bg-primary/15",
     },
 ]
 
@@ -59,27 +59,27 @@ export function AppsClient({ profile }: AppsClientProps) {
         <NavigationLayout isAdmin={isAdmin}>
             <div className="flex-1 p-4 pb-24 md:mx-auto md:w-full md:max-w-3xl md:p-6">
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Apps</h1>
-                    <p className="mt-1 text-sm text-gray-500">Pilih fitur untuk mendukung operasional tim Anda.</p>
+                    <h1 className="text-2xl font-bold text-foreground">Apps</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">Pilih fitur untuk mendukung operasional tim Anda.</p>
                 </div>
 
                 {isAdmin && (
                     <Link href="/apps/settings" className="mb-4 block">
-                        <Card className="border border-blue-100 bg-blue-50/60 shadow-sm transition-all hover:bg-blue-50">
+                        <Card className="border border-primary/30 bg-primary/10 shadow-sm transition-all hover:bg-primary/15">
                             <CardContent className="flex items-center justify-between p-4">
                                 <div className="flex items-center gap-3">
                                     <AppIcon 
                                         icon={Settings2} 
-                                        iconBg="bg-white shadow-sm border border-blue-50" 
-                                        iconColor="text-blue-600" 
+                                        iconBg="bg-card shadow-sm border border-primary/30"
+                                        iconColor="text-primary"
                                         size="sm" 
                                     />
                                     <div>
-                                        <p className="font-semibold text-gray-900">Apps Settings</p>
-                                        <p className="text-xs text-gray-500">Atur visibilitas app per role (sementara placeholder)</p>
+                                        <p className="font-semibold text-foreground">Apps Settings</p>
+                                        <p className="text-xs text-muted-foreground">Atur visibilitas app per role (sementara placeholder)</p>
                                     </div>
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-blue-400" />
+                                <ChevronRight className="h-5 w-5 text-primary" />
                             </CardContent>
                         </Card>
                     </Link>
@@ -119,11 +119,11 @@ export function AppsClient({ profile }: AppsClientProps) {
                                                     size="md" 
                                                 />
                                                 <div>
-                                                    <p className="font-semibold text-gray-900">{feature.title}</p>
-                                                    <p className="text-sm text-gray-500">{feature.description}</p>
+                                                    <p className="font-semibold text-foreground">{feature.title}</p>
+                                                    <p className="text-sm text-muted-foreground">{feature.description}</p>
                                                 </div>
                                             </div>
-                                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                         </CardContent>
                                     </Card>
                                 </Link>
@@ -148,11 +148,11 @@ export function AppsClient({ profile }: AppsClientProps) {
                                                 size="md" 
                                             />
                                             <div>
-                                                <p className="font-semibold text-gray-900">{feature.title}</p>
-                                                <p className="text-sm text-gray-500">{feature.description}</p>
+                                                <p className="font-semibold text-foreground">{feature.title}</p>
+                                                <p className="text-sm text-muted-foreground">{feature.description}</p>
                                             </div>
                                         </div>
-                                        <div className="ml-3 flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                        <div className="ml-3 flex items-center gap-1 rounded-full border border-warning/30 bg-warning/15 px-2.5 py-1 text-xs font-medium text-warning">
                                             <Clock3 className="h-3.5 w-3.5" /> WIP
                                         </div>
                                     </CardContent>
@@ -164,15 +164,15 @@ export function AppsClient({ profile }: AppsClientProps) {
             </div>
 
             {comingSoonFeature && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
                     <Card className="w-full max-w-sm border-none shadow-xl">
                         <CardContent className="p-6 text-center">
-                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-                                <Wrench className="h-7 w-7 text-amber-600" />
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-warning/15">
+                                <Wrench className="h-7 w-7 text-warning" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900">Coming Soon</h3>
-                            <p className="mt-2 text-sm text-gray-500">
-                                Fitur <span className="font-semibold text-gray-700">{comingSoonFeature.title}</span> sedang dalam proses pengembangan.
+                            <h3 className="text-lg font-bold text-foreground">Coming Soon</h3>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                                Fitur <span className="font-semibold text-foreground">{comingSoonFeature.title}</span> sedang dalam proses pengembangan.
                             </p>
                             <Button
                                 className="mt-5 h-10 w-full"
