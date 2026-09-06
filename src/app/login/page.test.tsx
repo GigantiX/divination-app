@@ -5,6 +5,7 @@ import LoginPage from './page';
 import { loginAction } from '@/app/actions/auth';
 
 vi.mock('@/app/actions/auth', () => ({
+  initialLoginActionState: { error: '' },
   loginAction: vi.fn(),
 }));
 
@@ -66,7 +67,7 @@ describe('LoginPage integration test', () => {
   });
 
   it('submits form with correct parameters', async () => {
-    vi.mocked(loginAction).mockResolvedValueOnce(undefined as any);
+    vi.mocked(loginAction).mockResolvedValueOnce({ error: '' });
     render(<LoginPage />);
 
     const emailInput = screen.getByLabelText(/Email/i);

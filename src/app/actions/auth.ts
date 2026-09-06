@@ -8,10 +8,21 @@ import { getRandomEmoji } from '@/lib/emojis'
 import { redirect } from 'next/navigation'
 import { AuthError } from 'next-auth'
 
+export type LoginActionState = {
+    error: string
+}
+
+export const initialLoginActionState: LoginActionState = {
+    error: '',
+}
+
 /**
  * Login action - Authenticate user with email and password
  */
-export async function loginAction(formData: FormData) {
+export async function loginAction(
+    _previousState: LoginActionState,
+    formData: FormData
+): Promise<LoginActionState> {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
@@ -29,7 +40,6 @@ export async function loginAction(formData: FormData) {
         if (error instanceof AuthError) {
             switch (error.type) {
                 case 'CredentialsSignin':
-                case 'CallbackRouteError':
                     return { error: 'Email atau password salah' }
                 default:
                     return { error: 'Terjadi kesalahan saat login' }

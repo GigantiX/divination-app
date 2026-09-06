@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
         remotePatterns: [
             {
                 protocol: "https",
+                hostname: "cdn.axelabs.my.id",
+            },
+            {
+                protocol: "https",
                 hostname: "*.r2.dev",
             },
             {
