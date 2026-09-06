@@ -8,34 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { loginAction } from "@/app/actions/auth"
+import { initialLoginActionState, loginAction } from "@/app/actions/auth"
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = React.useState(false)
-    const [isLoading, setIsLoading] = React.useState(false)
-    const [error, setError] = React.useState("")
+    const [state, formAction, isPending] = React.useActionState(loginAction, initialLoginActionState)
 
-    const togglePassword = () => setShowPassword(!showPassword)
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        setIsLoading(true)
-        setError("")
-
-        const formData = new FormData(e.currentTarget)
-
-        try {
-            const result = await loginAction(formData)
-            if (result?.error) {
-                setError(result.error)
-                setIsLoading(false)
-            }
-            // Success case handled by redirect in action
-        } catch {
-            setError("Terjadi kesalahan. Silakan coba lagi.")
-            setIsLoading(false)
-        }
-    }
+    const togglePassword = () => setShowPassword((value) => !value)
 
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
@@ -50,11 +29,11 @@ export default function LoginPage() {
                             Masukkan email dan password Anda
                         </CardDescription>
                     </CardHeader>
-                    <form onSubmit={handleSubmit}>
+                    <form action={formAction}>
                         <CardContent className="space-y-4">
-                            {error && (
+                            {state.error && (
                                 <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                                    {error}
+                                    {state.error}
                                 </div>
                             )}
                             <div className="space-y-2">
@@ -65,7 +44,7 @@ export default function LoginPage() {
                                     type="email"
                                     placeholder="email@contoh.com"
                                     required
-                                    disabled={isLoading}
+                                    disabled={isPending}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -78,13 +57,13 @@ export default function LoginPage() {
                                         name="password"
                                         type={showPassword ? "text" : "password"}
                                         required
-                                        disabled={isLoading}
+                                        disabled={isPending}
                                     />
                                     <button
                                         type="button"
                                         onClick={togglePassword}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                        disabled={isLoading}
+                                        disabled={isPending}
                                     >
                                         {showPassword ? (
                                             <EyeOff className="h-4 w-4" />
@@ -97,8 +76,8 @@ export default function LoginPage() {
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">
-                            <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? (
+                            <Button type="submit" className="w-full" disabled={isPending}>
+                                {isPending ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Memproses...

@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { loginAction, registerAction, logoutAction } from './auth';
+import { initialLoginActionState, loginAction, registerAction, logoutAction } from './auth';
 import { signIn, signOut } from '@/auth';
 import { mockSupabaseClient, MockQueryBuilder } from '@/tests/mocks/supabase';
 import { AuthError } from 'next-auth';
@@ -27,7 +27,7 @@ describe('auth server actions', () => {
   describe('loginAction', () => {
     it('should return error if email or password is missing', async () => {
       const formData = createFormData({ email: 'test@example.com' });
-      const result = await loginAction(formData);
+      const result = await loginAction(initialLoginActionState, formData);
       expect(result).toEqual({ error: 'Email dan password wajib diisi' });
       expect(signIn).not.toHaveBeenCalled();
     });
@@ -36,7 +36,7 @@ describe('auth server actions', () => {
       const formData = createFormData({ email: 'test@example.com', password: 'password123' });
       vi.mocked(signIn).mockResolvedValue(undefined as any);
 
-      await expect(loginAction(formData)).rejects.toThrow('NEXT_REDIRECT: /dashboard');
+      await expect(loginAction(initialLoginActionState, formData)).rejects.toThrow('NEXT_REDIRECT: /dashboard');
       expect(signIn).toHaveBeenCalledWith('credentials', {
         email: 'test@example.com',
         password: 'password123',
@@ -50,8 +50,18 @@ describe('auth server actions', () => {
       authError.type = 'CredentialsSignin';
       vi.mocked(signIn).mockRejectedValue(authError);
 
-      const result = await loginAction(formData);
+      const result = await loginAction(initialLoginActionState, formData);
       expect(result).toEqual({ error: 'Email atau password salah' });
+    });
+
+    it('should not present callback failures as invalid credentials', async () => {
+      const formData = createFormData({ email: 'test@example.com', password: 'password123' });
+      const authError = new AuthError('Auth error');
+      authError.type = 'CallbackRouteError';
+      vi.mocked(signIn).mockRejectedValue(authError);
+
+      const result = await loginAction(initialLoginActionState, formData);
+      expect(result).toEqual({ error: 'Terjadi kesalahan saat login' });
     });
   });
 
