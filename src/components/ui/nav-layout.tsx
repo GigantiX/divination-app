@@ -11,7 +11,7 @@ interface NavigationLayoutProps {
 
 export function NavigationLayout({ children, isAdmin = false }: NavigationLayoutProps) {
     return (
-        <div className="flex min-h-screen bg-background-secondary">
+        <div className="flex min-h-screen bg-background-secondary text-foreground">
             {/* Desktop Sidebar */}
             <Sidebar isAdmin={isAdmin} />
 

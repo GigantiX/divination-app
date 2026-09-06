@@ -1,6 +1,8 @@
 "use client"
 
 import { AlertTriangle, RefreshCw } from "lucide-react"
+import { ThemeScript } from "@/components/theme-provider"
+import "./globals.css"
 
 export default function GlobalError({
     error,
@@ -10,69 +12,25 @@ export default function GlobalError({
     reset: () => void
 }) {
     return (
-        <html lang="id">
-            <body style={{ margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                <div
-                    style={{
-                        display: "flex",
-                        minHeight: "100vh",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "#f8fafc",
-                        padding: "24px",
-                    }}
-                >
-                    <div style={{ maxWidth: "384px", textAlign: "center" }}>
-                        <div
-                            style={{
-                                margin: "0 auto 24px",
-                                width: "64px",
-                                height: "64px",
-                                borderRadius: "50%",
-                                backgroundColor: "#fef2f2",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <AlertTriangle size={32} color="#ef4444" />
+        <html lang="id" suppressHydrationWarning>
+            <head>
+                <ThemeScript />
+            </head>
+            <body className="m-0 font-sans antialiased">
+                <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
+                    <div className="max-w-sm text-center">
+                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15">
+                            <AlertTriangle size={32} className="text-destructive" />
                         </div>
-                        <h2
-                            style={{
-                                fontSize: "20px",
-                                fontWeight: 700,
-                                color: "#111827",
-                                marginBottom: "8px",
-                            }}
-                        >
+                        <h2 className="mb-2 text-xl font-bold">
                             Kesalahan Sistem
                         </h2>
-                        <p
-                            style={{
-                                fontSize: "14px",
-                                color: "#6b7280",
-                                marginBottom: "24px",
-                            }}
-                        >
+                        <p className="mb-6 text-sm text-muted-foreground">
                             Terjadi kesalahan serius pada aplikasi. Silakan muat ulang halaman.
                         </p>
                         <button
                             onClick={reset}
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "8px",
-                                width: "100%",
-                                height: "44px",
-                                backgroundColor: "#3b82f6",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "8px",
-                                fontSize: "14px",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                            }}
+                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                             <RefreshCw size={16} />
                             Muat Ulang

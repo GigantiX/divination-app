@@ -373,21 +373,21 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
-                                <Upload className="h-4 w-4 text-emerald-600" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/15">
+                                <Upload className="h-4 w-4 text-success" />
                             </div>
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-foreground">
                                 Upload Kontak
                             </h1>
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Upload kontak peserta event ke database lead.
                         </p>
                     </div>
                     <Link href="/apps/lead-database/history" passHref>
                         <Button
                             variant="outline"
-                            className="w-full sm:w-auto flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                            className="w-full sm:w-auto flex items-center gap-2 border-success/30 bg-success/15 text-success hover:bg-success/20 hover:text-success"
                         >
                             <History className="h-4 w-4" />
                             Riwayat Upload
@@ -404,8 +404,8 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                             className={cn(
                                 "flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
                                 activeTab === tab.key
-                                    ? "bg-emerald-600 text-white shadow-sm"
-                                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                                    ? "bg-success text-success-foreground shadow-sm"
+                                    : "bg-card text-muted-foreground border border-border hover:bg-accent"
                             )}
                         >
                             {tab.icon}
@@ -415,21 +415,21 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                 </div>
 
                 {/* Tab Content */}
-                <Card className="mb-4 border-gray-200 shadow-sm">
+                <Card className="mb-4 border-border shadow-sm">
                     <CardContent className="p-4 sm:p-5">
                         {/* Contact Picker Tab */}
                         {activeTab === "contact" && (
                             <div>
                                 {contactPickerSupported ? (
                                     <div className="flex flex-col items-center py-8">
-                                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                                            <ContactRound className="h-8 w-8 text-emerald-600" />
+                                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15">
+                                            <ContactRound className="h-8 w-8 text-success" />
                                         </div>
-                                        <p className="mb-4 text-center text-sm text-gray-500">
+                                        <p className="mb-4 text-center text-sm text-muted-foreground">
                                             Pilih kontak langsung dari perangkat Anda
                                         </p>
                                         <Button
-                                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+                                            className="bg-success hover:bg-success/85 text-success-foreground flex items-center gap-2"
                                             onClick={handleContactPicker}
                                         >
                                             <ContactRound className="h-4 w-4" />
@@ -438,10 +438,10 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center py-8">
-                                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                                            <ContactRound className="h-8 w-8 text-gray-400" />
+                                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                                            <ContactRound className="h-8 w-8 text-muted-foreground" />
                                         </div>
-                                        <p className="text-center text-sm text-gray-500">
+                                        <p className="text-center text-sm text-muted-foreground">
                                             Fitur ini hanya tersedia di Android Chrome.
                                             <br />
                                             Gunakan metode lain untuk menambahkan kontak.
@@ -458,32 +458,32 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                     className={cn(
                                         "flex flex-col items-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer",
                                         fileError
-                                            ? "border-red-300 bg-red-50"
-                                            : "border-gray-300 bg-gray-50 hover:border-emerald-400 hover:bg-emerald-50"
+                                            ? "border-destructive/30 bg-destructive/15"
+                                            : "border-border bg-muted hover:border-success/30 hover:bg-success/20"
                                     )}
                                     onClick={() => fileInputRef.current?.click()}
                                 >
                                     <div
                                         className={cn(
                                             "mb-3 flex h-12 w-12 items-center justify-center rounded-full",
-                                            fileError ? "bg-red-100" : "bg-emerald-100"
+                                            fileError ? "bg-destructive/15" : "bg-success/15"
                                         )}
                                     >
                                         <FileUp
                                             className={cn(
                                                 "h-6 w-6",
                                                 fileError
-                                                    ? "text-red-500"
-                                                    : "text-emerald-600"
+                                                    ? "text-destructive"
+                                                    : "text-success"
                                             )}
                                         />
                                     </div>
-                                    <p className="mb-1 text-sm font-medium text-gray-700">
+                                    <p className="mb-1 text-sm font-medium text-foreground">
                                         {fileName
                                             ? fileName
                                             : "Klik atau seret file ke sini"}
                                     </p>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-muted-foreground">
                                         Format: .vcf (vCard) atau .csv
                                     </p>
                                     <input
@@ -495,7 +495,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                     />
                                 </div>
                                 {fileError && (
-                                    <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                                    <div className="mt-3 flex items-start gap-2 rounded-lg bg-destructive/15 p-3 text-sm text-destructive">
                                         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                                         <span>{fileError}</span>
                                     </div>
@@ -523,7 +523,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                                         e.target.value
                                                     )
                                                 }
-                                                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                className="flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:border-success/30 focus:outline-none focus:ring-1 focus:ring-success"
                                             />
                                             <input
                                                 type="tel"
@@ -536,7 +536,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                                         e.target.value
                                                     )
                                                 }
-                                                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                                className="flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:border-success/30 focus:outline-none focus:ring-1 focus:ring-success"
                                             />
                                             <button
                                                 onClick={() => removeManualRow(i)}
@@ -544,8 +544,8 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                                 className={cn(
                                                     "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
                                                     manualRows.length <= 1
-                                                        ? "text-gray-300 cursor-not-allowed"
-                                                        : "text-gray-400 hover:bg-red-50 hover:text-red-500"
+                                                        ? "text-muted-foreground cursor-not-allowed"
+                                                        : "text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
                                                 )}
                                             >
                                                 <X className="h-4 w-4" />
@@ -557,7 +557,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                 <div className="mt-3 flex flex-col sm:flex-row gap-2">
                                     <button
                                         onClick={addManualRow}
-                                        className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 hover:border-emerald-400 hover:text-emerald-600 transition-colors"
+                                        className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:border-success/30 hover:text-success transition-colors"
                                     >
                                         <Plus className="h-4 w-4" />
                                         Tambah Kontak
@@ -570,7 +570,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                                     r.name.trim() || r.phone.trim()
                                             )
                                         }
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+                                        className="bg-success hover:bg-success/85 text-success-foreground flex items-center gap-2"
                                         size="sm"
                                     >
                                         <Plus className="h-4 w-4" />
@@ -583,21 +583,21 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                 </Card>
 
                 {/* Contact Preview Section */}
-                <Card className="mb-4 border-gray-200 shadow-sm">
+                <Card className="mb-4 border-border shadow-sm">
                     <CardContent className="p-4 sm:p-5">
                         <div className="mb-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-semibold text-gray-900">
+                                <h3 className="text-sm font-semibold text-foreground">
                                     Daftar Kontak
                                 </h3>
-                                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                                <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
                                     {contacts.length}
                                 </span>
                             </div>
                             {contacts.length > 0 && (
                                 <button
                                     onClick={clearAllContacts}
-                                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
+                                    className="flex items-center gap-1 text-xs text-destructive hover:text-destructive transition-colors"
                                 >
                                     <Trash2 className="h-3 w-3" />
                                     Hapus Semua
@@ -607,10 +607,10 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
 
                         {contacts.length === 0 ? (
                             <div className="flex flex-col items-center py-6 text-center">
-                                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                                    <UserPlus className="h-5 w-5 text-gray-400" />
+                                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                                    <UserPlus className="h-5 w-5 text-muted-foreground" />
                                 </div>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-muted-foreground">
                                     Belum ada kontak. Gunakan salah satu metode di atas
                                     untuk menambahkan kontak.
                                 </p>
@@ -620,19 +620,19 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                 {contacts.map((c, i) => (
                                     <div
                                         key={i}
-                                        className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 group"
+                                        className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-accent group"
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                            <p className="text-sm font-medium text-foreground truncate">
                                                 {c.name}
                                             </p>
-                                            <p className="text-xs text-gray-500 truncate">
+                                            <p className="text-xs text-muted-foreground truncate">
                                                 {c.phone}
                                             </p>
                                         </div>
                                         <button
                                             onClick={() => removeContact(i)}
-                                            className="ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-300 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all"
+                                            className="ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/15 hover:text-destructive transition-all"
                                         >
                                             <X className="h-3.5 w-3.5" />
                                         </button>
@@ -642,7 +642,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                         )}
 
                         {contacts.length > 0 && (
-                            <p className="mt-3 text-center text-xs text-gray-500">
+                            <p className="mt-3 text-center text-xs text-muted-foreground">
                                 {contacts.length} kontak siap diupload
                             </p>
                         )}
@@ -650,18 +650,18 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                 </Card>
 
                 {/* Event & Batch Selection */}
-                <Card className="mb-4 border-gray-200 shadow-sm">
+                <Card className="mb-4 border-border shadow-sm">
                     <CardContent className="p-4 sm:p-5">
-                        <h3 className="mb-3 text-sm font-semibold text-gray-900">
+                        <h3 className="mb-3 text-sm font-semibold text-foreground">
                             Pilih Event & Batch
                         </h3>
                         <div className="space-y-3">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-gray-600">
+                                <label className="text-xs font-medium text-muted-foreground">
                                     Event
                                 </label>
                                 <select
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground focus:border-success/30 focus:outline-none focus:ring-1 focus:ring-success"
                                     value={selectedEventId}
                                     onChange={(e) =>
                                         setSelectedEventId(e.target.value)
@@ -678,13 +678,13 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                 </select>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-gray-600">
+                                <label className="text-xs font-medium text-muted-foreground">
                                     Batch
                                 </label>
                                 <div className="relative">
                                     <select
                                         className={cn(
-                                            "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500",
+                                            "w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground focus:border-success/30 focus:outline-none focus:ring-1 focus:ring-success",
                                             !selectedEventId &&
                                                 "opacity-50 cursor-not-allowed"
                                         )}
@@ -707,7 +707,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                     </select>
                                     {loadingBatches && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                         </div>
                                     )}
                                 </div>
@@ -718,7 +718,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
 
                 {/* Error */}
                 {submitError && (
-                    <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+                    <div className="mb-4 flex items-start gap-2 rounded-lg bg-destructive/15 border border-destructive/30 p-3 text-sm text-destructive">
                         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                         <span>{submitError}</span>
                     </div>
@@ -726,7 +726,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
 
                 {/* Submit Button */}
                 <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 h-12 text-base font-semibold"
+                    className="w-full bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2 h-12 text-base font-semibold"
                     disabled={
                         contacts.length === 0 ||
                         !selectedEventId ||
@@ -751,50 +751,50 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
 
             {/* Result Modal */}
             {uploadResult && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
                     <Card className="w-full max-w-sm border-none shadow-xl">
                         <CardContent className="p-0">
                             <div className="p-6 text-center">
-                                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
-                                    <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+                                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success/15">
+                                    <CheckCircle2 className="h-7 w-7 text-success" />
                                 </div>
-                                <h3 className="mb-1 text-lg font-bold text-gray-900">
+                                <h3 className="mb-1 text-lg font-bold text-foreground">
                                     Upload Selesai!
                                 </h3>
-                                <p className="mb-5 text-sm text-gray-500">
+                                <p className="mb-5 text-sm text-muted-foreground">
                                     Berikut ringkasan hasil upload
                                 </p>
 
                                 <div className="space-y-3 text-left">
-                                    <div className="flex items-center gap-3 rounded-lg bg-emerald-50 px-4 py-3">
-                                        <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                                    <div className="flex items-center gap-3 rounded-lg bg-success/15 px-4 py-3">
+                                        <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
                                         <div>
-                                            <p className="text-sm font-semibold text-emerald-800">
+                                            <p className="text-sm font-semibold text-success">
                                                 {uploadResult.new_leads} kontak baru
                                                 ditambahkan
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3">
-                                        <RefreshCw className="h-5 w-5 text-blue-600 shrink-0" />
+                                    <div className="flex items-center gap-3 rounded-lg bg-primary/15 px-4 py-3">
+                                        <RefreshCw className="h-5 w-5 text-primary shrink-0" />
                                         <div>
-                                            <p className="text-sm font-semibold text-blue-800">
+                                            <p className="text-sm font-semibold text-primary">
                                                 {uploadResult.existing_leads} kontak
                                                 sudah ada (data event ditambahkan)
                                             </p>
                                         </div>
                                     </div>
                                     {uploadResult.failed > 0 && (
-                                        <div className="flex items-start gap-3 rounded-lg bg-red-50 px-4 py-3">
-                                            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                                        <div className="flex items-start gap-3 rounded-lg bg-destructive/15 px-4 py-3">
+                                            <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
                                             <div>
-                                                <p className="text-sm font-semibold text-red-800">
+                                                <p className="text-sm font-semibold text-destructive">
                                                     {uploadResult.failed} kontak gagal
                                                     (nomor tidak valid)
                                                 </p>
                                                 {uploadResult.failed_numbers.length >
                                                     0 && (
-                                                    <p className="mt-1 text-xs text-red-600">
+                                                    <p className="mt-1 text-xs text-destructive">
                                                         {uploadResult.failed_numbers.join(
                                                             ", "
                                                         )}
@@ -807,7 +807,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                             </div>
                             <div className="border-t p-4">
                                 <Button
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="w-full bg-primary hover:bg-primary-hover text-primary-foreground"
                                     onClick={handleDone}
                                 >
                                     Selesai

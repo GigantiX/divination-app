@@ -120,13 +120,13 @@ export default function NewEventPage() {
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center border-b bg-white px-4 py-4">
+            <div className="sticky top-0 z-10 flex items-center border-b bg-card px-4 py-4">
                 <Link href="/dashboard" className="mr-4">
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                         <ChevronLeft className="h-5 w-5" />
                     </Button>
                 </Link>
-                <h1 className="flex-1 text-center text-lg font-bold text-black pr-12">
+                <h1 className="flex-1 text-center text-lg font-bold text-foreground pr-12">
                     Buat Event Baru
                 </h1>
             </div>
@@ -139,7 +139,7 @@ export default function NewEventPage() {
                             {/* Logo Upload */}
                             <div className="space-y-2">
                                 <Label>Logo Event (Opsional)</Label>
-                                <div className={`relative flex h-40 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${preview ? "border-primary bg-primary/5" : "border-gray-200 hover:border-primary/50"
+                                <div className={`relative flex h-40 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${preview ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
                                     }`}>
                                     {!preview && (
                                         <input
@@ -166,19 +166,19 @@ export default function NewEventPage() {
                                             <button
                                                 type="button"
                                                 onClick={clearImage}
-                                                className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                                className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive-hover transition-colors"
                                             >
                                                 <X className="h-4 w-4" />
                                             </button>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                                            <div className="rounded-full bg-gray-100 p-4">
-                                                <ImageIcon className="h-8 w-8 text-gray-400" />
+                                            <div className="rounded-full bg-muted p-4">
+                                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
                                             </div>
                                             <div className="text-center">
-                                                <span className="text-sm font-medium text-gray-700">Tap untuk upload logo</span>
-                                                <p className="text-xs text-gray-400 mt-1">
+                                                <span className="text-sm font-medium text-foreground">Tap untuk upload logo</span>
+                                                <p className="text-xs text-muted-foreground mt-1">
                                                     JPG, PNG, WebP, GIF (maks. {IMAGE_CONFIG.maxSizeMB}MB)
                                                 </p>
                                             </div>
@@ -188,8 +188,8 @@ export default function NewEventPage() {
 
                                 {/* Compression info */}
                                 {compressedBlob && originalSize > 0 && (
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <Check className="h-3 w-3 text-green-500" />
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Check className="h-3 w-3 text-success" />
                                         <span>
                                             Dikompres: {formatFileSize(originalSize)} → {formatFileSize(compressedSize)}
                                             {" "}({Math.round((1 - compressedSize / originalSize) * 100)}% lebih kecil)
@@ -197,7 +197,7 @@ export default function NewEventPage() {
                                     </div>
                                 )}
 
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-muted-foreground">
                                     Ukuran rekomendasi: {IMAGE_CONFIG.maxWidth}×{IMAGE_CONFIG.maxHeight}px
                                 </p>
                             </div>
@@ -214,30 +214,30 @@ export default function NewEventPage() {
                                     className="h-11"
                                     maxLength={100}
                                 />
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-muted-foreground">
                                     Minimal 2 karakter, maksimal 100 karakter
                                 </p>
                             </div>
 
                             {/* Info Note */}
-                            <div className="rounded-lg bg-blue-50 p-4">
-                                <p className="text-xs text-blue-600">
+                            <div className="rounded-lg bg-primary/15 p-4">
+                                <p className="text-xs text-primary">
                                     <strong>Catatan:</strong> Anda dapat menambahkan batch ke event ini setelah membuatnya.
                                 </p>
                             </div>
 
                             {/* Error Message */}
                             {error && (
-                                <div className="rounded-lg bg-red-50 p-4">
-                                    <p className="text-sm text-red-600">{error}</p>
+                                <div className="rounded-lg bg-destructive/15 p-4">
+                                    <p className="text-sm text-destructive">{error}</p>
                                 </div>
                             )}
 
                             {/* Success Message */}
                             {success && (
-                                <div className="rounded-lg bg-green-50 p-4 flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-600" />
-                                    <p className="text-sm text-green-600">Event berhasil dibuat!</p>
+                                <div className="rounded-lg bg-success/15 p-4 flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-success" />
+                                    <p className="text-sm text-success">Event berhasil dibuat!</p>
                                 </div>
                             )}
 

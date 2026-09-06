@@ -38,7 +38,7 @@ const LineChart = dynamic(() => import("./line-chart"), {
     ssr: false,
     loading: () => (
         <div className="h-48 w-full flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-300" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
     ),
 })
@@ -166,14 +166,14 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
             <Sidebar isAdmin={isAdmin} />
             <div className="flex-1 flex flex-col min-w-0 pb-20 md:pl-64">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white shadow-sm">
+            <div className="sticky top-0 z-10 bg-card shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3">
                     <Link href="/dashboard">
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <ChevronLeft className="h-6 w-6" />
                         </Button>
                     </Link>
-                    <h1 className="text-lg font-bold text-black">{data.event.name}</h1>
+                    <h1 className="text-lg font-bold text-foreground">{data.event.name}</h1>
                     <div className="relative" ref={menuRef}>
                         {data.canManageEvent && (
                             <Button
@@ -189,28 +189,28 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
 
                         {/* Dropdown Menu - Admin/PIC Only */}
                         {isMenuOpen && (
-                            <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border bg-white py-1 shadow-lg">
+                            <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border bg-card py-1 shadow-lg">
                                 <Link
                                     href={`/events/${data.event.id}/batches/new`}
-                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    <Layers className="h-4 w-4 text-blue-500" />
+                                    <Layers className="h-4 w-4 text-primary" />
                                     Tambah Batch
                                 </Link>
                                 {selectedBatch && (
                                     <Link
                                         href={`/events/${data.event.id}/batches/${selectedBatch}/edit`}
-                                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors"
                                         onClick={() => setIsMenuOpen(false)}
                                     >
-                                        <Pencil className="h-4 w-4 text-amber-500" />
+                                        <Pencil className="h-4 w-4 text-warning" />
                                         Edit Batch
                                     </Link>
                                 )}
                                 {data.canDeleteBatch && selectedBatch && (
                                     <button
-                                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/15 transition-colors"
                                         onClick={() => {
                                             setIsMenuOpen(false)
                                             setIsDeleteModalOpen(true)
@@ -224,51 +224,51 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                     <>
                                         <Link
                                             href={`/events/${data.event.id}/edit`}
-                                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
-                                            <Settings className="h-4 w-4 text-gray-500" />
+                                            <Settings className="h-4 w-4 text-muted-foreground" />
                                             Edit Event
                                         </Link>
-                                        <div className="h-px bg-gray-100 my-1" />
-                                        <div className="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Export</div>
+                                        <div className="h-px bg-muted my-1" />
+                                        <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Export</div>
                                         
-                                        <div className="px-4 py-2 space-y-1.5 hover:bg-gray-50 transition-colors">
-                                            <div className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                                <Layers className="h-3.5 w-3.5 text-emerald-500" />
+                                        <div className="px-4 py-2 space-y-1.5 hover:bg-accent transition-colors">
+                                            <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                                <Layers className="h-3.5 w-3.5 text-success" />
                                                 Performance
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleExport("event-performance", "csv")}
-                                                    className="flex-1 py-1 text-center text-xs font-bold bg-emerald-50 text-emerald-700 rounded border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-success/15 text-success rounded border border-success/30 hover:bg-success/20 transition-colors"
                                                 >
                                                     CSV
                                                 </button>
                                                 <button
                                                     onClick={() => handleExport("event-performance", "xlsx")}
-                                                    className="flex-1 py-1 text-center text-xs font-bold bg-emerald-600 text-white rounded border border-emerald-700 hover:bg-emerald-700 transition-colors"
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-success text-success-foreground rounded border border-success/30 hover:bg-success/85 transition-colors"
                                                 >
                                                     Excel
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className="px-4 py-2 space-y-1.5 hover:bg-gray-50 transition-colors">
-                                            <div className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                                                <FileText className="h-3.5 w-3.5 text-blue-500" />
+                                        <div className="px-4 py-2 space-y-1.5 hover:bg-accent transition-colors">
+                                            <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                                <FileText className="h-3.5 w-3.5 text-primary" />
                                                 Daily Log
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleExport("daily-reports", "csv")}
-                                                    className="flex-1 py-1 text-center text-xs font-bold bg-blue-50 text-blue-700 rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-primary/15 text-primary rounded border border-primary/30 hover:bg-primary/20 transition-colors"
                                                 >
                                                     CSV
                                                 </button>
                                                 <button
                                                     onClick={() => handleExport("daily-reports", "xlsx")}
-                                                    className="flex-1 py-1 text-center text-xs font-bold bg-blue-600 text-white rounded border border-blue-700 hover:bg-blue-700 transition-colors"
+                                                    className="flex-1 py-1 text-center text-xs font-bold bg-primary text-primary-foreground rounded border border-primary/30 hover:bg-primary-hover transition-colors"
                                                 >
                                                     Excel
                                                 </button>
@@ -284,12 +284,12 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                 {/* Batch Selector */}
                 {data.batches.length > 0 ? (
                     <div className="px-4 pb-4">
-                        <div className="relative flex items-center justify-between rounded-lg border bg-white px-4 py-3 shadow-sm transition-colors hover:border-blue-400">
+                        <div className="relative flex items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-sm transition-colors hover:border-primary/30">
                             <div className="pointer-events-none flex items-center gap-2 text-sm font-medium">
-                                <Calendar className="h-4 w-4 text-gray-500" />
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <span>{batchLabel}</span>
                             </div>
-                            <ChevronDown className="pointer-events-none h-4 w-4 text-gray-400" />
+                            <ChevronDown className="pointer-events-none h-4 w-4 text-muted-foreground" />
 
                             <select
                                 className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
@@ -307,10 +307,10 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                         {/* Batch Price */}
                         {selectedBatchData && (
                             <div className="mt-2 flex items-center gap-1.5 px-1">
-                                <Banknote className="h-3.5 w-3.5 text-emerald-500" />
-                                <p className="text-xs text-gray-500">
+                                <Banknote className="h-3.5 w-3.5 text-success" />
+                                <p className="text-xs text-muted-foreground">
                                     Harga Tiket:{" "}
-                                    <span className="font-semibold text-gray-700">
+                                    <span className="font-semibold text-foreground">
                                         {selectedBatchData.price > 0
                                             ? `Rp ${selectedBatchData.price.toLocaleString('id-ID')}`
                                             : "Belum diatur"}
@@ -321,7 +321,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     </div>
                 ) : (
                     <div className="px-4 pb-4">
-                        <div className="rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-center text-sm text-gray-500">
+                        <div className="rounded-lg border-2 border-dashed border-border bg-muted px-4 py-3 text-center text-sm text-muted-foreground">
                             Belum ada batch
                         </div>
                     </div>
@@ -336,7 +336,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                             "flex-1 border-b-2 min-h-[44px] py-3 text-sm font-medium transition-colors",
                             activeTab === "overview"
                                 ? "border-primary text-primary"
-                                : "border-transparent text-gray-500"
+                                : "border-transparent text-muted-foreground"
                         )}
                     >
                         Overview
@@ -347,7 +347,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                             "flex-1 border-b-2 min-h-[44px] py-3 text-sm font-medium transition-colors",
                             activeTab === "reports"
                                 ? "border-primary text-primary"
-                                : "border-transparent text-gray-500"
+                                : "border-transparent text-muted-foreground"
                         )}
                     >
                         Reports
@@ -361,7 +361,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background-secondary/80 backdrop-blur-[1px] rounded-lg">
                         <div className="flex flex-col items-center gap-2">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-sm text-gray-500">Memuat data...</p>
+                            <p className="text-sm text-muted-foreground">Memuat data...</p>
                         </div>
                     </div>
                 )}
@@ -386,8 +386,8 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                         className={cn(
                                             "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
                                             data.range === option.value
-                                                ? "bg-primary text-white"
-                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted text-muted-foreground hover:bg-accent"
                                         )}
                                     >
                                         {option.label}
@@ -409,41 +409,41 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
             {data.canAddReport && selectedBatch && (
                 <Link href={`/events/${data.event.id}/reports/new?batch=${selectedBatch}`} className="fixed bottom-6 right-6">
                     <Button className="h-14 w-14 rounded-full bg-primary shadow-lg hover:bg-primary-hover">
-                        <Plus className="h-6 w-6 text-white" />
+                        <Plus className="h-6 w-6 text-primary-foreground" />
                     </Button>
                 </Link>
             )}
 
             {/* Delete Batch Confirmation Modal */}
             {isDeleteModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]">
-                    <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4 backdrop-blur-[1px]">
+                    <div className="w-full max-w-sm rounded-2xl bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                         {/* Header */}
-                        <div className="bg-red-50 border-b border-red-100 px-6 py-4 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 shrink-0">
-                                <Trash2 className="h-5 w-5 text-red-600" />
+                        <div className="bg-destructive/15 border-b border-destructive/30 px-6 py-4 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/15 shrink-0">
+                                <Trash2 className="h-5 w-5 text-destructive" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-gray-900">Hapus Batch?</h3>
-                                <p className="text-xs text-red-600 font-medium mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+                                <h3 className="font-bold text-foreground">Hapus Batch?</h3>
+                                <p className="text-xs text-destructive font-medium mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
                             </div>
                         </div>
 
                         {/* Body */}
                         <div className="px-6 py-5 space-y-3">
-                            <p className="text-sm text-gray-700 leading-relaxed">
+                            <p className="text-sm text-foreground leading-relaxed">
                                 Kamu akan menghapus batch{" "}
-                                <span className="font-bold text-gray-900">"{selectedBatchData?.name}"</span>.
+                                <span className="font-bold text-foreground">"{selectedBatchData?.name}"</span>.
                             </p>
-                            <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3">
-                                <p className="text-xs font-semibold text-red-600 leading-relaxed">
+                            <div className="rounded-xl bg-destructive/15 border border-destructive/30 px-4 py-3">
+                                <p className="text-xs font-semibold text-destructive leading-relaxed">
                                     ⚠️ Semua laporan harian dalam batch ini akan ikut terhapus secara permanen.
                                 </p>
                             </div>
                         </div>
 
                         {/* Footer */}
-                        <div className="border-t bg-gray-50 px-6 py-4 flex gap-3">
+                        <div className="border-t bg-muted px-6 py-4 flex gap-3">
                             <Button
                                 variant="outline"
                                 className="flex-1 h-11 font-semibold"
@@ -453,7 +453,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
                                 Batal
                             </Button>
                             <Button
-                                className="flex-1 h-11 bg-red-600 hover:bg-red-700 font-bold gap-2 text-white"
+                                className="flex-1 h-11 bg-destructive hover:bg-destructive-hover font-bold gap-2 text-destructive-foreground"
                                 onClick={handleDeleteBatch}
                                 disabled={isDeletingBatch}
                             >
@@ -505,23 +505,23 @@ function OverviewContent({ data, chartData }: ContentProps) {
                 {/* --- Summary Highlights --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                     {/* Profit & ROAS Highlight Card */}
-                    <div className={`rounded-2xl border p-5 flex flex-col justify-between shadow-sm relative overflow-hidden ${data.stats.profitLoss >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"}`}>
+                    <div className={`rounded-2xl border p-5 flex flex-col justify-between shadow-sm relative overflow-hidden ${data.stats.profitLoss >= 0 ? "bg-success/15 border-success/30" : "bg-destructive/15 border-destructive/30"}`}>
                         <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <TrendingUp className={`w-16 h-16 ${data.stats.profitLoss >= 0 ? "text-emerald-500" : "text-red-500"}`} />
+                            <TrendingUp className={`w-16 h-16 ${data.stats.profitLoss >= 0 ? "text-success" : "text-destructive"}`} />
                         </div>
                         <div>
-                            <p className={`text-xs font-bold uppercase tracking-wider ${data.stats.profitLoss >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            <p className={`text-xs font-bold uppercase tracking-wider ${data.stats.profitLoss >= 0 ? "text-success" : "text-destructive"}`}>
                                 PROFIT / LOSS
                             </p>
-                            <p className={`mt-1 text-xl font-bold leading-tight break-words md:text-2xl ${data.stats.profitLoss >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                            <p className={`mt-1 text-xl font-bold leading-tight break-words md:text-2xl ${data.stats.profitLoss >= 0 ? "text-success" : "text-destructive"}`}>
                                 {data.stats.profitLoss >= 0 ? "+" : ""}{formatCurrency(data.stats.profitLoss)}
                             </p>
                         </div>
                         <div className="mt-4 flex items-center gap-2">
-                            <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                            <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
                                 ROAS: {data.stats.roas}x
                             </div>
-                            <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                            <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${data.stats.profitLoss >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
                                 P/L %: {data.stats.totalSpend > 0 ? Math.round((data.stats.profitLoss / data.stats.totalSpend) * 100) : 0}%
                             </div>
                         </div>
@@ -529,22 +529,22 @@ function OverviewContent({ data, chartData }: ContentProps) {
 
                     {/* Financial Overview (Spend & Revenue) */}
                     <div className="grid grid-cols-1 gap-4 lg:gap-6">
-                        <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
-                            <div className="rounded-full bg-blue-50 p-3">
-                                <Wallet className="h-5 w-5 text-blue-500" />
+                        <div className="rounded-2xl border bg-card p-4 shadow-sm flex items-center gap-4">
+                            <div className="rounded-full bg-primary/15 p-3">
+                                <Wallet className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">REVENUE</p>
-                                <p className="text-base font-bold leading-tight break-words text-gray-800 sm:text-lg">{formatCurrency(data.stats.revenue)}</p>
+                                <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">REVENUE</p>
+                                <p className="text-base font-bold leading-tight break-words text-foreground sm:text-lg">{formatCurrency(data.stats.revenue)}</p>
                             </div>
                         </div>
-                        <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-4">
-                            <div className="rounded-full bg-orange-50 p-3">
-                                <Banknote className="h-5 w-5 text-orange-500" />
+                        <div className="rounded-2xl border bg-card p-4 shadow-sm flex items-center gap-4">
+                            <div className="rounded-full bg-warning/15 p-3">
+                                <Banknote className="h-5 w-5 text-warning" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">SPEND</p>
-                                <p className="text-base font-bold leading-tight break-words text-gray-800 sm:text-lg">{formatCurrency(data.stats.totalSpend)}</p>
+                                <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">SPEND</p>
+                                <p className="text-base font-bold leading-tight break-words text-foreground sm:text-lg">{formatCurrency(data.stats.totalSpend)}</p>
                             </div>
                         </div>
                     </div>
@@ -552,12 +552,12 @@ function OverviewContent({ data, chartData }: ContentProps) {
 
                 {/* --- Funnel Metrics --- */}
                 <div>
-                    <h3 className="mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                        <Target className="h-4 w-4 text-gray-400" /> Performa Funnel
+                    <h3 className="mb-3 text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <Target className="h-4 w-4 text-muted-foreground" /> Performa Funnel
                     </h3>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                        <StatCard title="LEADS" value={data.stats.totalLeads.toString()} icon={<Users className="h-4 w-4 text-blue-500" />} />
-                        <StatCard title="SALES" value={data.stats.totalSales.toString()} icon={<Target className="h-4 w-4 text-emerald-500" />} />
+                        <StatCard title="LEADS" value={data.stats.totalLeads.toString()} icon={<Users className="h-4 w-4 text-primary" />} />
+                        <StatCard title="SALES" value={data.stats.totalSales.toString()} icon={<Target className="h-4 w-4 text-success" />} />
                         <StatCard title="CPR" value={`Rp ${data.stats.cpr.toLocaleString('id-ID')}`} />
                         <StatCard title="CLOSING RATE" value={`${data.stats.closingRate}%`} />
                     </div>
@@ -569,10 +569,10 @@ function OverviewContent({ data, chartData }: ContentProps) {
                         <CardContent className="p-6">
                             <div className="mb-6 flex items-baseline justify-between gap-4">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Trend Leads & Sales</p>
+                                    <p className="text-sm font-medium text-muted-foreground">Trend Leads & Sales</p>
                                     <h3 className="text-xl font-bold">{chartTitle}</h3>
                                 </div>
-                                <span className="text-sm font-medium text-blue-500">
+                                <span className="text-sm font-medium text-primary">
                                     +{chartData.todayLeads || 0} hari ini
                                 </span>
                             </div>
@@ -589,24 +589,24 @@ function OverviewContent({ data, chartData }: ContentProps) {
                 {/* Advertiser Section */}
                 <div>
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-bold text-black">Advertiser</h3>
+                        <h3 className="font-bold text-foreground">Advertiser</h3>
                         {data.advertisers.length > 5 && (
-                            <button className="text-sm font-medium text-blue-500">Lihat Semua</button>
+                            <button className="text-sm font-medium text-primary">Lihat Semua</button>
                         )}
                     </div>
                     {data.advertisers.length > 0 ? (
                         <div className="space-y-4">
                             {data.advertisers.slice(0, 5).map((adv) => (
-                                <div key={adv.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+                                <div key={adv.id} className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                                     {/* Header / Identity */}
-                                    <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/50 px-4 py-3">
+                                    <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-3">
                                         <div className="flex items-center gap-3">
-                                            <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-white shadow-sm" />
-                                            <p className="font-semibold text-gray-900">{adv.name}</p>
+                                            <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-card shadow-sm" />
+                                            <p className="font-semibold text-foreground">{adv.name}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
-                                            <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
+                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Revenue</p>
+                                            <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-foreground sm:text-base">
                                                 {formatCurrency(adv.revenue)}
                                             </p>
                                         </div>
@@ -615,18 +615,18 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                     {/* Metrics Body */}
                                     <div className="p-4">
                                         {/* Profit / ROAS row */}
-                                        <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                                        <div className="mb-4 flex items-center justify-between rounded-lg bg-muted px-3 py-2">
                                             <div className="flex min-w-0 items-center gap-2">
-                                                <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
-                                                <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                <p className="text-xs font-semibold text-muted-foreground uppercase">P/L:</p>
+                                                <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
                                                     {adv.profitLoss >= 0 ? "+" : ""}{formatCurrency(adv.profitLoss)}
                                                 </p>
                                             </div>
-                                            <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
-                                                <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
-                                                <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
-                                                <p className="text-xs font-semibold text-gray-500 uppercase">P/L %:</p>
-                                                <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            <div className="flex items-center gap-2 border-l border-border pl-3">
+                                                <p className="text-xs font-semibold text-muted-foreground uppercase">ROAS:</p>
+                                                <p className="text-sm font-bold text-foreground">{adv.roas}x</p>
+                                                <p className="text-xs font-semibold text-muted-foreground uppercase">P/L %:</p>
+                                                <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
                                                     {adv.spend > 0 ? Math.round((adv.profitLoss / adv.spend) * 100) : 0}%
                                                 </p>
                                             </div>
@@ -635,20 +635,20 @@ function OverviewContent({ data, chartData }: ContentProps) {
                                         {/* Core Metrics Grid */}
                                         <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                             <div>
-                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCurrency(adv.spend)}</p>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Spend</p>
+                                                <p className="mt-1 break-words text-xs font-bold leading-tight text-primary sm:text-sm">{formatCurrency(adv.spend)}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
-                                                <p className="mt-1 text-xs sm:text-sm font-bold text-violet-600">{adv.leads}</p>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Leads</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-primary">{adv.leads}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
-                                                <p className="mt-1 text-xs sm:text-sm font-bold text-emerald-500">{adv.sales}</p>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sales</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-success">{adv.sales}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Closing</p>
-                                                <p className="mt-1 text-xs sm:text-sm font-bold text-gray-700">{adv.closingRate}%</p>
+                                                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Closing</p>
+                                                <p className="mt-1 text-xs sm:text-sm font-bold text-foreground">{adv.closingRate}%</p>
                                             </div>
                                         </div>
                                     </div>
@@ -663,14 +663,14 @@ function OverviewContent({ data, chartData }: ContentProps) {
                 {/* PIC Section */}
                 <div>
                     <div className="mb-4">
-                        <h3 className="font-bold text-black">PIC</h3>
+                        <h3 className="font-bold text-foreground">PIC</h3>
                     </div>
                     {data.pics.length > 0 ? (
                         <div className="space-y-3">
                             {data.pics.map((pic) => (
-                                <div key={pic.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                                <div key={pic.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
                                     <AvatarEmoji emoji={pic.emoji} size="sm" />
-                                    <p className="font-medium text-gray-900">{pic.name}</p>
+                                    <p className="font-medium text-foreground">{pic.name}</p>
                                 </div>
                             ))}
                         </div>
@@ -765,13 +765,13 @@ function ReportsContent({ data }: ContentProps) {
     if (groups.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="mb-6 rounded-full bg-gray-100 p-6">
-                    <Inbox className="h-12 w-12 text-gray-400" />
+                <div className="mb-6 rounded-full bg-muted p-6">
+                    <Inbox className="h-12 w-12 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                     Belum Ada Laporan
                 </h3>
-                <p className="text-gray-500 max-w-xs">
+                <p className="text-muted-foreground max-w-xs">
                     {data.canAddReport
                         ? "Tap tombol + untuk menambahkan laporan harian pertama."
                         : "Belum ada laporan untuk batch ini."
@@ -790,22 +790,22 @@ function ReportsContent({ data }: ContentProps) {
             {groups.map((adv) => {
                 const isExpanded = expandedAdvId === adv.id
                 return (
-                    <div key={adv.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-all duration-200">
+                    <div key={adv.id} className="rounded-xl border border-border bg-card shadow-sm overflow-hidden transition-all duration-200">
                         {/* Header & Stats Summary */}
                         <div
                             onClick={() => handleToggleExpand(adv.id)}
-                            className="cursor-pointer hover:bg-gray-50/30 transition-colors"
+                            className="cursor-pointer hover:bg-accent/30 transition-colors"
                         >
                             {/* Identity Header */}
-                            <div className="flex items-center justify-between border-b border-gray-50 bg-gray-50/50 px-4 py-3">
+                            <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-3">
                                 <div className="flex items-center gap-3">
-                                    <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform duration-200", isExpanded && "rotate-180")} />
-                                    <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-white shadow-sm" />
-                                    <p className="font-semibold text-gray-900">{adv.name}</p>
+                                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isExpanded && "rotate-180")} />
+                                    <AvatarEmoji emoji={adv.emoji} size="sm" className="bg-card shadow-sm" />
+                                    <p className="font-semibold text-foreground">{adv.name}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Revenue</p>
-                                    <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-gray-900 sm:text-base">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Revenue</p>
+                                    <p className="max-w-[160px] break-words text-right text-sm font-bold leading-tight text-foreground sm:text-base">
                                         {formatCurrency(adv.revenue)}
                                     </p>
                                 </div>
@@ -814,18 +814,18 @@ function ReportsContent({ data }: ContentProps) {
                             {/* Metrics Body */}
                             <div className="p-4">
                                 {/* Profit / ROAS row */}
-                                <div className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+                                <div className="mb-4 flex items-center justify-between rounded-lg bg-muted px-3 py-2">
                                     <div className="flex min-w-0 items-center gap-2">
-                                        <p className="text-xs font-semibold text-gray-500 uppercase">P/L:</p>
-                                        <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase">P/L:</p>
+                                        <p className={`break-words text-xs font-bold leading-tight sm:text-sm ${adv.profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
                                             {adv.profitLoss >= 0 ? "+" : ""}{formatCurrency(adv.profitLoss)}
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
-                                        <p className="text-xs font-semibold text-gray-500 uppercase">ROAS:</p>
-                                        <p className="text-sm font-bold text-gray-900">{adv.roas}x</p>
-                                        <p className="text-xs font-semibold text-gray-500 uppercase">P/L %:</p>
-                                        <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    <div className="flex items-center gap-2 border-l border-border pl-3">
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase">ROAS:</p>
+                                        <p className="text-sm font-bold text-foreground">{adv.roas}x</p>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase">P/L %:</p>
+                                        <p className={`text-sm font-bold ${adv.profitLoss >= 0 ? 'text-success' : 'text-destructive'}`}>
                                             {adv.spend > 0 ? Math.round((adv.profitLoss / adv.spend) * 100) : 0}%
                                         </p>
                                     </div>
@@ -834,20 +834,20 @@ function ReportsContent({ data }: ContentProps) {
                                 {/* Core Metrics Grid */}
                                 <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4 sm:divide-x sm:divide-gray-100">
                                     <div>
-                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Spend</p>
-                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-blue-600 sm:text-sm">{formatCurrency(adv.spend)}</p>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Spend</p>
+                                        <p className="mt-1 break-words text-xs font-bold leading-tight text-primary sm:text-sm">{formatCurrency(adv.spend)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Leads</p>
-                                        <p className="mt-1 text-xs sm:text-sm font-bold text-violet-600">{adv.leads}</p>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Leads</p>
+                                        <p className="mt-1 text-xs sm:text-sm font-bold text-primary">{adv.leads}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
-                                        <p className="mt-1 text-xs sm:text-sm font-bold text-emerald-500">{adv.sales}</p>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sales</p>
+                                        <p className="mt-1 text-xs sm:text-sm font-bold text-success">{adv.sales}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide">Closing</p>
-                                        <p className="mt-1 text-xs sm:text-sm font-bold text-gray-700">{adv.closingRate}%</p>
+                                        <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">Closing</p>
+                                        <p className="mt-1 text-xs sm:text-sm font-bold text-foreground">{adv.closingRate}%</p>
                                     </div>
                                 </div>
                             </div>
@@ -855,18 +855,18 @@ function ReportsContent({ data }: ContentProps) {
 
                         {/* Expanded Reports History */}
                         {isExpanded && (
-                            <div className="border-t border-gray-100 bg-gray-50/50 p-4 space-y-3">
-                                <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            <div className="border-t border-border bg-muted/50 p-4 space-y-3">
+                                <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                     Riwayat Laporan ({adv.reports.length})
                                 </h5>
                                 {adv.reports.length > 0 ? (
                                     adv.reports.map((report) => (
-                                        <Card key={report.id} className="rounded-xl border border-gray-100 bg-white shadow-sm">
+                                        <Card key={report.id} className="rounded-xl border border-border bg-card shadow-sm">
                                             <CardContent className="p-4">
                                                 <div className="mb-4 flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50">
-                                                            <Calendar className="h-4 w-4 text-blue-500" />
+                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15">
+                                                            <Calendar className="h-4 w-4 text-primary" />
                                                         </div>
                                                         <div>
                                                             <h4 className="text-sm font-bold">{formatDate(report.date)}</h4>
@@ -875,7 +875,7 @@ function ReportsContent({ data }: ContentProps) {
                                                     {(data.canManageEvent || report.reporter.id === data.currentUserId) && (
                                                         <Link
                                                             href={`/events/${data.event.id}/reports/${report.id}/edit`}
-                                                            className="text-xs font-medium text-blue-500 hover:underline"
+                                                            className="text-xs font-medium text-primary hover:underline"
                                                         >
                                                             Edit
                                                         </Link>
@@ -889,8 +889,8 @@ function ReportsContent({ data }: ContentProps) {
                                                 </div>
 
                                                 {report.notes && (
-                                                    <div className="mt-3 bg-gray-50 rounded-lg p-2.5 text-xs text-gray-600 border border-gray-100">
-                                                        <p className="font-semibold text-gray-500 mb-0.5">Catatan:</p>
+                                                    <div className="mt-3 bg-muted rounded-lg p-2.5 text-xs text-muted-foreground border border-border">
+                                                        <p className="font-semibold text-muted-foreground mb-0.5">Catatan:</p>
                                                         {report.notes}
                                                     </div>
                                                 )}
@@ -898,7 +898,7 @@ function ReportsContent({ data }: ContentProps) {
                                         </Card>
                                     ))
                                 ) : (
-                                    <div className="text-center py-6 text-sm text-gray-400">
+                                    <div className="text-center py-6 text-sm text-muted-foreground">
                                         Belum ada laporan harian untuk advertiser ini
                                     </div>
                                 )}
@@ -908,7 +908,7 @@ function ReportsContent({ data }: ContentProps) {
                 )
             })}
             <div className="pt-4 text-center">
-                <p className="text-sm text-gray-400">Akhir dari laporan</p>
+                <p className="text-sm text-muted-foreground">Akhir dari laporan</p>
             </div>
         </div>
     )
@@ -919,8 +919,8 @@ function StatCard({ title, value, valueColor, icon }: { title: string; value: st
         <Card className="rounded-2xl border-none shadow-sm h-32 flex flex-col justify-center">
             <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                    {icon && <div className="rounded-md bg-gray-50 p-1.5">{icon}</div>}
-                    <p className="text-xs font-bold uppercase text-gray-400 tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">{title}</p>
+                    {icon && <div className="rounded-md bg-muted p-1.5">{icon}</div>}
+                    <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">{title}</p>
                 </div>
                 <p className={`mt-3 text-xl font-bold ${valueColor || ""}`}>{value}</p>
             </CardContent>
@@ -930,8 +930,8 @@ function StatCard({ title, value, valueColor, icon }: { title: string; value: st
 
 function BadgeBox({ label, value }: { label: string; value: string }) {
     return (
-        <div className="min-w-[124px] rounded-lg bg-gray-50 p-2">
-            <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
+        <div className="min-w-[124px] rounded-lg bg-muted p-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase">{label}</p>
             <p className="text-sm font-semibold leading-tight">{value}</p>
         </div>
     )
@@ -939,7 +939,7 @@ function BadgeBox({ label, value }: { label: string; value: string }) {
 
 function EmptyState({ message }: { message: string }) {
     return (
-        <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+        <div className="rounded-xl border-2 border-dashed border-border bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
             {message}
         </div>
     )

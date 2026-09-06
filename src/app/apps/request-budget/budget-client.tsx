@@ -101,20 +101,20 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
             <div className="flex-1 p-4 pb-24 md:mx-auto md:w-full md:max-w-4xl md:p-6">
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Request Budget</h1>
-                        <p className="mt-1 text-sm text-gray-500">Riwayat request budget iklan.</p>
+                        <h1 className="text-2xl font-bold text-foreground">Request Budget</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Riwayat request budget iklan.</p>
                     </div>
                     
                     <div className="flex flex-col sm:flex-row gap-2">
                         {isAdmin && (
                             <Link href="/apps/request-budget/queue" passHref>
-                                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800">
+                                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2 border-warning/30 bg-warning/15 text-warning hover:bg-warning/20 hover:text-warning">
                                     <ListTodo className="h-4 w-4" /> Queue
                                 </Button>
                             </Link>
                         )}
                         <Button 
-                            className="w-full sm:w-auto flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                            className="w-full sm:w-auto flex items-center gap-2 bg-primary hover:bg-primary-hover text-primary-foreground"
                             onClick={() => setIsSubmitModalOpen(true)}
                         >
                             <Plus className="h-4 w-4" /> Request Baru
@@ -124,32 +124,32 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
 
                 {loading ? (
                     <div className="flex justify-center p-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                 ) : requests.length === 0 ? (
-                    <div className="text-center p-12 bg-white rounded-xl border border-gray-200">
-                        <p className="text-gray-500">Belum ada riwayat request budget.</p>
+                    <div className="text-center p-12 bg-card rounded-xl border border-border">
+                        <p className="text-muted-foreground">Belum ada riwayat request budget.</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
                         {requests.map((req) => (
-                            <Card key={req.id} className="border-gray-200 shadow-sm overflow-hidden">
+                            <Card key={req.id} className="border-border shadow-sm overflow-hidden">
                                 <CardContent className="p-4 sm:p-5">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
                                                     {new Date(req.created_at).toLocaleDateString('id-ID', {
                                                         day: 'numeric', month: 'short', year: 'numeric'
                                                     })}
                                                 </span>
                                                 <StatusBadge status={req.status} />
                                             </div>
-                                            <h3 className="font-semibold text-gray-900">{req.event_name || 'Unknown Event'}</h3>
+                                            <h3 className="font-semibold text-foreground">{req.event_name || 'Unknown Event'}</h3>
                                             {isAdmin && req.user_name && (
-                                                <p className="text-xs text-gray-500">Oleh: <span className="font-medium text-gray-700">{req.user_name}</span></p>
+                                                <p className="text-xs text-muted-foreground">Oleh: <span className="font-medium text-foreground">{req.user_name}</span></p>
                                             )}
-                                            <p className="text-xl font-bold text-blue-600">{formatIDR(req.amount)}</p>
+                                            <p className="text-xl font-bold text-primary">{formatIDR(req.amount)}</p>
                                         </div>
                                         
                                         {req.status === 'approved' && req.proof_image_url && (
@@ -172,18 +172,18 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
 
             {/* Submit Modal */}
             {isSubmitModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
                     <Card className="w-full max-w-md border-none shadow-xl">
                         <CardContent className="p-0">
                             <div className="flex items-center justify-between border-b p-4">
                                 <h3 className="text-lg font-bold">Request Budget Baru</h3>
-                                <button onClick={() => setIsSubmitModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <button onClick={() => setIsSubmitModalOpen(false)} className="text-muted-foreground hover:text-foreground">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
                             <form onSubmit={handleSubmit} className="p-4 space-y-4">
                                 {submitError && (
-                                    <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
+                                    <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-lg">
                                         {submitError}
                                     </div>
                                 )}
@@ -191,7 +191,7 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Event</label>
                                     <select 
-                                        className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        className="w-full rounded-md border border-border p-2 text-sm focus:border-primary/30 focus:outline-none focus:ring-1 focus:ring-primary"
                                         value={selectedEventId}
                                         onChange={(e) => setSelectedEventId(e.target.value)}
                                         required
@@ -207,13 +207,13 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
                                     <label className="text-sm font-medium">Jumlah (IDR)</label>
                                     <div className="relative">
                                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <span className="text-gray-500 sm:text-sm">Rp</span>
+                                            <span className="text-muted-foreground sm:text-sm">Rp</span>
                                         </div>
                                         <input 
                                             type="text"
                                             value={amountInput}
                                             onChange={handleAmountChange}
-                                            className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            className="w-full rounded-md border border-border py-2 pl-10 pr-3 text-sm focus:border-primary/30 focus:outline-none focus:ring-1 focus:ring-primary"
                                             placeholder="10.000.000"
                                             required
                                         />
@@ -223,7 +223,7 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
                                 <div className="pt-2">
                                     <Button 
                                         type="submit" 
-                                        className="w-full bg-blue-600 hover:bg-blue-700"
+                                        className="w-full bg-primary hover:bg-primary-hover"
                                         disabled={isSubmitting || !selectedEventId || !amountInput}
                                     >
                                         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -238,10 +238,10 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
 
             {/* Proof Modal */}
             {proofModalUrl && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4" onClick={() => setProofModalUrl(null)}>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/80 p-4" onClick={() => setProofModalUrl(null)}>
                     <div className="relative max-w-3xl w-full max-h-[90vh] flex flex-col items-center">
                         <button 
-                            className="absolute -top-10 right-0 text-white hover:text-gray-300 bg-black/50 rounded-full p-2"
+                            className="absolute -top-10 right-0 text-primary-foreground hover:text-foreground bg-overlay/50 rounded-full p-2"
                             onClick={() => setProofModalUrl(null)}
                         >
                             <X className="h-6 w-6" />
@@ -263,12 +263,12 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
 function StatusBadge({ status }: { status: string }) {
     switch (status) {
         case 'process':
-            return <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-semibold">Diproses</span>
+            return <span className="bg-warning/15 text-warning px-2 py-0.5 rounded text-xs font-semibold">Diproses</span>
         case 'approved':
-            return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-semibold">Disetujui</span>
+            return <span className="bg-success/15 text-success px-2 py-0.5 rounded text-xs font-semibold">Disetujui</span>
         case 'rejected':
-            return <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">Ditolak</span>
+            return <span className="bg-destructive/15 text-destructive px-2 py-0.5 rounded text-xs font-semibold">Ditolak</span>
         default:
-            return <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-semibold">{status}</span>
+            return <span className="bg-muted text-foreground px-2 py-0.5 rounded text-xs font-semibold">{status}</span>
     }
 }

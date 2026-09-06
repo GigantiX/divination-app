@@ -25,20 +25,20 @@ import {
 const getRoleBadgeStyle = (role: "pic" | "advertiser") => {
     switch (role) {
         case "pic":
-            return { bgColor: "bg-blue-50", textColor: "text-blue-600", label: "PIC" }
+            return { bgColor: "bg-primary/15", textColor: "text-primary", label: "PIC" }
         case "advertiser":
-            return { bgColor: "bg-purple-50", textColor: "text-purple-600", label: "Advertiser" }
+            return { bgColor: "bg-primary/15", textColor: "text-primary", label: "Advertiser" }
     }
 }
 
 const getGlobalRoleConfig = (role: string) => {
     switch (role) {
         case "developer":
-            return { label: "Developer", bgColor: "bg-purple-100", textColor: "text-purple-700" }
+            return { label: "Developer", bgColor: "bg-primary/15", textColor: "text-primary" }
         case "admin":
-            return { label: "Admin", bgColor: "bg-blue-100", textColor: "text-blue-700" }
+            return { label: "Admin", bgColor: "bg-primary/15", textColor: "text-primary" }
         default:
-            return { label: "User", bgColor: "bg-gray-100", textColor: "text-gray-700" }
+            return { label: "User", bgColor: "bg-muted", textColor: "text-foreground" }
     }
 }
 
@@ -100,15 +100,15 @@ export default function UserDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen flex-col bg-gray-50">
-                <div className="bg-white px-4 py-4 shadow-sm">
+            <div className="flex min-h-screen flex-col bg-muted">
+                <div className="bg-card px-4 py-4 shadow-sm">
                     <div className="flex items-center gap-3">
                         <Link href="/people">
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <ChevronLeft className="h-6 w-6" />
                             </Button>
                         </Link>
-                        <h1 className="text-xl font-bold text-black">User Details</h1>
+                        <h1 className="text-xl font-bold text-foreground">User Details</h1>
                     </div>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
@@ -120,19 +120,19 @@ export default function UserDetailPage() {
 
     if (error && !user) {
         return (
-            <div className="flex min-h-screen flex-col bg-gray-50">
-                <div className="bg-white px-4 py-4 shadow-sm">
+            <div className="flex min-h-screen flex-col bg-muted">
+                <div className="bg-card px-4 py-4 shadow-sm">
                     <div className="flex items-center gap-3">
                         <Link href="/people">
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <ChevronLeft className="h-6 w-6" />
                             </Button>
                         </Link>
-                        <h1 className="text-xl font-bold text-black">User Details</h1>
+                        <h1 className="text-xl font-bold text-foreground">User Details</h1>
                     </div>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
-                    <p className="text-red-500">{error}</p>
+                    <p className="text-destructive">{error}</p>
                 </div>
             </div>
         )
@@ -143,16 +143,16 @@ export default function UserDetailPage() {
     const isAdminOrDev = user.role === "admin" || user.role === "developer"
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50">
+        <div className="flex min-h-screen flex-col bg-muted">
             {/* Header */}
-            <div className="bg-white px-4 py-4 shadow-sm">
+            <div className="bg-card px-4 py-4 shadow-sm">
                 <div className="flex items-center gap-3">
                     <Link href="/people">
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <ChevronLeft className="h-6 w-6" />
                         </Button>
                     </Link>
-                    <h1 className="text-xl font-bold text-black">User Details</h1>
+                    <h1 className="text-xl font-bold text-foreground">User Details</h1>
                 </div>
             </div>
 
@@ -160,10 +160,10 @@ export default function UserDetailPage() {
             <div className="flex-1 p-6 md:max-w-2xl md:mx-auto md:w-full">
                 {/* Profile Section */}
                 <div className="flex flex-col items-center text-center mb-8">
-                    <AvatarEmoji emoji={user.emoji} size="lg" className="mb-4 border-4 border-white shadow-lg" />
+                    <AvatarEmoji emoji={user.emoji} size="lg" className="mb-4 border-4 border-card shadow-lg" />
 
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
-                    <p className="text-gray-500 mb-3">@{user.username}</p>
+                    <h2 className="text-2xl font-bold text-foreground mb-1">{user.name}</h2>
+                    <p className="text-muted-foreground mb-3">@{user.username}</p>
 
                     {/* Global Role Badge */}
                     {globalRoleConfig && (
@@ -181,13 +181,13 @@ export default function UserDetailPage() {
                 {/* Role Management (Developer only, for non-developer users) */}
                 {user.role !== "developer" && (
                     <div className="mb-6">
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                             Global Role
                         </h3>
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-muted-foreground">
                                         Role saat ini: <span className="font-semibold">{globalRoleConfig?.label}</span>
                                     </p>
                                     {user.role === "user" ? (
@@ -205,7 +205,7 @@ export default function UserDetailPage() {
                                     ) : user.role === "admin" ? (
                                         <Button
                                             variant="outline"
-                                            className="text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                            className="text-sm text-warning hover:text-warning hover:bg-warning/20"
                                             onClick={() => {
                                                 setPendingRole("user")
                                                 setShowRoleConfirm(true)
@@ -223,7 +223,7 @@ export default function UserDetailPage() {
                 {/* Assign to Event Button — Only for regular users */}
                 {!isAdminOrDev && (
                     <Link href={`/people/${userId}/assign`}>
-                        <Button className="w-full h-14 rounded-2xl text-base font-semibold mb-8 bg-blue-500 hover:bg-blue-600">
+                        <Button className="w-full h-14 rounded-2xl text-base font-semibold mb-8 bg-primary hover:bg-primary-hover">
                             <Plus className="h-5 w-5 mr-2" />
                             Tugaskan ke Event
                         </Button>
@@ -231,8 +231,8 @@ export default function UserDetailPage() {
                 )}
 
                 {isAdminOrDev && (
-                    <div className="mb-8 rounded-lg bg-blue-50 px-4 py-3">
-                        <p className="text-xs text-blue-600">
+                    <div className="mb-8 rounded-lg bg-primary/15 px-4 py-3">
+                        <p className="text-xs text-primary">
                             ℹ️ {user.role === "developer" ? "Developer" : "Admin"} memiliki akses ke semua event secara otomatis.
                         </p>
                     </div>
@@ -240,19 +240,19 @@ export default function UserDetailPage() {
 
                 {/* Error display */}
                 {error && (
-                    <div className="mb-4 rounded-lg bg-red-50 px-4 py-3">
-                        <p className="text-sm text-red-600">{error}</p>
+                    <div className="mb-4 rounded-lg bg-destructive/15 px-4 py-3">
+                        <p className="text-sm text-destructive">{error}</p>
                     </div>
                 )}
 
                 {/* Assigned Events Section */}
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Event yang Ditugaskan</h3>
+                    <h3 className="text-lg font-bold text-foreground mb-4">Event yang Ditugaskan</h3>
 
                     {user.assignments.length === 0 ? (
                         <Card className="border-none shadow-sm">
                             <CardContent className="p-8 text-center">
-                                <p className="text-gray-500">Belum ada event yang ditugaskan</p>
+                                <p className="text-muted-foreground">Belum ada event yang ditugaskan</p>
                             </CardContent>
                         </Card>
                     ) : (
@@ -264,7 +264,7 @@ export default function UserDetailPage() {
                                         <CardContent className="p-4">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="font-semibold text-gray-900 mb-2">
+                                                    <h4 className="font-semibold text-foreground mb-2">
                                                         {assignment.eventName}
                                                     </h4>
                                                     <span className={cn(
@@ -277,7 +277,7 @@ export default function UserDetailPage() {
                                                 </div>
                                                 <Button
                                                     variant="ghost"
-                                                    className="text-red-500 hover:text-red-600 hover:bg-red-50 font-semibold"
+                                                    className="text-destructive hover:text-destructive hover:bg-destructive/15 font-semibold"
                                                     onClick={() => handleRevoke(assignment.id)}
                                                     disabled={revokingId === assignment.id}
                                                 >
@@ -299,12 +299,12 @@ export default function UserDetailPage() {
 
             {/* Role Change Confirmation Dialog */}
             {showRoleConfirm && pendingRole && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
-                        <h3 className="text-center text-lg font-bold text-gray-900 mb-2">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
+                    <div className="w-full max-w-sm rounded-3xl bg-card p-6 shadow-xl">
+                        <h3 className="text-center text-lg font-bold text-foreground mb-2">
                             Konfirmasi Perubahan Role
                         </h3>
-                        <p className="text-center text-sm text-gray-500 mb-6">
+                        <p className="text-center text-sm text-muted-foreground mb-6">
                             {pendingRole === "admin"
                                 ? `Jadikan ${user.name} sebagai Admin? Admin memiliki akses ke semua event.`
                                 : `Turunkan ${user.name} dari Admin menjadi User biasa?`
@@ -326,8 +326,8 @@ export default function UserDetailPage() {
                                 className={cn(
                                     "flex-1",
                                     pendingRole === "admin"
-                                        ? "bg-blue-500 hover:bg-blue-600"
-                                        : "bg-orange-500 hover:bg-orange-600"
+                                        ? "bg-primary hover:bg-primary-hover"
+                                        : "bg-warning text-warning-foreground hover:bg-warning/85"
                                 )}
                                 onClick={handleRoleChange}
                                 disabled={isChangingRole}

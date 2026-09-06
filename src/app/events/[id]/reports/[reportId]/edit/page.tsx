@@ -196,14 +196,14 @@ export default function EditReportPage() {
     if (isLoading) {
         return (
             <div className="flex min-h-screen flex-col bg-background-secondary">
-                <div className="sticky top-0 z-10 border-b bg-white px-4 py-4">
+                <div className="sticky top-0 z-10 border-b bg-card px-4 py-4">
                     <div className="flex items-center">
                         <Link href={`/events/${eventId}`}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 mr-2">
                                 <ChevronLeft className="h-5 w-5" />
                             </Button>
                         </Link>
-                        <h1 className="flex-1 text-center text-lg font-bold text-black pr-10">
+                        <h1 className="flex-1 text-center text-lg font-bold text-foreground pr-10">
                             Edit Laporan
                         </h1>
                     </div>
@@ -218,14 +218,14 @@ export default function EditReportPage() {
     return (
         <div className="flex min-h-screen flex-col bg-background-secondary">
             {/* Header */}
-            <div className="sticky top-0 z-10 border-b bg-white px-4 py-4">
+            <div className="sticky top-0 z-10 border-b bg-card px-4 py-4">
                 <div className="flex items-center">
                     <Link href={`/events/${eventId}?batch=${batchId}`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 mr-2">
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
                     </Link>
-                    <h1 className="flex-1 text-center text-lg font-bold text-black pr-10">
+                    <h1 className="flex-1 text-center text-lg font-bold text-foreground pr-10">
                         Edit Laporan
                     </h1>
                 </div>
@@ -235,18 +235,18 @@ export default function EditReportPage() {
             <div className="flex-1 p-4 md:p-6 md:max-w-2xl md:mx-auto md:w-full">
                 {/* Batch Info */}
                 {batchName && (
-                    <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-center gap-2">
-                        <span className="text-blue-500 text-sm">📋</span>
-                        <p className="text-sm text-blue-700">
+                    <div className="mb-4 rounded-xl bg-primary/15 border border-primary/30 px-4 py-3 flex items-center gap-2">
+                        <span className="text-primary text-sm">📋</span>
+                        <p className="text-sm text-primary">
                             Mengedit laporan di batch <span className="font-semibold">{batchName}</span>
                         </p>
                     </div>
                 )}
 
                 {/* Reporter Info */}
-                <div className="mb-4 rounded-lg bg-gray-50 px-4 py-3">
-                    <p className="text-xs text-gray-500">
-                        Laporan oleh <span className="font-medium text-gray-700">{reporterName}</span>
+                <div className="mb-4 rounded-lg bg-muted px-4 py-3">
+                    <p className="text-xs text-muted-foreground">
+                        Laporan oleh <span className="font-medium text-foreground">{reporterName}</span>
                     </p>
                 </div>
 
@@ -256,11 +256,11 @@ export default function EditReportPage() {
                             {/* Date Display */}
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-gray-500" />
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
                                     Tanggal Laporan
                                 </Label>
-                                <div className="rounded-lg bg-blue-50 px-3 py-2">
-                                    <p className="text-xs text-blue-600">
+                                <div className="rounded-lg bg-primary/15 px-3 py-2">
+                                    <p className="text-xs text-primary">
                                         📅 {formatDisplayDate(formData.reportDate)}
                                     </p>
                                 </div>
@@ -268,18 +268,18 @@ export default function EditReportPage() {
 
                             {/* Metrics Section */}
                             <div className="space-y-4">
-                                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
                                     Metrik Performa
                                 </h3>
 
                                 {/* Spend Field */}
                                 <div className="space-y-2">
                                     <Label htmlFor="spend" className="flex items-center gap-2">
-                                        <DollarSign className="h-4 w-4 text-blue-500" />
+                                        <DollarSign className="h-4 w-4 text-primary" />
                                         Ad Spend (IDR) *
                                     </Label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
                                             Rp
                                         </span>
                                         <Input
@@ -299,7 +299,7 @@ export default function EditReportPage() {
                                 {/* Tax Selector */}
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2">
-                                        <Percent className="h-4 w-4 text-amber-500" />
+                                        <Percent className="h-4 w-4 text-warning" />
                                         Pajak Meta Ads
                                     </Label>
                                     <div className="flex gap-2">
@@ -311,8 +311,8 @@ export default function EditReportPage() {
                                                 className={cn(
                                                     "flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all",
                                                     taxOption === opt
-                                                        ? "bg-amber-500 text-white shadow-sm"
-                                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                                        ? "bg-warning text-warning-foreground shadow-sm"
+                                                        : "bg-muted text-muted-foreground hover:bg-accent"
                                                 )}
                                             >
                                                 {opt === "custom" ? "Custom" : `${opt}%`}
@@ -332,10 +332,10 @@ export default function EditReportPage() {
                                                 step="0.1"
                                                 className="h-11 pr-8"
                                             />
-                                            <span className="absolute right-3 top-1/2 translate-y-[-35%] text-gray-400 font-medium">%</span>
+                                            <span className="absolute right-3 top-1/2 translate-y-[-35%] text-muted-foreground font-medium">%</span>
                                         </div>
                                     )}
-                                    <p className="break-words text-xs leading-relaxed text-gray-400">
+                                    <p className="break-words text-xs leading-relaxed text-muted-foreground">
                                         Pajak akan ditambahkan ke Ad Spend{spendNum > 0 ? `: Rp ${formatCurrency(spendNum.toString())} + ${taxPct}% = Rp ${formatCurrency(spendWithTax.toString())}` : ""}
                                     </p>
                                 </div>
@@ -344,7 +344,7 @@ export default function EditReportPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="leads" className="flex items-center gap-2">
-                                            <Users className="h-4 w-4 text-violet-500" />
+                                            <Users className="h-4 w-4 text-primary" />
                                             Leads *
                                         </Label>
                                         <Input
@@ -363,7 +363,7 @@ export default function EditReportPage() {
 
                                     <div className="space-y-2">
                                         <Label htmlFor="sales" className="flex items-center gap-2">
-                                            <ShoppingCart className="h-4 w-4 text-emerald-500" />
+                                            <ShoppingCart className="h-4 w-4 text-success" />
                                             Closing *
                                         </Label>
                                         <Input
@@ -386,7 +386,7 @@ export default function EditReportPage() {
                             {/* Notes Section */}
                             <div className="space-y-2">
                                 <Label htmlFor="notes" className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-gray-500" />
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
                                     Catatan (Opsional)
                                 </Label>
                                 <Textarea
@@ -402,30 +402,30 @@ export default function EditReportPage() {
 
                             {/* Quick Stats Preview */}
                             {(formData.spend || formData.leads) && (
-                                <div className="rounded-xl bg-gradient-to-r from-blue-50 to-violet-50 p-4">
-                                    <p className="text-xs font-semibold text-gray-600 mb-2">
+                                <div className="rounded-xl bg-primary/10 p-4">
+                                    <p className="text-xs font-semibold text-muted-foreground mb-2">
                                         PREVIEW
                                     </p>
                                     <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
                                         <div>
-                                            <p className="text-sm text-gray-500">Total + Pajak</p>
-                                            <p className="break-words text-base font-bold leading-tight text-blue-600 sm:text-lg">
+                                            <p className="text-sm text-muted-foreground">Total + Pajak</p>
+                                            <p className="break-words text-base font-bold leading-tight text-primary sm:text-lg">
                                                 {spendWithTax > 0
                                                     ? `Rp ${formatCurrency(spendWithTax.toString())}`
                                                     : "-"}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-500">CPR</p>
-                                            <p className="break-words text-base font-bold leading-tight text-violet-600 sm:text-lg">
+                                            <p className="text-sm text-muted-foreground">CPR</p>
+                                            <p className="break-words text-base font-bold leading-tight text-primary sm:text-lg">
                                                 {spendWithTax > 0 && salesNum > 0
                                                     ? `Rp ${formatCurrency(Math.round(spendWithTax / salesNum).toString())}`
                                                     : "-"}
                                             </p>
                                         </div>
                                         <div className="text-left sm:text-right">
-                                            <p className="text-sm text-gray-500">Conv. Rate</p>
-                                            <p className="text-base font-bold leading-tight text-emerald-500 sm:text-lg">
+                                            <p className="text-sm text-muted-foreground">Conv. Rate</p>
+                                            <p className="text-base font-bold leading-tight text-success sm:text-lg">
                                                 {leadsNum > 0 && salesNum >= 0
                                                     ? `${((salesNum / leadsNum) * 100).toFixed(1)}%`
                                                     : "-"}
@@ -437,16 +437,16 @@ export default function EditReportPage() {
 
                             {/* Error Message */}
                             {error && (
-                                <div className="rounded-lg bg-red-50 p-4">
-                                    <p className="text-sm text-red-600">{error}</p>
+                                <div className="rounded-lg bg-destructive/15 p-4">
+                                    <p className="text-sm text-destructive">{error}</p>
                                 </div>
                             )}
 
                             {/* Success Message */}
                             {success && (
-                                <div className="rounded-lg bg-green-50 p-4 flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-600" />
-                                    <p className="text-sm text-green-600">
+                                <div className="rounded-lg bg-success/15 p-4 flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-success" />
+                                    <p className="text-sm text-success">
                                         Laporan berhasil diperbarui!
                                     </p>
                                 </div>
@@ -479,14 +479,14 @@ export default function EditReportPage() {
                             {!showDeleteConfirm ? (
                                 <button
                                     onClick={() => setShowDeleteConfirm(true)}
-                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/15 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/15"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                     Hapus Laporan
                                 </button>
                             ) : (
                                 <div className="space-y-3">
-                                    <p className="text-center text-sm text-gray-600">
+                                    <p className="text-center text-sm text-muted-foreground">
                                         Yakin ingin menghapus laporan ini?
                                     </p>
                                     <div className="flex gap-3">
@@ -499,7 +499,7 @@ export default function EditReportPage() {
                                             Batal
                                         </Button>
                                         <Button
-                                            className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                                            className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive-hover"
                                             onClick={handleDelete}
                                             disabled={isDeleting}
                                         >

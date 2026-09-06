@@ -7,15 +7,15 @@ export default function NotFound() {
         <div className="flex min-h-screen items-center justify-center bg-background-secondary p-6">
             <div className="w-full max-w-sm text-center">
                 <div className="mb-6">
-                    <span className="text-7xl font-bold text-gray-200">404</span>
+                    <span className="text-7xl font-bold text-muted-foreground/30">404</span>
                 </div>
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                    <Search className="h-8 w-8 text-blue-500" />
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+                    <Search className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="mb-2 text-xl font-bold text-gray-900">
+                <h2 className="mb-2 text-xl font-bold text-foreground">
                     Halaman Tidak Ditemukan
                 </h2>
-                <p className="mb-6 text-sm text-gray-500">
+                <p className="mb-6 text-sm text-muted-foreground">
                     Halaman yang Anda cari tidak ada atau telah dipindahkan.
                 </p>
                 <Link href="/dashboard">

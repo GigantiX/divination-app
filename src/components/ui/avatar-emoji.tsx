@@ -24,7 +24,7 @@ const AvatarEmoji = React.forwardRef<HTMLDivElement, AvatarEmojiProps>(
         <div
             ref={ref}
             className={cn(
-                "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-100 to-blue-200",
+                "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15",
                 sizeClasses[size],
                 className
             )}

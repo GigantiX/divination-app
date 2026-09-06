@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { DEFAULT_THEME, isThemePreference, type ThemePreference } from '@/lib/theme'
 import { revalidatePath } from 'next/cache'
 
 export interface UserProfile {
@@ -41,6 +42,64 @@ export async function getProfile(): Promise<UserProfile | null> {
     }
 
     return profile as UserProfile
+}
+
+/**
+ * Reads the authenticated user's persisted theme intent for the root layout.
+ * `null` means the visitor is logged out, has no profile, or the preference
+ * cannot be read. The layout can then safely use its browser-only fallback.
+ */
+export async function getThemePreference(): Promise<ThemePreference | null> {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+        return null
+    }
+
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('theme')
+        .eq('id', session.user.id)
+        .maybeSingle()
+
+    if (error) {
+        console.error('Error fetching theme preference:', error)
+        return null
+    }
+
+    if (!data) {
+        return null
+    }
+
+    return isThemePreference(data.theme) ? data.theme : DEFAULT_THEME
+}
+
+/** Persists the authenticated user's theme intent. */
+export async function updateThemePreference(theme: ThemePreference) {
+    if (!isThemePreference(theme)) {
+        return { error: 'Tema tidak valid' }
+    }
+
+    const session = await auth()
+
+    if (!session?.user?.id) {
+        return { error: 'Tidak terautentikasi' }
+    }
+
+    const supabase = createAdminClient()
+    const { error } = await supabase
+        .from('profiles')
+        .update({ theme })
+        .eq('id', session.user.id)
+
+    if (error) {
+        console.error('Error updating theme preference:', error)
+        return { error: 'Gagal menyimpan tema' }
+    }
+
+    revalidatePath('/', 'layout')
+    return { success: true }
 }
 
 /**

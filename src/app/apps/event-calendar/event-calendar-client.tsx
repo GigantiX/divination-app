@@ -188,19 +188,19 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
     // ── Status styles ──
     const getBatchStatusStyles = (status: string) => {
         switch (status) {
-            case "active": return "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/60"
-            case "upcoming": return "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/60"
-            case "completed": return "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100/60"
-            default: return "bg-gray-50 text-gray-700 border-gray-200"
+            case "active": return "bg-success/15 text-success border-success/30 hover:bg-success/20"
+            case "upcoming": return "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
+            case "completed": return "bg-muted text-muted-foreground border-border hover:bg-accent/60"
+            default: return "bg-muted text-foreground border-border"
         }
     }
 
     const getBatchDotColor = (status: string) => {
         switch (status) {
-            case "active": return "bg-emerald-500"
-            case "upcoming": return "bg-blue-500"
-            case "completed": return "bg-gray-400"
-            default: return "bg-gray-400"
+            case "active": return "bg-success"
+            case "upcoming": return "bg-primary"
+            case "completed": return "bg-muted-foreground/20"
+            default: return "bg-muted-foreground/20"
         }
     }
 
@@ -336,20 +336,20 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
         <NavigationLayout isAdmin={isAdmin}>
             <div className="flex-1 flex flex-col min-h-screen bg-background-secondary">
                 {/* ── Header ── */}
-                <div className="bg-white border-b px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="bg-card border-b px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <div className="flex items-center gap-2.5">
-                            <AppIcon icon={CalendarIcon} iconBg="bg-violet-100" iconColor="text-violet-600" size="sm" />
-                            <h1 className="text-xl font-bold text-gray-900">Event Calendar</h1>
+                            <AppIcon icon={CalendarIcon} iconBg="bg-primary/15" iconColor="text-primary" size="sm" />
+                            <h1 className="text-xl font-bold text-foreground">Event Calendar</h1>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">Jadwal batch event & acara pribadi Anda.</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Jadwal batch event & acara pribadi Anda.</p>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg self-start sm:self-center">
+                    <div className="flex items-center gap-2 bg-muted p-1 rounded-lg self-start sm:self-center">
                         <button
                             onClick={() => setViewMode("month")}
                             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
-                                viewMode === "month" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                                viewMode === "month" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <CalendarIcon className="h-3.5 w-3.5" /> Kalender
@@ -357,7 +357,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                         <button
                             onClick={() => setViewMode("list")}
                             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
-                                viewMode === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                                viewMode === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <List className="h-3.5 w-3.5" /> Daftar
@@ -369,29 +369,29 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                 <div className="p-4 md:p-6 space-y-4 max-w-6xl w-full mx-auto flex-1 flex flex-col pb-28">
 
                     {/* Controls & Filter Panel */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white rounded-2xl border p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-card rounded-2xl border p-4 shadow-sm">
 
                         {viewMode === "month" ? (
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center border rounded-lg bg-gray-50 shadow-sm">
+                                <div className="flex items-center border rounded-lg bg-muted shadow-sm">
                                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-r-none border-r" onClick={prevMonth}>
-                                        <ChevronLeft className="h-4 w-4 text-gray-600" />
+                                        <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                                     </Button>
                                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-l-none" onClick={nextMonth}>
-                                        <ChevronRight className="h-4 w-4 text-gray-600" />
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                     </Button>
                                 </div>
                                 <Button variant="outline" size="sm" className="h-9 shadow-sm" onClick={handleToday}>
                                     Hari Ini
                                 </Button>
-                                <span className="font-bold text-gray-900 min-w-[130px] text-center md:text-left">
+                                <span className="font-bold text-foreground min-w-[130px] text-center md:text-left">
                                     {monthNames[month]} {year}
                                 </span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-gray-900">Seluruh Jadwal</span>
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-500 border">
+                                <span className="font-bold text-foreground">Seluruh Jadwal</span>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground border">
                                     {allListItems.length} item
                                 </span>
                             </div>
@@ -399,7 +399,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
 
                         {/* Filters */}
                         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-                            <span className="text-xs text-gray-400 font-semibold mr-1 shrink-0">FILTER:</span>
+                            <span className="text-xs text-muted-foreground font-semibold mr-1 shrink-0">FILTER:</span>
                             {[
                                 { key: "all", label: "Semua" },
                                 { key: "active", label: "Active" },
@@ -413,8 +413,8 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                     className={cn(
                                         "px-3 py-1.5 rounded-full text-xs font-semibold border transition-all shrink-0",
                                         filterStatus === key
-                                            ? "bg-violet-600 text-white border-violet-600 shadow-sm"
-                                            : "bg-white text-gray-600 hover:bg-gray-50"
+                                            ? "bg-primary text-primary-foreground border-primary/30 shadow-sm"
+                                            : "bg-card text-muted-foreground hover:bg-accent"
                                     )}
                                 >
                                     {label}
@@ -427,12 +427,12 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                     {viewMode === "month" ? (
                         <Card className="rounded-2xl border shadow-sm overflow-hidden flex-1">
                             {/* Weekday headers */}
-                            <div className="grid grid-cols-7 border-b bg-gray-50 text-center text-xs font-bold text-gray-500 py-3 uppercase tracking-wider">
+                            <div className="grid grid-cols-7 border-b bg-muted text-center text-xs font-bold text-muted-foreground py-3 uppercase tracking-wider">
                                 {weekdayNames.map(n => <div key={n}>{n}</div>)}
                             </div>
 
                             {/* Calendar grid */}
-                            <div className="grid grid-cols-7 bg-gray-100/50 gap-[1px]">
+                            <div className="grid grid-cols-7 bg-muted/50 gap-[1px]">
                                 {gridDays.map((dayObj, index) => {
                                     const items = getItemsForDay(dayObj.date)
                                     const todayState = isToday(dayObj.date)
@@ -443,17 +443,17 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                             key={index}
                                             onClick={() => handleDayClick(dayObj.date, items)}
                                             className={cn(
-                                                "min-h-[90px] bg-white p-1.5 flex flex-col gap-0.5 transition-colors relative",
-                                                !dayObj.isCurrentMonth && "bg-gray-50/70",
-                                                hasItems && "md:cursor-default cursor-pointer active:bg-gray-50"
+                                                "min-h-[90px] bg-card p-1.5 flex flex-col gap-0.5 transition-colors relative",
+                                                !dayObj.isCurrentMonth && "bg-muted/70",
+                                                hasItems && "md:cursor-default cursor-pointer active:bg-muted"
                                             )}
                                         >
                                             {/* Date number */}
                                             <div className="flex items-center justify-between mb-0.5">
                                                 <span className={cn(
                                                     "text-xs font-bold flex items-center justify-center h-6 w-6 rounded-full",
-                                                    todayState ? "bg-violet-600 text-white shadow-sm" :
-                                                    dayObj.isCurrentMonth ? "text-gray-900" : "text-gray-300"
+                                                    todayState ? "bg-primary text-primary-foreground shadow-sm" :
+                                                    dayObj.isCurrentMonth ? "text-foreground" : "text-muted-foreground"
                                                 )}>
                                                     {dayObj.day}
                                                 </span>
@@ -473,14 +473,14 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                                             "w-full text-left truncate text-[10px] font-semibold px-1.5 py-0.5 rounded border transition-colors",
                                                             item.kind === "batch"
                                                                 ? getBatchStatusStyles(item.data.event.status)
-                                                                : "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100/60"
+                                                                : "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
                                                         )}
                                                     >
                                                         {item.kind === "batch" ? item.data.event.name : item.data.name}
                                                     </button>
                                                 ))}
                                                 {items.length > 3 && (
-                                                    <div className="text-[9px] font-bold text-violet-500 pl-1">
+                                                    <div className="text-[9px] font-bold text-primary pl-1">
                                                         +{items.length - 3} lainnya
                                                     </div>
                                                 )}
@@ -495,12 +495,12 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                                             "h-1 w-full rounded-full",
                                                             item.kind === "batch"
                                                                 ? getBatchDotColor(item.data.event.status)
-                                                                : "bg-violet-500"
+                                                                : "bg-primary"
                                                         )}
                                                     />
                                                 ))}
                                                 {items.length > 2 && (
-                                                    <span className="text-[9px] font-bold text-gray-400 leading-none">
+                                                    <span className="text-[9px] font-bold text-muted-foreground leading-none">
                                                         +{items.length - 2}
                                                     </span>
                                                 )}
@@ -521,26 +521,26 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                                 <AppIcon
                                                     icon={CalendarIcon}
                                                     iconBg={cn("border shadow-sm",
-                                                        item.data.event.status === "active" ? "bg-emerald-50 border-emerald-100" :
-                                                        item.data.event.status === "upcoming" ? "bg-blue-50 border-blue-100" :
-                                                        "bg-gray-50 border-gray-100"
+                                                        item.data.event.status === "active" ? "bg-success/15 border-success/30" :
+                                                        item.data.event.status === "upcoming" ? "bg-primary/15 border-primary/30" :
+                                                        "bg-muted border-border"
                                                     )}
                                                     iconColor={
-                                                        item.data.event.status === "active" ? "text-emerald-600" :
-                                                        item.data.event.status === "upcoming" ? "text-blue-600" :
-                                                        "text-gray-500"
+                                                        item.data.event.status === "active" ? "text-success" :
+                                                        item.data.event.status === "upcoming" ? "text-primary" :
+                                                        "text-muted-foreground"
                                                     }
                                                     size="sm"
                                                 />
                                                 <div>
                                                     <div className="flex items-center gap-2 flex-wrap">
-                                                        <h4 className="font-bold text-gray-900 text-base">{item.data.event.name}</h4>
+                                                        <h4 className="font-bold text-foreground text-base">{item.data.event.name}</h4>
                                                         <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border", getBatchStatusStyles(item.data.event.status))}>
                                                             {getStatusLabel(item.data.event.status)}
                                                         </span>
                                                     </div>
-                                                    <p className="text-sm font-semibold text-gray-600 mt-0.5">Batch: {item.data.name}</p>
-                                                    <p className="text-xs text-gray-400 font-medium mt-1">Jadwal: {formatBatchDateRange(item.data)}</p>
+                                                    <p className="text-sm font-semibold text-muted-foreground mt-0.5">Batch: {item.data.name}</p>
+                                                    <p className="text-xs text-muted-foreground font-medium mt-1">Jadwal: {formatBatchDateRange(item.data)}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 self-end sm:self-center">
@@ -556,32 +556,32 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                         </CardContent>
                                     </Card>
                                 ) : (
-                                    <Card key={`custom-${item.data.id}`} className="rounded-2xl border border-violet-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <Card key={`custom-${item.data.id}`} className="rounded-2xl border border-primary/30 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                                         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                             <div className="flex items-start gap-3.5">
-                                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 border border-violet-200 shadow-sm shrink-0">
-                                                    <CalendarPlus className="h-4.5 w-4.5 text-violet-600" />
+                                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 shadow-sm shrink-0">
+                                                    <CalendarPlus className="h-4.5 w-4.5 text-primary" />
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2 flex-wrap">
-                                                        <h4 className="font-bold text-gray-900 text-base">{item.data.name}</h4>
-                                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-violet-50 text-violet-700 border-violet-200">
+                                                        <h4 className="font-bold text-foreground text-base">{item.data.name}</h4>
+                                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-primary/15 text-primary border-primary/30">
                                                             Acara Pribadi
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-gray-400 font-medium mt-1">
+                                                    <p className="text-xs text-muted-foreground font-medium mt-1">
                                                         {formatCustomEventDate(item.data)}
                                                         {item.data.startTime && ` · ${formatTime(item.data.startTime)}${item.data.endTime ? ` – ${formatTime(item.data.endTime)}` : ""}`}
                                                     </p>
                                                     {item.data.location && (
                                                         <div className="flex items-center gap-1 mt-1">
-                                                            <MapPin className="h-3 w-3 text-gray-400" />
+                                                            <MapPin className="h-3 w-3 text-muted-foreground" />
                                                             {isUrl(item.data.location) ? (
-                                                                <a href={item.data.location} target="_blank" rel="noopener noreferrer" className="text-xs text-violet-600 hover:underline flex items-center gap-0.5">
+                                                                <a href={item.data.location} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-0.5">
                                                                     Lihat Lokasi <ExternalLink className="h-3 w-3" />
                                                                 </a>
                                                             ) : (
-                                                                <span className="text-xs text-gray-500">{item.data.location}</span>
+                                                                <span className="text-xs text-muted-foreground">{item.data.location}</span>
                                                             )}
                                                         </div>
                                                     )}
@@ -594,7 +594,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    className="h-9 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                                    className="h-9 border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
                                                     onClick={() => handleDeleteCalendarEvent(item.data.id)}
                                                     disabled={deletingId === item.data.id}
                                                 >
@@ -605,10 +605,10 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                     </Card>
                                 )
                             )) : (
-                                <div className="text-center py-16 bg-white rounded-2xl border shadow-sm">
-                                    <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                                    <h4 className="font-bold text-gray-700">Tidak ada item</h4>
-                                    <p className="text-sm text-gray-500 mt-1">Sesuaikan filter atau tambah acara baru.</p>
+                                <div className="text-center py-16 bg-card rounded-2xl border shadow-sm">
+                                    <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                    <h4 className="font-bold text-foreground">Tidak ada item</h4>
+                                    <p className="text-sm text-muted-foreground mt-1">Sesuaikan filter atau tambah acara baru.</p>
                                 </div>
                             )}
                         </div>
@@ -621,7 +621,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
             ═══════════════════════════════════════════════════════════════ */}
             <button
                 onClick={handleOpenAddSheet}
-                className="fixed bottom-24 right-5 z-40 flex items-center gap-2 bg-violet-600 hover:bg-violet-700 active:scale-95 text-white font-bold text-sm px-4 py-3 rounded-full shadow-lg shadow-violet-300 transition-all duration-200"
+                className="fixed bottom-24 right-5 z-40 flex items-center gap-2 bg-primary hover:bg-primary-hover active:scale-95 text-primary-foreground font-bold text-sm px-4 py-3 rounded-full shadow-lg shadow-primary/30 transition-all duration-200"
                 aria-label="Tambah Acara"
             >
                 <Plus className="h-5 w-5" />
@@ -632,28 +632,28 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                 MOBILE: Day Bottom Sheet
             ═══════════════════════════════════════════════════════════════ */}
             {selectedDay && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[1px]" onClick={() => setSelectedDay(null)}>
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/40 backdrop-blur-[1px]" onClick={() => setSelectedDay(null)}>
                     <div
-                        className="w-full max-w-lg bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
+                        className="w-full max-w-lg bg-card rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Sheet handle */}
                         <div className="flex justify-center pt-3 pb-1">
-                            <div className="h-1 w-10 rounded-full bg-gray-200" />
+                            <div className="h-1 w-10 rounded-full bg-muted-foreground/20" />
                         </div>
 
                         {/* Sheet header */}
                         <div className="flex items-center justify-between px-5 py-3 border-b">
                             <div>
-                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                     {weekdayLong[selectedDay.getDay()]}
                                 </p>
-                                <h3 className="text-lg font-bold text-gray-900">
+                                <h3 className="text-lg font-bold text-foreground">
                                     {selectedDay.getDate()} {monthNames[selectedDay.getMonth()]} {selectedDay.getFullYear()}
                                 </h3>
                             </div>
-                            <button onClick={() => setSelectedDay(null)} className="p-2 rounded-full hover:bg-gray-100">
-                                <X className="h-5 w-5 text-gray-500" />
+                            <button onClick={() => setSelectedDay(null)} className="p-2 rounded-full hover:bg-accent">
+                                <X className="h-5 w-5 text-muted-foreground" />
                             </button>
                         </div>
 
@@ -666,7 +666,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                         "w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border font-semibold text-sm transition-colors",
                                         item.kind === "batch"
                                             ? getBatchStatusStyles(item.data.event.status)
-                                            : "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100/60"
+                                            : "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
                                     )}
                                     onClick={() => {
                                         setSelectedDay(null)
@@ -681,7 +681,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                         "text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0",
                                         item.kind === "batch"
                                             ? getBatchStatusStyles(item.data.event.status)
-                                            : "bg-violet-100 text-violet-700 border-violet-200"
+                                            : "bg-primary/15 text-primary border-primary/30"
                                     )}>
                                         {item.kind === "batch" ? getStatusLabel(item.data.event.status) : "Pribadi"}
                                     </span>
@@ -697,43 +697,43 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                 Batch Detail Modal
             ═══════════════════════════════════════════════════════════════ */}
             {selectedBatch && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4 backdrop-blur-[1px]">
                     <Card className="w-full max-w-md border-none shadow-2xl overflow-hidden rounded-2xl animate-in fade-in zoom-in duration-200">
-                        <div className="border-b bg-gray-50 px-6 py-4 flex items-center justify-between">
+                        <div className="border-b bg-muted px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <AvatarEmoji emoji="🗓️" size="sm" className="bg-white shadow-sm border" />
+                                <AvatarEmoji emoji="🗓️" size="sm" className="bg-card shadow-sm border" />
                                 <div>
-                                    <h3 className="font-bold text-gray-900">Detail Jadwal Batch</h3>
+                                    <h3 className="font-bold text-foreground">Detail Jadwal Batch</h3>
                                     <span className={cn("inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border mt-0.5", getBatchStatusStyles(selectedBatch.event.status))}>
                                         {getStatusLabel(selectedBatch.event.status)}
                                     </span>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 rounded-full" onClick={() => setSelectedBatch(null)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full" onClick={() => setSelectedBatch(null)}>
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
                         <div className="p-6 space-y-4">
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">EVENT</p>
-                                <p className="text-base font-bold text-gray-900 mt-1">{selectedBatch.event.name}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">EVENT</p>
+                                <p className="text-base font-bold text-foreground mt-1">{selectedBatch.event.name}</p>
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">BATCH</p>
-                                <p className="text-sm font-semibold text-gray-700 mt-0.5">{selectedBatch.name}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">BATCH</p>
+                                <p className="text-sm font-semibold text-foreground mt-0.5">{selectedBatch.name}</p>
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TANGGAL</p>
-                                <p className="text-sm font-semibold text-gray-700 mt-0.5">{formatBatchDateRange(selectedBatch)}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TANGGAL</p>
+                                <p className="text-sm font-semibold text-foreground mt-0.5">{formatBatchDateRange(selectedBatch)}</p>
                             </div>
                             {selectedBatch.notes && (
-                                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CATATAN BATCH</p>
-                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedBatch.notes}</p>
+                                <div className="bg-muted border border-border rounded-xl p-3">
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">CATATAN BATCH</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{selectedBatch.notes}</p>
                                 </div>
                             )}
                         </div>
-                        <div className="border-t bg-gray-50 px-6 py-4 flex justify-end gap-2">
+                        <div className="border-t bg-muted px-6 py-4 flex justify-end gap-2">
                             <Button variant="outline" size="sm" className="h-10 text-xs font-semibold shadow-sm" onClick={() => setSelectedBatch(null)}>
                                 Tutup
                             </Button>
@@ -751,40 +751,40 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                 Custom Event Detail Modal
             ═══════════════════════════════════════════════════════════════ */}
             {selectedCalendarEvent && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4 backdrop-blur-[1px]">
                     <Card className="w-full max-w-md border-none shadow-2xl overflow-hidden rounded-2xl animate-in fade-in zoom-in duration-200">
-                        <div className="border-b bg-violet-50 px-6 py-4 flex items-center justify-between">
+                        <div className="border-b bg-primary/15 px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 border border-violet-200">
-                                    <CalendarPlus className="h-4.5 w-4.5 text-violet-600" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 border border-primary/30">
+                                    <CalendarPlus className="h-4.5 w-4.5 text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900">Acara Pribadi</h3>
-                                    <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border mt-0.5 bg-violet-100 text-violet-700 border-violet-200">
+                                    <h3 className="font-bold text-foreground">Acara Pribadi</h3>
+                                    <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border mt-0.5 bg-primary/15 text-primary border-primary/30">
                                         Acara Pribadi
                                     </span>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 rounded-full" onClick={() => setSelectedCalendarEvent(null)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full" onClick={() => setSelectedCalendarEvent(null)}>
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
 
                         <div className="p-6 space-y-4">
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">NAMA ACARA</p>
-                                <p className="text-base font-bold text-gray-900 mt-1">{selectedCalendarEvent.name}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">NAMA ACARA</p>
+                                <p className="text-base font-bold text-foreground mt-1">{selectedCalendarEvent.name}</p>
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TANGGAL</p>
-                                <p className="text-sm font-semibold text-gray-700 mt-0.5">{formatCustomEventDate(selectedCalendarEvent)}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TANGGAL</p>
+                                <p className="text-sm font-semibold text-foreground mt-0.5">{formatCustomEventDate(selectedCalendarEvent)}</p>
                             </div>
                             {(selectedCalendarEvent.startTime) && (
                                 <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">WAKTU</p>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">WAKTU</p>
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                        <Clock className="h-4 w-4 text-gray-400" />
-                                        <p className="text-sm font-semibold text-gray-700">
+                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                        <p className="text-sm font-semibold text-foreground">
                                             {formatTime(selectedCalendarEvent.startTime)}
                                             {selectedCalendarEvent.endTime && ` – ${formatTime(selectedCalendarEvent.endTime)}`}
                                         </p>
@@ -793,31 +793,31 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                             )}
                             {selectedCalendarEvent.location && (
                                 <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">LOKASI</p>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">LOKASI</p>
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                        <MapPin className="h-4 w-4 text-gray-400" />
+                                        <MapPin className="h-4 w-4 text-muted-foreground" />
                                         {isUrl(selectedCalendarEvent.location) ? (
                                             <a
                                                 href={selectedCalendarEvent.location}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm font-semibold text-violet-600 hover:underline flex items-center gap-1"
+                                                className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
                                             >
                                                 Lihat Lokasi di Maps <ExternalLink className="h-3.5 w-3.5" />
                                             </a>
                                         ) : (
-                                            <p className="text-sm font-semibold text-gray-700">{selectedCalendarEvent.location}</p>
+                                            <p className="text-sm font-semibold text-foreground">{selectedCalendarEvent.location}</p>
                                         )}
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="border-t bg-gray-50 px-6 py-4 flex justify-between gap-2">
+                        <div className="border-t bg-muted px-6 py-4 flex justify-between gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-10 text-xs font-semibold border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 gap-1.5"
+                                className="h-10 text-xs font-semibold border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive gap-1.5"
                                 onClick={() => handleDeleteCalendarEvent(selectedCalendarEvent.id)}
                                 disabled={deletingId === selectedCalendarEvent.id}
                             >
@@ -836,26 +836,26 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                 "Tambah Acara" Bottom Sheet
             ═══════════════════════════════════════════════════════════════ */}
             {showAddSheet && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-[1px]" onClick={() => setShowAddSheet(false)}>
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/50 backdrop-blur-[1px]" onClick={() => setShowAddSheet(false)}>
                     <div
-                        className="w-full max-w-lg bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
+                        className="w-full max-w-lg bg-card rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Sheet handle */}
                         <div className="flex justify-center pt-3 pb-1">
-                            <div className="h-1 w-10 rounded-full bg-gray-200" />
+                            <div className="h-1 w-10 rounded-full bg-muted-foreground/20" />
                         </div>
 
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 pt-2 pb-4 border-b">
                             <div className="flex items-center gap-2.5">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100">
-                                    <CalendarPlus className="h-4.5 w-4.5 text-violet-600" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
+                                    <CalendarPlus className="h-4.5 w-4.5 text-primary" />
                                 </div>
-                                <h2 className="text-lg font-bold text-gray-900">Tambah Acara</h2>
+                                <h2 className="text-lg font-bold text-foreground">Tambah Acara</h2>
                             </div>
-                            <button onClick={() => setShowAddSheet(false)} className="p-2 rounded-full hover:bg-gray-100">
-                                <X className="h-5 w-5 text-gray-500" />
+                            <button onClick={() => setShowAddSheet(false)} className="p-2 rounded-full hover:bg-accent">
+                                <X className="h-5 w-5 text-muted-foreground" />
                             </button>
                         </div>
 
@@ -864,15 +864,15 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
 
                             {/* Error */}
                             {formError && (
-                                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
+                                <div className="bg-destructive/15 border border-destructive/30 rounded-xl px-4 py-3 text-sm text-destructive font-medium">
                                     {formError}
                                 </div>
                             )}
 
                             {/* Name */}
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    Nama Acara <span className="text-red-400">*</span>
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                    Nama Acara <span className="text-destructive">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -880,24 +880,24 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                     onChange={e => setFormName(e.target.value)}
                                     placeholder="cth. Meeting Tim, Webinar, Ulang Tahun..."
                                     maxLength={100}
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+                                    className="w-full rounded-xl border border-border bg-muted px-4 py-3 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                 />
                             </div>
 
                             {/* Date Section */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Tanggal</label>
                                     {/* Range toggle */}
                                     <button
                                         onClick={() => { setFormIsRange(!formIsRange); if (formIsRange) setFormEndDate("") }}
-                                        className="flex items-center gap-2 text-xs font-semibold text-gray-600"
+                                        className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"
                                     >
                                         <div className={cn(
                                             "relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200",
-                                            formIsRange ? "bg-violet-500" : "bg-gray-200"
+                                            formIsRange ? "bg-primary" : "bg-muted-foreground/20"
                                         )}>
-                                            <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200",
+                                            <span className={cn("inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform duration-200",
                                                 formIsRange ? "translate-x-4" : "translate-x-0.5"
                                             )} />
                                         </div>
@@ -907,7 +907,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                 <div className={cn("space-y-2", formIsRange && "space-y-3")}>
                                     {!formIsRange ? (
                                         <div>
-                                            <p className="text-xs text-gray-400 mb-1">Tanggal</p>
+                                            <p className="text-xs text-muted-foreground mb-1">Tanggal</p>
                                             <DatePicker
                                                 mode="single"
                                                 selected={formStartDate ? strToDate(formStartDate) : undefined}
@@ -920,7 +920,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                         </div>
                                     ) : (
                                         <div>
-                                            <p className="text-xs text-gray-400 mb-1">Pilih rentang tanggal</p>
+                                            <p className="text-xs text-muted-foreground mb-1">Pilih rentang tanggal</p>
                                             <DatePicker
                                                 mode="range"
                                                 selected={
@@ -942,16 +942,16 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                             {/* Time Section */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Waktu</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Waktu</label>
                                     <button
                                         onClick={() => { setFormIsFullDay(!formIsFullDay); if (!formIsFullDay) { setFormStartTime(""); setFormEndTime("") } }}
-                                        className="flex items-center gap-2 text-xs font-semibold text-gray-600"
+                                        className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"
                                     >
                                         <div className={cn(
                                             "relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200",
-                                            formIsFullDay ? "bg-violet-500" : "bg-gray-200"
+                                            formIsFullDay ? "bg-primary" : "bg-muted-foreground/20"
                                         )}>
-                                            <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200",
+                                            <span className={cn("inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform duration-200",
                                                 formIsFullDay ? "translate-x-4" : "translate-x-0.5"
                                             )} />
                                         </div>
@@ -961,21 +961,21 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                 {!formIsFullDay && (
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <p className="text-xs text-gray-400 mb-1">Mulai</p>
+                                            <p className="text-xs text-muted-foreground mb-1">Mulai</p>
                                             <input
                                                 type="time"
                                                 value={formStartTime}
                                                 onChange={e => setFormStartTime(e.target.value)}
-                                                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+                                                className="w-full rounded-xl border border-border bg-muted px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                             />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 mb-1">Selesai</p>
+                                            <p className="text-xs text-muted-foreground mb-1">Selesai</p>
                                             <input
                                                 type="time"
                                                 value={formEndTime}
                                                 onChange={e => setFormEndTime(e.target.value)}
-                                                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+                                                className="w-full rounded-xl border border-border bg-muted px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                             />
                                         </div>
                                     </div>
@@ -985,16 +985,16 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                             {/* Location Section */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Lokasi</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lokasi</label>
                                     <button
                                         onClick={() => { setFormHasLocation(!formHasLocation); if (formHasLocation) setFormLocation("") }}
-                                        className="flex items-center gap-2 text-xs font-semibold text-gray-600"
+                                        className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"
                                     >
                                         <div className={cn(
                                             "relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200",
-                                            formHasLocation ? "bg-violet-500" : "bg-gray-200"
+                                            formHasLocation ? "bg-primary" : "bg-muted-foreground/20"
                                         )}>
-                                            <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200",
+                                            <span className={cn("inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform duration-200",
                                                 formHasLocation ? "translate-x-4" : "translate-x-0.5"
                                             )} />
                                         </div>
@@ -1004,23 +1004,23 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                 {formHasLocation && (
                                     <div>
                                         <div className="relative">
-                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <input
                                                 type="text"
                                                 value={formLocation}
                                                 onChange={e => setFormLocation(e.target.value)}
                                                 placeholder="Nama tempat atau link Google Maps..."
-                                                className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+                                                className="w-full rounded-xl border border-border bg-muted pl-9 pr-4 py-3 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                             />
                                         </div>
-                                        <p className="text-xs text-gray-400 mt-1.5">Link Google Maps akan otomatis jadi clickable.</p>
+                                        <p className="text-xs text-muted-foreground mt-1.5">Link Google Maps akan otomatis jadi clickable.</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Footer */}
-                        <div className="px-5 py-4 border-t bg-gray-50 flex gap-3">
+                        <div className="px-5 py-4 border-t bg-muted flex gap-3">
                             <Button
                                 variant="outline"
                                 className="flex-1 h-12 rounded-xl font-semibold"
@@ -1029,13 +1029,13 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                 Batal
                             </Button>
                             <Button
-                                className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 font-bold gap-2 shadow-sm"
+                                className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary-hover font-bold gap-2 shadow-sm"
                                 onClick={handleSubmitEvent}
                                 disabled={formSubmitting}
                             >
                                 {formSubmitting ? (
                                     <>
-                                        <span className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full" />
+                                        <span className="animate-spin h-4 w-4 border-2 border-card/30 border-t-white rounded-full" />
                                         Menyimpan...
                                     </>
                                 ) : (

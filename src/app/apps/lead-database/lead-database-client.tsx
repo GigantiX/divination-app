@@ -286,14 +286,14 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                 {/* =================== HEADER =================== */}
                 <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Lead Database</h1>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <h1 className="text-2xl font-bold text-foreground">Lead Database</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Database lengkap kontak peserta dari semua event.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Link href="/apps/lead-database/upload">
-                            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                            <Button className="bg-success hover:bg-success/85 text-success-foreground gap-2">
                                 <Upload className="h-4 w-4" />
                                 Upload Kontak
                             </Button>
@@ -315,15 +315,15 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                     <Card className="min-w-[160px] flex-1 border-none shadow-sm">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-                                    <Users className="h-5 w-5 text-emerald-600" />
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15">
+                                    <Users className="h-5 w-5 text-success" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Total Leads</p>
+                                    <p className="text-xs text-muted-foreground">Total Leads</p>
                                     {statsLoading ? (
-                                        <div className="mt-1 h-6 w-12 animate-pulse rounded bg-gray-200" />
+                                        <div className="mt-1 h-6 w-12 animate-pulse rounded bg-muted-foreground/20" />
                                     ) : (
-                                        <p className="text-xl font-bold text-gray-900">
+                                        <p className="text-xl font-bold text-foreground">
                                             {stats?.total_leads ?? 0}
                                         </p>
                                     )}
@@ -336,15 +336,15 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                     <Card className="min-w-[160px] flex-1 border-none shadow-sm">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100">
-                                    <Repeat className="h-5 w-5 text-blue-600" />
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+                                    <Repeat className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Leads Repeat</p>
+                                    <p className="text-xs text-muted-foreground">Leads Repeat</p>
                                     {statsLoading ? (
-                                        <div className="mt-1 h-6 w-12 animate-pulse rounded bg-gray-200" />
+                                        <div className="mt-1 h-6 w-12 animate-pulse rounded bg-muted-foreground/20" />
                                     ) : (
-                                        <p className="text-xl font-bold text-gray-900">
+                                        <p className="text-xl font-bold text-foreground">
                                             {stats?.multi_event_leads ?? 0}
                                         </p>
                                     )}
@@ -357,15 +357,15 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                     <Card className="min-w-[160px] flex-1 border-none shadow-sm">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100">
-                                    <Calendar className="h-5 w-5 text-purple-600" />
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+                                    <Calendar className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Total Events</p>
+                                    <p className="text-xs text-muted-foreground">Total Events</p>
                                     {statsLoading ? (
-                                        <div className="mt-1 h-6 w-12 animate-pulse rounded bg-gray-200" />
+                                        <div className="mt-1 h-6 w-12 animate-pulse rounded bg-muted-foreground/20" />
                                     ) : (
-                                        <p className="text-xl font-bold text-gray-900">
+                                        <p className="text-xl font-bold text-foreground">
                                             {stats?.total_events ?? 0}
                                         </p>
                                     )}
@@ -379,18 +379,18 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                     {/* Search */}
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Cari nama atau nomor telepon..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                            className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-success/30 focus:outline-none focus:ring-2 focus:ring-success"
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -401,7 +401,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                     <select
                         value={selectedEvent}
                         onChange={(e) => setSelectedEvent(e.target.value)}
-                        className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 sm:w-52"
+                        className="h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-success/30 focus:outline-none focus:ring-2 focus:ring-success sm:w-52"
                     >
                         <option value="">Semua Event</option>
                         {events.map((evt) => (
@@ -417,7 +417,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                         onChange={(e) => setSelectedBatch(e.target.value)}
                         disabled={!selectedEvent}
                         className={cn(
-                            "h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 sm:w-44",
+                            "h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-success/30 focus:outline-none focus:ring-2 focus:ring-success sm:w-44",
                             !selectedEvent && "cursor-not-allowed opacity-50"
                         )}
                     >
@@ -432,7 +432,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
 
                 {/* =================== RESULTS COUNT =================== */}
                 {!loading && (
-                    <p className="mb-3 text-xs text-gray-500">
+                    <p className="mb-3 text-xs text-muted-foreground">
                         Menampilkan {leads.length} dari {totalLeads} lead
                         {isFiltering && " (difilter)"}
                     </p>
@@ -441,25 +441,25 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                 {/* =================== LEADS LIST =================== */}
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-                        <p className="mt-3 text-sm text-gray-500">Memuat data lead...</p>
+                        <Loader2 className="h-8 w-8 animate-spin text-success" />
+                        <p className="mt-3 text-sm text-muted-foreground">Memuat data lead...</p>
                     </div>
                 ) : leads.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                            <Users className="h-8 w-8 text-gray-400" />
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                            <Users className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <h3 className="mt-4 text-base font-semibold text-gray-900">
+                        <h3 className="mt-4 text-base font-semibold text-foreground">
                             Belum ada data lead
                         </h3>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             {isFiltering
                                 ? "Tidak ada lead yang cocok dengan filter Anda."
                                 : "Upload kontak peserta untuk mulai membangun database."}
                         </p>
                         {!isFiltering && (
                             <Link href="/apps/lead-database/upload" className="mt-4">
-                                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                                <Button className="bg-success hover:bg-success/85 text-success-foreground gap-2">
                                     <Upload className="h-4 w-4" />
                                     Upload Kontak
                                 </Button>
@@ -487,23 +487,23 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                         <CardContent className="flex items-center justify-between p-4">
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <p className="truncate font-semibold text-gray-900">
+                                                    <p className="truncate font-semibold text-foreground">
                                                         {lead.primary_name}
                                                     </p>
                                                     {lead.events.length > 1 && (
-                                                        <span className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                                                        <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                                                             {new Set(lead.events.map(e => e.event_id)).size} event
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="mt-0.5 text-sm text-gray-500">
+                                                <p className="mt-0.5 text-sm text-muted-foreground">
                                                     {maskPhone(lead.phone)}
                                                 </p>
                                                 <div className="mt-2 flex flex-wrap gap-1">
                                                     {displayEvents.map(([eventId, eventName]) => (
                                                         <span
                                                             key={eventId}
-                                                            className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+                                                            className="inline-flex rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-medium text-success"
                                                         >
                                                             {eventName.length > 25
                                                                 ? eventName.slice(0, 25) + "…"
@@ -511,13 +511,13 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                                         </span>
                                                     ))}
                                                     {overflowCount > 0 && (
-                                                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+                                                        <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                                                             +{overflowCount} lainnya
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
-                                            <ChevronRight className="ml-3 h-5 w-5 shrink-0 text-gray-400" />
+                                            <ChevronRight className="ml-3 h-5 w-5 shrink-0 text-muted-foreground" />
                                         </CardContent>
                                     </Card>
                                 </button>
@@ -529,43 +529,43 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
 
             {/* =================== LEAD DETAIL MODAL =================== */}
             {(selectedLead || detailLoading) && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 md:items-center md:p-4">
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/50 md:items-center md:p-4">
                     <div
-                        className="w-full max-h-[90vh] overflow-y-auto rounded-t-2xl bg-white md:max-w-lg md:rounded-2xl"
+                        className="w-full max-h-[90vh] overflow-y-auto rounded-t-2xl bg-card md:max-w-lg md:rounded-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {detailLoading ? (
                             <div className="flex flex-col items-center justify-center py-20">
-                                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-                                <p className="mt-3 text-sm text-gray-500">Memuat detail...</p>
+                                <Loader2 className="h-8 w-8 animate-spin text-success" />
+                                <p className="mt-3 text-sm text-muted-foreground">Memuat detail...</p>
                             </div>
                         ) : selectedLead ? (
                             <>
                                 {/* Modal Header */}
-                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4 rounded-t-2xl">
-                                    <h2 className="text-lg font-bold text-gray-900">
+                                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4 rounded-t-2xl">
+                                    <h2 className="text-lg font-bold text-foreground">
                                         Detail Lead
                                     </h2>
                                     <button
                                         onClick={closeDetailModal}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
+                                        className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent"
                                     >
-                                        <X className="h-5 w-5 text-gray-500" />
+                                        <X className="h-5 w-5 text-muted-foreground" />
                                     </button>
                                 </div>
 
                                 <div className="px-5 py-4 space-y-5">
                                     {/* Contact Info */}
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-900">
+                                        <h3 className="text-xl font-bold text-foreground">
                                             {selectedLead.primary_name}
                                         </h3>
 
                                         {/* Aliases */}
                                         {selectedLead.aliases.length > 1 && (
-                                            <p className="mt-1 text-xs text-gray-500">
+                                            <p className="mt-1 text-xs text-muted-foreground">
                                                 Juga dikenal sebagai:{" "}
-                                                <span className="text-gray-700">
+                                                <span className="text-foreground">
                                                     {selectedLead.aliases
                                                         .filter((a) => a !== selectedLead.primary_name)
                                                         .join(", ")}
@@ -575,9 +575,9 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
 
                                         {/* Phone + Actions */}
                                         <div className="mt-3 flex items-center gap-2">
-                                            <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 flex-1">
-                                                <Phone className="h-4 w-4 text-gray-400" />
-                                                <span className="text-sm font-medium text-gray-900">
+                                            <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 flex-1">
+                                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm font-medium text-foreground">
                                                     {selectedLead.phone}
                                                 </span>
                                             </div>
@@ -588,7 +588,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                                 className="shrink-0"
                                             >
                                                 {phoneCopied ? (
-                                                    <Check className="h-4 w-4 text-emerald-600" />
+                                                    <Check className="h-4 w-4 text-success" />
                                                 ) : (
                                                     <Copy className="h-4 w-4" />
                                                 )}
@@ -601,7 +601,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
-                                                    className="shrink-0 border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                                                    className="shrink-0 border-success/30 text-success hover:bg-success/20"
                                                 >
                                                     <MessageCircle className="h-4 w-4" />
                                                 </Button>
@@ -612,8 +612,8 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                     {/* Event History */}
                                     <div>
                                         <div className="flex items-center gap-2 mb-3">
-                                            <History className="h-4 w-4 text-gray-500" />
-                                            <h4 className="text-sm font-semibold text-gray-900">
+                                            <History className="h-4 w-4 text-muted-foreground" />
+                                            <h4 className="text-sm font-semibold text-foreground">
                                                 Riwayat Event
                                             </h4>
                                         </div>
@@ -628,22 +628,22 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                                     <div key={`${event.event_id}-${event.batch_id}`} className="relative flex gap-3 pb-4">
                                                         {/* Timeline line */}
                                                         <div className="flex flex-col items-center">
-                                                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                                                                <div className="h-2 w-2 rounded-full bg-emerald-600" />
+                                                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success/15">
+                                                                <div className="h-2 w-2 rounded-full bg-success" />
                                                             </div>
                                                             {idx < arr.length - 1 && (
-                                                                <div className="w-px flex-1 bg-gray-200" />
+                                                                <div className="w-px flex-1 bg-muted-foreground/20" />
                                                             )}
                                                         </div>
                                                         {/* Content */}
                                                         <div className="pb-2 min-w-0 flex-1">
-                                                            <p className="text-sm font-semibold text-gray-900 truncate">
+                                                            <p className="text-sm font-semibold text-foreground truncate">
                                                                 {event.event_name}
                                                             </p>
-                                                            <p className="text-xs text-gray-500">
+                                                            <p className="text-xs text-muted-foreground">
                                                                 {event.batch_name}
                                                             </p>
-                                                            <p className="mt-1 text-xs text-gray-400">
+                                                            <p className="mt-1 text-xs text-muted-foreground">
                                                                 Diupload oleh: {event.uploaded_by_name} •{" "}
                                                                 {formatDate(event.uploaded_at)}
                                                             </p>
@@ -656,8 +656,8 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                     {/* Notes */}
                                     <div>
                                         <div className="flex items-center gap-2 mb-3">
-                                            <StickyNote className="h-4 w-4 text-gray-500" />
-                                            <h4 className="text-sm font-semibold text-gray-900">
+                                            <StickyNote className="h-4 w-4 text-muted-foreground" />
+                                            <h4 className="text-sm font-semibold text-foreground">
                                                 Catatan
                                             </h4>
                                         </div>
@@ -669,7 +669,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                         />
                                         <div className="mt-2 flex items-center justify-between">
                                             {notesSaved && (
-                                                <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+                                                <div className="flex items-center gap-1.5 text-xs text-success">
                                                     <Check className="h-3.5 w-3.5" />
                                                     Catatan tersimpan
                                                 </div>
@@ -678,7 +678,7 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                             <Button
                                                 onClick={handleSaveNotes}
                                                 disabled={notesSaving}
-                                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                                                className="bg-success hover:bg-success/85 text-success-foreground gap-2"
                                                 size="sm"
                                             >
                                                 {notesSaving ? (
@@ -692,31 +692,31 @@ export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
                                     </div>
 
                                     {/* Delete Lead */}
-                                    <div className="border-t border-gray-100 pt-4">
+                                    <div className="border-t border-border pt-4">
                                         {!showDeleteConfirm ? (
                                             <button
                                                 onClick={() => setShowDeleteConfirm(true)}
-                                                className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 transition-colors"
+                                                className="flex items-center gap-2 text-sm text-destructive hover:text-destructive transition-colors"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                                 Hapus Lead
                                             </button>
                                         ) : (
-                                            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                                            <div className="rounded-lg border border-destructive/30 bg-destructive/15 p-4">
                                                 <div className="flex items-start gap-3">
-                                                    <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                                                    <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                                                     <div className="flex-1">
-                                                        <p className="text-sm font-semibold text-red-800">
+                                                        <p className="text-sm font-semibold text-destructive">
                                                             Hapus lead ini?
                                                         </p>
-                                                        <p className="mt-1 text-xs text-red-600">
+                                                        <p className="mt-1 text-xs text-destructive">
                                                             Lead <strong>{selectedLead?.primary_name}</strong> dan semua riwayat event-nya akan dihapus permanen.
                                                         </p>
                                                         <div className="mt-3 flex items-center gap-2">
                                                             <Button
                                                                 onClick={handleDeleteLead}
                                                                 disabled={isDeleting}
-                                                                className="bg-red-600 hover:bg-red-700 text-white gap-2"
+                                                                className="bg-destructive hover:bg-destructive-hover text-destructive-foreground gap-2"
                                                                 size="sm"
                                                             >
                                                                 {isDeleting ? (
