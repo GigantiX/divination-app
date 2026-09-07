@@ -12,10 +12,6 @@ export type LoginActionState = {
     error: string
 }
 
-export const initialLoginActionState: LoginActionState = {
-    error: '',
-}
-
 /**
  * Login action - Authenticate user with email and password
  */

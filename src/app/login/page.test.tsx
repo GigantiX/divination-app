@@ -5,7 +5,6 @@ import LoginPage from './page';
 import { loginAction } from '@/app/actions/auth';
 
 vi.mock('@/app/actions/auth', () => ({
-  initialLoginActionState: { error: '' },
   loginAction: vi.fn(),
 }));
 
