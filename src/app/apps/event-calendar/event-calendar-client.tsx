@@ -513,7 +513,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                     ) : (
                         /* ── List View ── */
                         <div className="space-y-3">
-                            {allListItems.length > 0 ? allListItems.map((item, idx) => (
+                            {allListItems.length > 0 ? allListItems.map((item) => (
                                 item.kind === "batch" ? (
                                     <Card key={`batch-${item.data.id}`} className="rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                                         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

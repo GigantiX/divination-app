@@ -2,14 +2,12 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Plus, ListTodo, ImageIcon, X, Loader2 } from "lucide-react"
 
 import { NavigationLayout } from "@/components/ui/nav-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { type UserProfile } from "@/app/actions/profile"
-import { cn } from "@/lib/utils"
 import { getBudgetRequests, submitBudgetRequest, getAvailableEventsForBudget, type BudgetRequest } from "@/app/actions/budget"
 
 function formatIDR(amount: number) {
@@ -27,7 +25,6 @@ function parseIDRInput(value: string) {
 
 export function BudgetClient({ profile }: { profile: UserProfile }) {
     const isAdmin = profile.role === "admin" || profile.role === "developer"
-    const router = useRouter()
     const [requests, setRequests] = React.useState<BudgetRequest[]>([])
     const [events, setEvents] = React.useState<{id: string, name: string}[]>([])
     const [loading, setLoading] = React.useState(true)
@@ -40,10 +37,6 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
 
     const [proofModalUrl, setProofModalUrl] = React.useState<string | null>(null)
 
-    React.useEffect(() => {
-        loadData()
-    }, [])
-
     async function loadData() {
         setLoading(true)
         const [reqRes, eventRes] = await Promise.all([
@@ -55,6 +48,10 @@ export function BudgetClient({ profile }: { profile: UserProfile }) {
         if (eventRes.data) setEvents(eventRes.data)
         setLoading(false)
     }
+
+    React.useEffect(() => {
+        loadData()
+    }, [])
 
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = parseIDRInput(e.target.value)

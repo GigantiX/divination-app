@@ -19,16 +19,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { type UserProfile } from "@/app/actions/profile"
 import { getUploadHistory, type UploadHistoryItem } from "@/app/actions/lead-database"
-import { cn } from "@/lib/utils"
 
 export function HistoryClient({ profile }: { profile: UserProfile }) {
     const isAdmin = profile.role === "admin" || profile.role === "developer"
     const [history, setHistory] = React.useState<UploadHistoryItem[]>([])
     const [loading, setLoading] = React.useState(true)
-
-    React.useEffect(() => {
-        loadHistory()
-    }, [])
 
     async function loadHistory() {
         setLoading(true)
@@ -36,6 +31,10 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
         if (res.data) setHistory(res.data)
         setLoading(false)
     }
+
+    React.useEffect(() => {
+        loadHistory()
+    }, [])
 
     function formatDate(dateStr: string) {
         return new Date(dateStr).toLocaleDateString("id-ID", {

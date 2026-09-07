@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidateTag } from 'next/cache'
+import { getEventAccess, isAdminOrDeveloper } from '@/lib/authorization'
 
 export interface CreateBatchInput {
     eventId: string
@@ -19,6 +20,12 @@ export interface BatchResult {
     batchId?: string
 }
 
+function isIsoDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+    const parsed = new Date(`${value}T00:00:00.000Z`)
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
 /**
  * Create a new batch for an event (Admin/Developer/PIC only)
  */
@@ -31,31 +38,9 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
 
     const supabase = createAdminClient()
 
-    // Get user profile and check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
-        return { error: 'Profil tidak ditemukan' }
-    }
-
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
-
-    // If not admin/dev, check if user is PIC for this event
-    if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', input.eventId)
-            .eq('user_id', session.user.id)
-            .single()
-
-        if (!assignment || (assignment.role !== 'pic' && assignment.role !== 'advertiser')) {
-            return { error: 'Tidak memiliki akses untuk menambahkan batch' }
-        }
+    const access = await getEventAccess(supabase, session.user.id, input.eventId)
+    if (!access) {
+        return { error: 'Tidak memiliki akses untuk menambahkan batch' }
     }
 
     // Validate event exists
@@ -78,22 +63,19 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
         return { error: 'Nama batch maksimal 100 karakter' }
     }
 
-    if (!input.startDate) {
+    if (!input.startDate || !isIsoDate(input.startDate)) {
         return { error: 'Tanggal mulai wajib diisi' }
     }
 
     // Validate date range only if end date is provided
     if (input.endDate) {
-        const startDate = new Date(input.startDate)
-        const endDate = new Date(input.endDate)
-
-        if (endDate < startDate) {
+        if (!isIsoDate(input.endDate) || input.endDate < input.startDate) {
             return { error: 'Tanggal selesai harus setelah tanggal mulai' }
         }
     }
 
     // Validate price
-    if (input.price !== undefined && input.price < 0) {
+    if (input.price !== undefined && (!Number.isFinite(input.price) || input.price < 0)) {
         return { error: 'Harga tidak boleh negatif' }
     }
 
@@ -153,6 +135,11 @@ export async function getBatch(batchId: string) {
         return null
     }
 
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access) {
+        return null
+    }
+
     return batch
 }
 
@@ -174,7 +161,7 @@ export async function updateBatch(
     // Get batch to find event_id
     const { data: batch } = await supabase
         .from('batches')
-        .select('event_id')
+        .select('event_id, start_date, end_date')
         .eq('id', batchId)
         .single()
 
@@ -182,30 +169,28 @@ export async function updateBatch(
         return { error: 'Batch tidak ditemukan' }
     }
 
-    // Check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
-        return { error: 'Profil tidak ditemukan' }
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access) {
+        return { error: 'Tidak memiliki akses' }
     }
 
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
+    if (input.name !== undefined && (typeof input.name !== 'string' || input.name.trim().length < 1 || input.name.trim().length > 100)) {
+        return { error: 'Nama batch harus terdiri dari 1-100 karakter' }
+    }
+    if (input.startDate !== undefined && !isIsoDate(input.startDate)) {
+        return { error: 'Tanggal mulai tidak valid' }
+    }
+    if (input.endDate !== undefined && input.endDate !== null && !isIsoDate(input.endDate)) {
+        return { error: 'Tanggal selesai tidak valid' }
+    }
+    if (input.price !== undefined && (!Number.isFinite(input.price) || input.price < 0)) {
+        return { error: 'Harga tidak boleh negatif' }
+    }
 
-    if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', batch.event_id)
-            .eq('user_id', session.user.id)
-            .single()
-
-        if (!assignment || (assignment.role !== 'pic' && assignment.role !== 'advertiser')) {
-            return { error: 'Tidak memiliki akses' }
-        }
+    const startDate = input.startDate ?? batch.start_date
+    const endDate = input.endDate === undefined ? batch.end_date : input.endDate
+    if (endDate && endDate < startDate) {
+        return { error: 'Tanggal selesai harus setelah tanggal mulai' }
     }
 
     // Build update object
@@ -254,30 +239,9 @@ export async function deleteBatch(batchId: string): Promise<BatchResult> {
         return { error: 'Batch tidak ditemukan' }
     }
 
-    // Check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
-        return { error: 'Profil tidak ditemukan' }
-    }
-
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
-
-    if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', batch.event_id)
-            .eq('user_id', session.user.id)
-            .single()
-
-        if (!assignment || assignment.role !== 'pic') {
-            return { error: 'Tidak memiliki akses' }
-        }
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access || (!isAdminOrDeveloper(access.userRole) && access.eventRole !== 'pic')) {
+        return { error: 'Tidak memiliki akses' }
     }
 
     const { error } = await supabase

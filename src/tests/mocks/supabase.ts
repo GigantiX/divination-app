@@ -53,14 +53,6 @@ export const mockSupabaseClient = {
   },
 };
 
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: vi.fn(() => mockSupabaseClient),
-}));
-
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn().mockResolvedValue(mockSupabaseClient),
-}));
-
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: vi.fn(() => mockSupabaseClient),
 }));

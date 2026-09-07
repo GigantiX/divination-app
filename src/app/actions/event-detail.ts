@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { unstable_cache } from 'next/cache'
+import { getEventAccess } from '@/lib/authorization'
+import { getJakartaDateString } from '@/lib/date'
 
 // Types for Event Detail
 export interface EventDetailUser {
@@ -145,7 +147,9 @@ const _getEventDetail = async (
     }))
 
     // Determine current batch (latest or specified)
-    const currentBatchId = batchId || (mappedBatches.length > 0 ? mappedBatches[0].id : null)
+    const currentBatchId = batchId
+        ? mappedBatches.find((batch) => batch.id === batchId)?.id ?? null
+        : mappedBatches[0]?.id ?? null
 
     // Compute date range filter for all report queries
     const dateFilter = getDateRangeFilter(range)
@@ -179,49 +183,16 @@ const _getEventDetail = async (
             }
 
             if (a.role === 'advertiser') {
-                // Get advertiser stats from reports
-                let advertiserStats = { spend: 0, leads: 0, sales: 0 }
-
-                if (currentBatchId) {
-                    let reportsQuery = supabase
-                        .from('reports')
-                        .select('ads_spent, tax_percentage, leads_count, closing_count')
-                        .eq('batch_id', currentBatchId)
-                        .eq('user_id', profileData.id)
-
-                    if (dateFilter.gte) reportsQuery = reportsQuery.gte('report_date', dateFilter.gte)
-                    if (dateFilter.lte) reportsQuery = reportsQuery.lte('report_date', dateFilter.lte)
-
-                    const { data: reports } = await reportsQuery
-
-                    if (reports) {
-                        advertiserStats = reports.reduce(
-                            (acc, r) => {
-                                const spent = Number(r.ads_spent || 0)
-                                const tax = Number(r.tax_percentage ?? 11)
-                                const spendWithTax = Math.round(spent * (1 + tax / 100))
-                                return {
-                                    spend: acc.spend + spendWithTax,
-                                    leads: acc.leads + (r.leads_count || 0),
-                                    sales: acc.sales + (r.closing_count || 0),
-                                }
-                            },
-                            { spend: 0, leads: 0, sales: 0 }
-                        )
-                    }
-                }
-
-                const advRevenue = advertiserStats.sales * currentBatchPrice
-                const advProfitLoss = advRevenue - advertiserStats.spend
-
                 advertisers.push({
                     ...user,
-                    ...advertiserStats,
-                    cpr: advertiserStats.sales > 0 ? Math.round(advertiserStats.spend / advertiserStats.sales) : 0,
-                    closingRate: advertiserStats.leads > 0 ? Math.round((advertiserStats.sales / advertiserStats.leads) * 10000) / 100 : 0,
-                    revenue: advRevenue,
-                    profitLoss: advProfitLoss,
-                    roas: advertiserStats.spend > 0 ? Math.round((advRevenue / advertiserStats.spend) * 100) / 100 : 0,
+                    spend: 0,
+                    leads: 0,
+                    sales: 0,
+                    cpr: 0,
+                    closingRate: 0,
+                    revenue: 0,
+                    profitLoss: 0,
+                    roas: 0,
                 })
             } else {
                 pics.push(user)
@@ -229,59 +200,28 @@ const _getEventDetail = async (
         }
     }
 
-    // Calculate overall stats for current batch
+    // Fetch report rows once and reuse them for the list, overall totals, and
+    // per-advertiser totals. This avoids one query per advertiser.
     let stats: EventDetailStats = {
         totalSpend: 0, totalLeads: 0, totalSales: 0,
         cpr: 0, closingRate: 0, revenue: 0, profitLoss: 0, roas: 0,
     }
 
-    if (currentBatchId) {
-        let allReportsQuery = supabase
-            .from('reports')
-            .select('ads_spent, tax_percentage, leads_count, closing_count')
-            .eq('batch_id', currentBatchId)
-
-        if (dateFilter.gte) allReportsQuery = allReportsQuery.gte('report_date', dateFilter.gte)
-        if (dateFilter.lte) allReportsQuery = allReportsQuery.lte('report_date', dateFilter.lte)
-
-        const { data: allReports } = await allReportsQuery
-
-        if (allReports) {
-            const totals = allReports.reduce(
-                (acc, r) => {
-                    const spent = Number(r.ads_spent || 0)
-                    const tax = Number(r.tax_percentage ?? 11)
-                    const spendWithTax = Math.round(spent * (1 + tax / 100))
-                    return {
-                        spend: acc.spend + spendWithTax,
-                        leads: acc.leads + (r.leads_count || 0),
-                        sales: acc.sales + (r.closing_count || 0),
-                    }
-                },
-                { spend: 0, leads: 0, sales: 0 }
-            )
-
-            const revenue = totals.sales * currentBatchPrice
-            const profitLoss = revenue - totals.spend
-
-            stats = {
-                totalSpend: totals.spend,
-                totalLeads: totals.leads,
-                totalSales: totals.sales,
-                cpr: totals.sales > 0 ? Math.round(totals.spend / totals.sales) : 0,
-                closingRate: totals.leads > 0 ? Math.round((totals.sales / totals.leads) * 10000) / 100 : 0,
-                revenue,
-                profitLoss,
-                roas: totals.spend > 0 ? Math.round((revenue / totals.spend) * 100) / 100 : 0,
-            }
-        }
-    }
-
-    // Get reports for current batch
     let reports: EventDetailReport[] = []
+    let rawReports: Array<{
+        id: string
+        report_date: string
+        ads_spent: number | string | null
+        tax_percentage: number | string | null
+        leads_count: number | null
+        closing_count: number | null
+        notes: string | null
+        user_id: string
+        profiles: unknown
+    }> = []
 
     if (currentBatchId) {
-        let reportsQuery = supabase
+        const reportsQuery = supabase
             .from('reports')
             .select(`
                 id,
@@ -300,7 +240,8 @@ const _getEventDetail = async (
         const { data: reportData } = await reportsQuery
 
         if (reportData) {
-            reports = reportData.map((r) => {
+            rawReports = reportData
+            reports = rawReports.map((r) => {
                 const reporter = r.profiles as unknown as { id: string; full_name: string; emoji: string } | null
                 return {
                     id: r.id,
@@ -317,6 +258,56 @@ const _getEventDetail = async (
                 }
             })
         }
+    }
+
+    const reportsInRange = rawReports.filter((report) =>
+        (!dateFilter.gte || report.report_date >= dateFilter.gte) &&
+        (!dateFilter.lte || report.report_date <= dateFilter.lte)
+    )
+
+    const aggregateReports = (rows: typeof rawReports) => rows.reduce(
+        (totals, report) => {
+            const spent = Number(report.ads_spent || 0)
+            const tax = Number(report.tax_percentage ?? 11)
+            return {
+                spend: totals.spend + Math.round(spent * (1 + tax / 100)),
+                leads: totals.leads + (report.leads_count || 0),
+                sales: totals.sales + (report.closing_count || 0),
+            }
+        },
+        { spend: 0, leads: 0, sales: 0 }
+    )
+
+    const totals = aggregateReports(reportsInRange)
+    const revenue = totals.sales * currentBatchPrice
+    stats = {
+        totalSpend: totals.spend,
+        totalLeads: totals.leads,
+        totalSales: totals.sales,
+        cpr: totals.sales > 0 ? Math.round(totals.spend / totals.sales) : 0,
+        closingRate: totals.leads > 0 ? Math.round((totals.sales / totals.leads) * 10000) / 100 : 0,
+        revenue,
+        profitLoss: revenue - totals.spend,
+        roas: totals.spend > 0 ? Math.round((revenue / totals.spend) * 100) / 100 : 0,
+    }
+
+    for (const advertiser of advertisers) {
+        const advertiserTotals = aggregateReports(
+            reportsInRange.filter((report) => report.user_id === advertiser.id)
+        )
+        const advertiserRevenue = advertiserTotals.sales * currentBatchPrice
+        Object.assign(advertiser, {
+            ...advertiserTotals,
+            cpr: advertiserTotals.sales > 0 ? Math.round(advertiserTotals.spend / advertiserTotals.sales) : 0,
+            closingRate: advertiserTotals.leads > 0
+                ? Math.round((advertiserTotals.sales / advertiserTotals.leads) * 10000) / 100
+                : 0,
+            revenue: advertiserRevenue,
+            profitLoss: advertiserRevenue - advertiserTotals.spend,
+            roas: advertiserTotals.spend > 0
+                ? Math.round((advertiserRevenue / advertiserTotals.spend) * 100) / 100
+                : 0,
+        })
     }
 
     // Determine permissions
@@ -362,17 +353,6 @@ export async function getEventDetail(
 }
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'all'
-
-const BUSINESS_TIME_ZONE = 'Asia/Jakarta'
-
-function getJakartaDateString(date = new Date()): string {
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: BUSINESS_TIME_ZONE,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).format(date)
-}
 
 function parseDateString(dateString: string): Date {
     const [year, month, day] = dateString.split('-').map(Number)
@@ -421,6 +401,17 @@ export async function getEventChartData(batchId: string, range: DateRange = 'tod
     }
 
     const supabase = createAdminClient()
+
+    const { data: batch } = await supabase
+        .from('batches')
+        .select('event_id')
+        .eq('id', batchId)
+        .maybeSingle()
+
+    if (!batch) return null
+
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access) return null
 
     const today = getJakartaDateString()
 

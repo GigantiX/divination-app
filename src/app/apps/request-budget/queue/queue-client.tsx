@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { type UserProfile } from "@/app/actions/profile"
 import { getPendingQueue, updateRequestStatus, uploadBudgetProof, type BudgetRequest } from "@/app/actions/budget"
-import { compressImage } from "@/lib/image-compression"
+import { compressImage } from "@/lib/image"
 
 function formatIDR(amount: number) {
     return new Intl.NumberFormat('id-ID', {
@@ -87,7 +87,7 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
 
         try {
             // Compress image before upload
-            const compressedBlob = await compressImage(proofFile)
+            const compressedBlob = await compressImage(proofFile, 1920, 1080)
             const compressedFile = new File([compressedBlob], proofFile.name, {
                 type: 'image/jpeg',
                 lastModified: Date.now(),
@@ -112,8 +112,8 @@ export function QueueClient({ profile }: { profile: UserProfile }) {
             setProofPreview(null)
             loadData()
 
-        } catch (err: any) {
-            setErrorMsg(err.message || "Terjadi kesalahan")
+        } catch (err) {
+            setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan")
         } finally {
             setIsProcessing(false)
         }

@@ -6,6 +6,7 @@
 
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getEventAccess } from '@/lib/authorization'
 
 // --- Types ---
 
@@ -135,6 +136,9 @@ export async function getBatchesForEvent(eventId: string): Promise<{ data?: { id
 
     try {
         const supabase = createAdminClient()
+
+        const access = await getEventAccess(supabase, session.user.id, eventId)
+        if (!access) return { error: 'Anda tidak memiliki akses ke event ini' }
 
         const { data, error } = await supabase
             .from('batches')

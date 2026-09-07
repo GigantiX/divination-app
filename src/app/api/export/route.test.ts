@@ -177,4 +177,38 @@ describe('GET /api/export route handler', () => {
         expect(text).toContain('Super Event')
         expect(text).toContain('Batch 1')
     })
+
+    it('should neutralize spreadsheet formulas in CSV exports', async () => {
+        vi.mocked(auth as any).mockResolvedValueOnce({
+            user: { id: 'admin-1' }
+        } as any)
+
+        vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+            if (table === 'profiles') {
+                return new MockQueryBuilder({ id: 'admin-1', role: 'admin' })
+            }
+            if (table === 'budget_requests') {
+                return new MockQueryBuilder([
+                    {
+                        created_at: '2026-07-18T10:00:00Z',
+                        amount: 1500000,
+                        status: 'approved',
+                        proof_image_url: '=HYPERLINK("https://attacker.example")',
+                        events: { name: '+Malicious Event' },
+                        profiles: { full_name: '@attacker' }
+                    }
+                ])
+            }
+            return new MockQueryBuilder(null)
+        })
+
+        const req = createRequest('http://localhost:3000/api/export?type=budget-history&format=csv')
+        const res = await GET(req)
+        const text = await res.text()
+
+        expect(res.status).toBe(200)
+        expect(text).toContain("'+Malicious Event")
+        expect(text).toContain("'@attacker")
+        expect(text).toContain("'=HYPERLINK")
+    })
 })

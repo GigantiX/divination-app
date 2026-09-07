@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { getUserRole, isAdminOrDeveloper } from '@/lib/authorization'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -71,13 +72,8 @@ async function requireAdminOrDev(): Promise<{ userId: string } | { error: string
     }
 
     const supabase = createAdminClient()
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'developer')) {
+    const role = await getUserRole(supabase, session.user.id)
+    if (!isAdminOrDeveloper(role)) {
         return { error: 'Tidak memiliki akses' }
     }
 

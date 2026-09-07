@@ -8,7 +8,6 @@ import { NavigationLayout } from "@/components/ui/nav-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { type UserProfile } from "@/app/actions/profile"
-import { cn } from "@/lib/utils"
 import { AppIcon } from "@/components/ui/app-icon"
 
 interface AppsClientProps {

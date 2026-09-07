@@ -20,7 +20,6 @@ import {
     Users,
     Target,
     Trash2,
-    Download,
     FileText,
 } from "lucide-react"
 import dynamic from "next/dynamic"
@@ -108,7 +107,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
             pendingNavigationRef.current = false
             setIsBatchLoading(false)
         }
-    }, [data])
+    }, [data, selectedBatch])
 
     // Fetch chart data when batch or range changes
     React.useEffect(() => {

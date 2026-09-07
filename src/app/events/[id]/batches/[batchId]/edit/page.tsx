@@ -29,15 +29,6 @@ const strToDate = (s: string): Date => {
 const dateToStr = (d: Date): string =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
-// Get today's date in Jakarta timezone (UTC+7)
-const getJakartaDate = () => {
-    const now = new Date()
-    const jakartaOffset = 7 * 60 // UTC+7 in minutes
-    const localOffset = now.getTimezoneOffset()
-    const jakartaTime = new Date(now.getTime() + (jakartaOffset + localOffset) * 60 * 1000)
-    return jakartaTime.toISOString().split('T')[0]
-}
-
 export default function EditBatchPage() {
     const router = useRouter()
     const params = useParams()

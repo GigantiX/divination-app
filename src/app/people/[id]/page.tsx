@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import {
     ChevronLeft,
     Plus,
@@ -44,7 +44,6 @@ const getGlobalRoleConfig = (role: string) => {
 
 export default function UserDetailPage() {
     const params = useParams()
-    const router = useRouter()
     const userId = params.id as string
 
     const [user, setUser] = React.useState<UserDetailData | null>(null)

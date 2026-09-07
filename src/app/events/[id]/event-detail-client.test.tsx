@@ -104,6 +104,7 @@ describe('EventDetailClient integration test', () => {
     expect(screen.getAllByText('Batch Jan 2026')[0]).toBeInTheDocument();
     expect(screen.getByText(/Harga Tiket:/i)).toBeInTheDocument();
     expect(screen.getByText('Rp 150.000')).toBeInTheDocument();
+    await waitFor(() => expect(getEventChartData).toHaveBeenCalledWith('batch-1', 'today'));
   });
 
   it('allows switching between tabs', async () => {

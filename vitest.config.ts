@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck -- Vitest and the root Vite/Rolldown packages expose incompatible plugin types.
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -23,6 +23,8 @@ export default defineConfig({
         'src/lib/password.ts',
         'src/lib/emojis.ts',
         'src/lib/utils.ts',
+        'src/lib/authorization.ts',
+        'src/lib/date.ts',
         'src/app/actions/auth.ts',
         'src/app/actions/event-detail.ts',
         'src/app/dashboard/dashboard-client.tsx',

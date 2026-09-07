@@ -103,6 +103,7 @@ describe('event-detail server actions', () => {
       expect(result?.stats.roas).toBe(1.82); // 200 / 110
       expect(result?.userRole).toBe('admin');
       expect(result?.canManageEvent).toBe(true);
+      expect(vi.mocked(mockSupabaseClient.from).mock.calls.filter(([table]) => table === 'reports')).toHaveLength(1);
     });
 
     it('should return details for developer with range today', async () => {
@@ -229,9 +230,34 @@ describe('event-detail server actions', () => {
       const result = await getEventDetail('event-123');
       expect(result).toBeNull();
     });
+
+    it('should ignore a batch id that does not belong to the requested event', async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'admin-user', role: 'admin' } } as any);
+      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+        if (table === 'profiles') return new MockQueryBuilder({ id: 'admin-user', role: 'admin' });
+        if (table === 'events') return new MockQueryBuilder({ id: 'event-1', name: 'Event 1' });
+        if (table === 'batches') return new MockQueryBuilder([{ id: 'batch-1', name: 'Batch 1', price: 100 }]);
+        if (table === 'event_assignments') return new MockQueryBuilder([]);
+        if (table === 'reports') throw new Error('reports must not be queried for a foreign batch');
+        return new MockQueryBuilder(null);
+      });
+
+      const result = await getEventDetail('event-1', 'batch-from-another-event', 'all');
+      expect(result?.currentBatchId).toBeNull();
+      expect(result?.reports).toEqual([]);
+    });
   });
 
   describe('getEventChartData', () => {
+    const mockChartQueries = (reports: unknown[]) => {
+      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+        if (table === 'batches') return new MockQueryBuilder({ event_id: 'event-1' });
+        if (table === 'profiles') return new MockQueryBuilder({ role: 'admin' });
+        if (table === 'reports') return new MockQueryBuilder(reports);
+        return new MockQueryBuilder(null);
+      });
+    };
+
     const jakartaDate = () => new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Jakarta',
       year: 'numeric',
@@ -253,14 +279,9 @@ describe('event-detail server actions', () => {
 
       const todayStr = jakartaDate();
 
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([
-            { report_date: todayStr, leads_count: 10, closing_count: 2 },
-          ]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([
+        { report_date: todayStr, leads_count: 10, closing_count: 2 },
+      ]);
 
       const result = await getEventChartData('batch-1', 'today');
       expect(result).not.toBeNull();
@@ -274,14 +295,9 @@ describe('event-detail server actions', () => {
 
       const yesterdayStr = shiftDate(jakartaDate(), -1);
 
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([
-            { report_date: yesterdayStr, leads_count: 5, closing_count: 1 },
-          ]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([
+        { report_date: yesterdayStr, leads_count: 5, closing_count: 1 },
+      ]);
 
       const result = await getEventChartData('batch-1', 'yesterday');
       expect(result).not.toBeNull();
@@ -297,14 +313,9 @@ describe('event-detail server actions', () => {
       date.setDate(date.getDate() - 4);
       const dateStr = date.toISOString().split('T')[0];
 
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([
-            { report_date: dateStr, leads_count: 5, closing_count: 1 },
-          ]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([
+        { report_date: dateStr, leads_count: 5, closing_count: 1 },
+      ]);
 
       const result = await getEventChartData('batch-1', '7d');
       expect(result).not.toBeNull();
@@ -317,14 +328,9 @@ describe('event-detail server actions', () => {
       date.setDate(date.getDate() - 15);
       const dateStr = date.toISOString().split('T')[0];
 
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([
-            { report_date: dateStr, leads_count: 5, closing_count: 1 },
-          ]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([
+        { report_date: dateStr, leads_count: 5, closing_count: 1 },
+      ]);
 
       const result = await getEventChartData('batch-1', '30d');
       expect(result).not.toBeNull();
@@ -332,14 +338,9 @@ describe('event-detail server actions', () => {
 
     it('should return all chart data', async () => {
       vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([
-            { report_date: '2026-06-01', leads_count: 5, closing_count: 1 },
-          ]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([
+        { report_date: '2026-06-01', leads_count: 5, closing_count: 1 },
+      ]);
 
       const result = await getEventChartData('batch-1', 'all');
       expect(result).not.toBeNull();
@@ -353,12 +354,7 @@ describe('event-detail server actions', () => {
 
     it('should handle empty reports for all range', async () => {
       vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([]);
 
       const result = await getEventChartData('batch-1', 'all');
       expect(result).not.toBeNull();
@@ -366,18 +362,26 @@ describe('event-detail server actions', () => {
 
     it('should handle out of order reports for all range', async () => {
       vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
-      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
-        if (table === 'reports') {
-          return new MockQueryBuilder([
-            { report_date: '2026-07-15', leads_count: 5, closing_count: 1 },
-            { report_date: '2026-07-14', leads_count: 10, closing_count: 2 },
-          ]);
-        }
-        return new MockQueryBuilder(null);
-      });
+      mockChartQueries([
+        { report_date: '2026-07-15', leads_count: 5, closing_count: 1 },
+        { report_date: '2026-07-14', leads_count: 10, closing_count: 2 },
+      ]);
 
       const result = await getEventChartData('batch-1', 'all');
       expect(result).not.toBeNull();
+    });
+
+    it('should not expose chart data for an event the user cannot access', async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'user-1' } } as any);
+      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+        if (table === 'batches') return new MockQueryBuilder({ event_id: 'event-2' });
+        if (table === 'profiles') return new MockQueryBuilder({ role: 'user' });
+        if (table === 'event_assignments') return new MockQueryBuilder(null);
+        if (table === 'reports') throw new Error('reports must not be queried');
+        return new MockQueryBuilder(null);
+      });
+
+      await expect(getEventChartData('batch-2', 'all')).resolves.toBeNull();
     });
   });
 });

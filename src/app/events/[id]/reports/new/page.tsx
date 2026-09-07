@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Calendar, Check, ChevronLeft, ChevronDown, Facebook, FileText, Info, Loader2, Percent, RefreshCw, Search, ShoppingCart, Users } from "lucide-react"
+import { Calendar, Check, ChevronLeft, ChevronDown, Facebook, FileText, Info, Loader2, RefreshCw, Search, ShoppingCart, Users } from "lucide-react"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import type { DateRange } from "react-day-picker"

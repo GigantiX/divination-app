@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { getUserRole, isAdminOrDeveloper } from '@/lib/authorization'
 
 export interface CalendarBatch {
     id: string
@@ -49,7 +50,21 @@ export async function getCalendarBatches(): Promise<CalendarBatch[]> {
 
     const supabase = createAdminClient()
 
-    const { data, error } = await supabase
+    const role = await getUserRole(supabase, session.user.id)
+    if (!role) return []
+
+    let accessibleEventIds: string[] | null = null
+    if (!isAdminOrDeveloper(role)) {
+        const { data: assignments, error: assignmentsError } = await supabase
+            .from('event_assignments')
+            .select('event_id')
+            .eq('user_id', session.user.id)
+
+        if (assignmentsError || !assignments?.length) return []
+        accessibleEventIds = assignments.map((assignment) => assignment.event_id)
+    }
+
+    let query = supabase
         .from('batches')
         .select(`
             id,
@@ -63,25 +78,33 @@ export async function getCalendarBatches(): Promise<CalendarBatch[]> {
                 status
             )
         `)
-        .order('start_date', { ascending: true })
+
+    if (accessibleEventIds) {
+        query = query.in('event_id', accessibleEventIds)
+    }
+
+    const { data, error } = await query.order('start_date', { ascending: true })
 
     if (error || !data) {
         console.error('Error fetching calendar batches:', error)
         return []
     }
 
-    return data.map((b: any) => ({
-        id: b.id,
-        name: b.name,
-        startDate: b.start_date,
-        endDate: b.end_date,
-        notes: b.notes,
-        event: {
-            id: b.events?.id || '',
-            name: b.events?.name || 'Unknown Event',
-            status: b.events?.status || 'active'
+    return data.map((batch) => {
+        const event = batch.events as unknown as CalendarBatch['event'] | null
+        return {
+            id: batch.id,
+            name: batch.name,
+            startDate: batch.start_date,
+            endDate: batch.end_date,
+            notes: batch.notes,
+            event: {
+                id: event?.id || '',
+                name: event?.name || 'Unknown Event',
+                status: event?.status || 'active',
+            },
         }
-    }))
+    })
 }
 
 /**
@@ -103,7 +126,7 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
         return []
     }
 
-    return data.map((e: any) => ({
+    return data.map((e) => ({
         id: e.id,
         name: e.name,
         startDate: e.start_date,

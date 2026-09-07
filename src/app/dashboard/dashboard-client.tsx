@@ -3,7 +3,6 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Calendar, Plus, Inbox, Loader2 } from "lucide-react"
 import useSWR from "swr"
 
@@ -20,8 +19,6 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ data }: DashboardClientProps) {
-    const router = useRouter()
-
     const { mutate } = useSWR('/dashboard', getDashboardData, {
         fallbackData: data,
         revalidateOnFocus: false,
