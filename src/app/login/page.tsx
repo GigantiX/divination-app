@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { initialLoginActionState, loginAction } from "@/app/actions/auth"
+import { loginAction } from "@/app/actions/auth"
+
+const initialLoginActionState = { error: "" }
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = React.useState(false)

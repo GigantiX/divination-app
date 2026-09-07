@@ -1,8 +1,10 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { initialLoginActionState, loginAction, registerAction, logoutAction } from './auth';
+import { loginAction, registerAction, logoutAction } from './auth';
 import { signIn, signOut } from '@/auth';
 import { mockSupabaseClient, MockQueryBuilder } from '@/tests/mocks/supabase';
 import { AuthError } from 'next-auth';
+
+const initialLoginActionState = { error: '' };
 
 vi.mock('@/lib/password', () => ({
   hashPassword: vi.fn().mockResolvedValue('hashed-password'),
