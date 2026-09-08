@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EventDetailClient } from './event-detail-client';
 import { getEventChartData } from '@/app/actions/event-detail';
@@ -136,6 +136,35 @@ describe('EventDetailClient integration test', () => {
     await userEvent.selectOptions(select, 'batch-2');
 
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('batch=batch-2'));
+  });
+
+  it('renders the complete advertiser performance card including CPR', async () => {
+    render(<EventDetailClient data={{
+      ...mockEventDetailData,
+      advertisers: [{
+        id: 'advertiser-1',
+        name: 'Nadia Ads',
+        emoji: '📈',
+        role: 'advertiser',
+        spend: 500000,
+        leads: 50,
+        sales: 10,
+        cpr: 50000,
+        closingRate: 20,
+        revenue: 1500000,
+        profitLoss: 1000000,
+        roas: 3,
+      }],
+    }} />);
+
+    const card = screen.getByTestId('advertiser-card-advertiser-1');
+    expect(within(card).getByText('Nadia Ads')).toBeInTheDocument();
+    expect(within(card).getByText('CPR')).toBeInTheDocument();
+    expect(within(card).getByText('Cost per result')).toBeInTheDocument();
+    expect(within(card).getByText('Rp 50.000')).toBeInTheDocument();
+    expect(within(card).getByText('Hasil Bisnis')).toBeInTheDocument();
+    expect(within(card).getByText('+Rp 1.000.000')).toBeInTheDocument();
+    await waitFor(() => expect(getEventChartData).toHaveBeenCalledWith('batch-1', 'today'));
   });
 
   it('shows delete batch modal and calls delete action on confirm', async () => {
