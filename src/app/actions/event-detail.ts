@@ -73,9 +73,9 @@ export interface EventDetailData {
     userRole: 'developer' | 'admin' | 'user'
     userEventRole: 'pic' | 'advertiser' | null // User's role in this event
     currentUserId: string // Current logged-in user's ID
-    canManageEvent: boolean // Can add batch, edit event, etc
+    canManageEvent: boolean // Can add/edit batches and access event management options
     canAddReport: boolean // Can submit daily reports
-    canDeleteBatch: boolean // Admin, Developer, PIC only
+    canDeleteBatch: boolean // Admin and Developer only
 }
 
 /**
@@ -311,9 +311,9 @@ const _getEventDetail = async (
     }
 
     // Determine permissions
-    const canManageEvent = isAdminOrDev || userEventRole === 'pic' || userEventRole === 'advertiser'
+    const canManageEvent = isAdminOrDev || userEventRole === 'pic'
     const canAddReport = isAdminOrDev || userEventRole === 'advertiser'
-    const canDeleteBatch = isAdminOrDev || userEventRole === 'pic'
+    const canDeleteBatch = isAdminOrDev
 
     return {
         event,

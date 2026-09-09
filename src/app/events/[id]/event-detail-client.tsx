@@ -156,7 +156,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
         setIsDeletingBatch(false)
         setIsDeleteModalOpen(false)
         if (!result.error) {
-            router.push(`/events/${data.event.id}`)
+            router.push(`/events/${data.event.id}/batches`)
         }
     }
 
@@ -167,7 +167,7 @@ export function EventDetailClient({ data }: EventDetailClientProps) {
             {/* Header */}
             <div className="sticky top-0 z-10 bg-card shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3">
-                    <Link href="/dashboard">
+                    <Link href={`/events/${data.event.id}/batches`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <ChevronLeft className="h-6 w-6" />
                         </Button>

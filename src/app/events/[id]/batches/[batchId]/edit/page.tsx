@@ -155,7 +155,7 @@ export default function EditBatchPage() {
             {/* Header */}
             <div className="sticky top-0 z-10 border-b bg-card px-4 py-4">
                 <div className="flex items-center">
-                    <Link href={`/events/${eventId}`}>
+                    <Link href={`/events/${eventId}/batches`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 mr-2">
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
