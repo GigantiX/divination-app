@@ -103,14 +103,18 @@ interface LineChartProps {
 
 export default function LineChart({ labels, leadsData, salesData }: LineChartProps) {
     const { resolvedTheme } = useTheme()
-    const colors = React.useMemo<ChartColors>(() => ({
-        foreground: getToken("--foreground"),
-        mutedForeground: getToken("--muted-foreground"),
-        border: getToken("--border"),
-        popover: getToken("--popover", 0.96),
-        leads: getToken("--chart-leads"),
-        sales: getToken("--chart-sales"),
-    }), [resolvedTheme])
+    const colors = React.useMemo<ChartColors>(() => {
+        // resolvedTheme deliberately invalidates CSS-variable reads on theme changes.
+        void resolvedTheme
+        return {
+            foreground: getToken("--foreground"),
+            mutedForeground: getToken("--muted-foreground"),
+            border: getToken("--border"),
+            popover: getToken("--popover", 0.96),
+            leads: getToken("--chart-leads"),
+            sales: getToken("--chart-sales"),
+        }
+    }, [resolvedTheme])
     const options = React.useMemo(() => createChartOptions(colors), [colors])
     const data = React.useMemo(() => ({
         labels,

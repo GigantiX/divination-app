@@ -70,6 +70,10 @@ describe('DashboardClient integration test', () => {
     // Verify event batch counts
     expect(screen.getByText('2')).toBeInTheDocument(); // 2 Batches
     expect(screen.getByText('1')).toBeInTheDocument(); // 1 Batch
+    expect(screen.getByRole('link', { name: /Active Event A/i })).toHaveAttribute(
+      'href',
+      '/events/event-1/batches'
+    );
   });
 
   it('shows empty state warning for regular user with no assigned events', () => {

@@ -16,6 +16,7 @@ import {
     Clock,
     Trash2,
     CalendarPlus,
+    LockKeyhole,
 } from "lucide-react"
 import { NavigationLayout } from "@/components/ui/nav-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -27,6 +28,12 @@ import { AppIcon } from "@/components/ui/app-icon"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { DateRange } from "react-day-picker"
+import {
+    CalendarAccessDeniedDialog,
+    CalendarDayEventsDialog,
+    type CalendarDayEventGroup,
+} from "./calendar-day-events-dialog"
+import { getCalendarEventColor } from "./calendar-event-colors"
 
 const strToDate = (s: string): Date => {
     const [y, m, d] = s.split('-').map(Number)
@@ -65,8 +72,6 @@ const monthNames = [
 
 const weekdayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
 
-const weekdayLong = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-
 // ─────────────────────────────────────────────────────────
 // Types for the unified day items
 // ─────────────────────────────────────────────────────────
@@ -74,6 +79,29 @@ const weekdayLong = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sab
 type DayItemBatch = { kind: "batch"; data: CalendarBatch }
 type DayItemCustom = { kind: "custom"; data: CalendarEvent }
 type DayItem = DayItemBatch | DayItemCustom
+
+type CalendarDayDisplayItem =
+    | { kind: "event"; group: CalendarDayEventGroup }
+    | { kind: "custom"; event: CalendarEvent }
+
+function groupBatchesByEvent(items: DayItem[]): CalendarDayEventGroup[] {
+    const groups = new Map<string, CalendarDayEventGroup>()
+
+    for (const item of items) {
+        if (item.kind !== "batch") continue
+        const existing = groups.get(item.data.event.id)
+        if (existing) {
+            existing.batches.push(item.data)
+        } else {
+            groups.set(item.data.event.id, {
+                event: item.data.event,
+                batches: [item.data],
+            })
+        }
+    }
+
+    return Array.from(groups.values())
+}
 
 // ─────────────────────────────────────────────────────────
 // Main Component
@@ -90,7 +118,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
     // ── Selection state ──
     const [selectedBatch, setSelectedBatch] = React.useState<CalendarBatch | null>(null)
     const [selectedCalendarEvent, setSelectedCalendarEvent] = React.useState<CalendarEvent | null>(null)
-    const [selectedDay, setSelectedDay] = React.useState<Date | null>(null)   // mobile day sheet
+    const [selectedDay, setSelectedDay] = React.useState<Date | null>(null)
 
     // ── Local custom events (optimistic) ──
     const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>(initialCalendarEvents)
@@ -111,6 +139,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
 
     // ── Delete state ──
     const [deletingId, setDeletingId] = React.useState<string | null>(null)
+    const [accessDeniedEventName, setAccessDeniedEventName] = React.useState<string | null>(null)
 
     // ── Calendar math ──
     const year = currentDate.getFullYear()
@@ -192,15 +221,6 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
             case "upcoming": return "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
             case "completed": return "bg-muted text-muted-foreground border-border hover:bg-accent/60"
             default: return "bg-muted text-foreground border-border"
-        }
-    }
-
-    const getBatchDotColor = (status: string) => {
-        switch (status) {
-            case "active": return "bg-success"
-            case "upcoming": return "bg-primary"
-            case "completed": return "bg-muted-foreground/20"
-            default: return "bg-muted-foreground/20"
         }
     }
 
@@ -314,11 +334,22 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
         setDeletingId(null)
     }
 
-    // ── Day cell click (mobile) ──
-    const handleDayClick = (date: Date, items: DayItem[]) => {
-        if (items.length === 0) return
+    // ── Day cell click ──
+    const handleDayClick = (date: Date) => {
         setSelectedDay(date)
     }
+
+    const handleAccessDenied = (eventName: string) => {
+        setSelectedDay(null)
+        setSelectedBatch(null)
+        setAccessDeniedEventName(eventName)
+    }
+
+    const selectedDayItems = selectedDay ? getItemsForDay(selectedDay) : []
+    const selectedDayEventGroups = groupBatchesByEvent(selectedDayItems)
+    const selectedDayCustomEvents = selectedDayItems
+        .filter((item): item is DayItemCustom => item.kind === "custom")
+        .map((item) => item.data)
 
     // ── All calendar events for the list view ──
     const allListItems: DayItem[] = React.useMemo(() => {
@@ -435,17 +466,29 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                             <div className="grid grid-cols-7 bg-muted/50 gap-[1px]">
                                 {gridDays.map((dayObj, index) => {
                                     const items = getItemsForDay(dayObj.date)
+                                    const eventGroups = groupBatchesByEvent(items)
+                                    const customEvents = items
+                                        .filter((item): item is DayItemCustom => item.kind === "custom")
+                                        .map((item) => item.data)
+                                    const displayItems: CalendarDayDisplayItem[] = [
+                                        ...eventGroups.map((group) => ({ kind: "event" as const, group })),
+                                        ...customEvents.map((event) => ({ kind: "custom" as const, event })),
+                                    ]
                                     const todayState = isToday(dayObj.date)
-                                    const hasItems = items.length > 0
+                                    const hasItems = displayItems.length > 0
 
                                     return (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={index}
-                                            onClick={() => handleDayClick(dayObj.date, items)}
+                                            onClick={() => handleDayClick(dayObj.date)}
+                                            aria-label={hasItems
+                                                ? `${dayObj.day} ${monthNames[dayObj.date.getMonth()]}: ${displayItems.length} event`
+                                                : `${dayObj.day} ${monthNames[dayObj.date.getMonth()]}: tidak ada event`}
                                             className={cn(
-                                                "min-h-[90px] bg-card p-1.5 flex flex-col gap-0.5 transition-colors relative",
+                                                "min-h-[90px] bg-card p-1.5 text-left flex flex-col gap-0.5 transition-colors relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                                                 !dayObj.isCurrentMonth && "bg-muted/70",
-                                                hasItems && "md:cursor-default cursor-pointer active:bg-muted"
+                                                "cursor-pointer hover:bg-muted/50 active:bg-muted"
                                             )}
                                         >
                                             {/* Date number */}
@@ -461,51 +504,57 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
 
                                             {/* Desktop: text chips */}
                                             <div className="hidden md:flex flex-col gap-0.5 overflow-y-auto max-h-[72px] scrollbar-hide">
-                                                {items.slice(0, 3).map((item, i) => (
-                                                    <button
-                                                        key={i}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            if (item.kind === "batch") setSelectedBatch(item.data)
-                                                            else setSelectedCalendarEvent(item.data)
-                                                        }}
-                                                        className={cn(
-                                                            "w-full text-left truncate text-[10px] font-semibold px-1.5 py-0.5 rounded border transition-colors",
-                                                            item.kind === "batch"
-                                                                ? getBatchStatusStyles(item.data.event.status)
-                                                                : "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
-                                                        )}
-                                                    >
-                                                        {item.kind === "batch" ? item.data.event.name : item.data.name}
-                                                    </button>
+                                                {displayItems.slice(0, 3).map((item) => (
+                                                    item.kind === "event" ? (
+                                                        <div
+                                                            key={item.group.event.id}
+                                                            className={cn("flex min-w-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold", getCalendarEventColor(item.group.event.id).chip)}
+                                                        >
+                                                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", getCalendarEventColor(item.group.event.id).dot)} />
+                                                            <span className="truncate">{item.group.event.name}</span>
+                                                            {item.group.batches.length > 1 && (
+                                                                <span className="ml-auto shrink-0 rounded bg-card/70 px-1 text-[9px] font-bold">
+                                                                    {item.group.batches.length}B
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            key={item.event.id}
+                                                            className="flex min-w-0 items-center gap-1 rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary"
+                                                        >
+                                                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                                                            <span className="truncate">{item.event.name}</span>
+                                                        </div>
+                                                    )
                                                 ))}
-                                                {items.length > 3 && (
+                                                {displayItems.length > 3 && (
                                                     <div className="text-[9px] font-bold text-primary pl-1">
-                                                        +{items.length - 3} lainnya
+                                                        +{displayItems.length - 3} lainnya
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Mobile: pill strips (Google Calendar-style) */}
+                                            {/* Mobile: compact event-color strips */}
                                             <div className="flex md:hidden flex-col gap-0.5 mt-auto">
-                                                {items.slice(0, 2).map((item, i) => (
+                                                {displayItems.slice(0, 2).map((item) => (
                                                     <div
-                                                        key={i}
+                                                        key={item.kind === "event" ? item.group.event.id : item.event.id}
                                                         className={cn(
                                                             "h-1 w-full rounded-full",
-                                                            item.kind === "batch"
-                                                                ? getBatchDotColor(item.data.event.status)
+                                                            item.kind === "event"
+                                                                ? getCalendarEventColor(item.group.event.id).dot
                                                                 : "bg-primary"
                                                         )}
                                                     />
                                                 ))}
-                                                {items.length > 2 && (
+                                                {displayItems.length > 2 && (
                                                     <span className="text-[9px] font-bold text-muted-foreground leading-none">
-                                                        +{items.length - 2}
+                                                        +{displayItems.length - 2}
                                                     </span>
                                                 )}
                                             </div>
-                                        </div>
+                                        </button>
                                     )
                                 })}
                             </div>
@@ -513,7 +562,7 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                     ) : (
                         /* ── List View ── */
                         <div className="space-y-3">
-                            {allListItems.length > 0 ? allListItems.map((item, idx) => (
+                            {allListItems.length > 0 ? allListItems.map((item) => (
                                 item.kind === "batch" ? (
                                     <Card key={`batch-${item.data.id}`} className="rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                                         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -547,11 +596,22 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                                                 <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold" onClick={() => setSelectedBatch(item.data)}>
                                                     <Info className="h-3.5 w-3.5" /> Info
                                                 </Button>
-                                                <Link href={`/events/${item.data.event.id}?batch=${item.data.id}`}>
-                                                    <Button size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-                                                        Detail <ChevronRightIcon className="h-3.5 w-3.5" />
+                                                {item.data.canAccess ? (
+                                                    <Link href={`/events/${item.data.event.id}?batch=${item.data.id}`}>
+                                                        <Button size="sm" className="h-9 gap-1.5 text-xs font-semibold">
+                                                            Detail <ChevronRightIcon className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </Link>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-9 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                        onClick={() => handleAccessDenied(item.data.event.name)}
+                                                    >
+                                                        <LockKeyhole className="h-3.5 w-3.5" /> Akses
                                                     </Button>
-                                                </Link>
+                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -628,69 +688,26 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                 <span className="hidden sm:inline">Tambah Acara</span>
             </button>
 
-            {/* ═══════════════════════════════════════════════════════════════
-                MOBILE: Day Bottom Sheet
-            ═══════════════════════════════════════════════════════════════ */}
+            {/* ── Day event list dialog ── */}
             {selectedDay && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/40 backdrop-blur-[1px]" onClick={() => setSelectedDay(null)}>
-                    <div
-                        className="w-full max-w-lg bg-card rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Sheet handle */}
-                        <div className="flex justify-center pt-3 pb-1">
-                            <div className="h-1 w-10 rounded-full bg-muted-foreground/20" />
-                        </div>
+                <CalendarDayEventsDialog
+                    date={selectedDay}
+                    eventGroups={selectedDayEventGroups}
+                    customEvents={selectedDayCustomEvents}
+                    onClose={() => setSelectedDay(null)}
+                    onOpenCustomEvent={(event) => {
+                        setSelectedDay(null)
+                        setSelectedCalendarEvent(event)
+                    }}
+                    onAccessDenied={handleAccessDenied}
+                />
+            )}
 
-                        {/* Sheet header */}
-                        <div className="flex items-center justify-between px-5 py-3 border-b">
-                            <div>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    {weekdayLong[selectedDay.getDay()]}
-                                </p>
-                                <h3 className="text-lg font-bold text-foreground">
-                                    {selectedDay.getDate()} {monthNames[selectedDay.getMonth()]} {selectedDay.getFullYear()}
-                                </h3>
-                            </div>
-                            <button onClick={() => setSelectedDay(null)} className="p-2 rounded-full hover:bg-accent">
-                                <X className="h-5 w-5 text-muted-foreground" />
-                            </button>
-                        </div>
-
-                        {/* Event list */}
-                        <div className="px-4 py-3 space-y-2 max-h-72 overflow-y-auto pb-safe">
-                            {getItemsForDay(selectedDay).map((item, i) => (
-                                <button
-                                    key={i}
-                                    className={cn(
-                                        "w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border font-semibold text-sm transition-colors",
-                                        item.kind === "batch"
-                                            ? getBatchStatusStyles(item.data.event.status)
-                                            : "bg-primary/15 text-primary border-primary/30 hover:bg-primary/20"
-                                    )}
-                                    onClick={() => {
-                                        setSelectedDay(null)
-                                        if (item.kind === "batch") setSelectedBatch(item.data)
-                                        else setSelectedCalendarEvent(item.data)
-                                    }}
-                                >
-                                    <span className="truncate">
-                                        {item.kind === "batch" ? item.data.event.name : item.data.name}
-                                    </span>
-                                    <span className={cn(
-                                        "text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0",
-                                        item.kind === "batch"
-                                            ? getBatchStatusStyles(item.data.event.status)
-                                            : "bg-primary/15 text-primary border-primary/30"
-                                    )}>
-                                        {item.kind === "batch" ? getStatusLabel(item.data.event.status) : "Pribadi"}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                        <div className="h-6" />
-                    </div>
-                </div>
+            {accessDeniedEventName && (
+                <CalendarAccessDeniedDialog
+                    eventName={accessDeniedEventName}
+                    onClose={() => setAccessDeniedEventName(null)}
+                />
             )}
 
             {/* ═══════════════════════════════════════════════════════════════
@@ -737,11 +754,22 @@ export function EventCalendarClient({ profile, initialBatches, initialCalendarEv
                             <Button variant="outline" size="sm" className="h-10 text-xs font-semibold shadow-sm" onClick={() => setSelectedBatch(null)}>
                                 Tutup
                             </Button>
-                            <Link href={`/events/${selectedBatch.event.id}?batch=${selectedBatch.id}`} onClick={() => setSelectedBatch(null)}>
-                                <Button size="sm" className="h-10 text-xs font-semibold gap-1.5 shadow-sm">
-                                    Lihat Dashboard Event <ExternalLink className="h-3.5 w-3.5" />
+                            {selectedBatch.canAccess ? (
+                                <Link href={`/events/${selectedBatch.event.id}?batch=${selectedBatch.id}`} onClick={() => setSelectedBatch(null)}>
+                                    <Button size="sm" className="h-10 text-xs font-semibold gap-1.5 shadow-sm">
+                                        Lihat Dashboard Event <ExternalLink className="h-3.5 w-3.5" />
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-10 gap-1.5 border-destructive/30 text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={() => handleAccessDenied(selectedBatch.event.name)}
+                                >
+                                    <LockKeyhole className="h-3.5 w-3.5" /> Lihat Dashboard Event
                                 </Button>
-                            </Link>
+                            )}
                         </div>
                     </Card>
                 </div>

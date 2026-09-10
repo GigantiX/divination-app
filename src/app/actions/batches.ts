@@ -3,6 +3,34 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidateTag } from 'next/cache'
+import { getEventAccess, isAdminOrDeveloper } from '@/lib/authorization'
+import { getJakartaDateString } from '@/lib/date'
+
+export interface BatchListItem {
+    id: string
+    name: string
+    startDate: string
+    endDate: string | null
+    price: number
+    notes: string | null
+    createdAt: string
+}
+
+export interface EventBatchListData {
+    event: {
+        id: string
+        name: string
+        logoUrl: string | null
+        status: string
+    }
+    activeBatches: BatchListItem[]
+    completedBatches: BatchListItem[]
+    userRole: 'developer' | 'admin' | 'user'
+    userEventRole: 'pic' | 'advertiser' | null
+    canCreateBatch: boolean
+    canEditBatch: boolean
+    canDeleteBatch: boolean
+}
 
 export interface CreateBatchInput {
     eventId: string
@@ -19,6 +47,80 @@ export interface BatchResult {
     batchId?: string
 }
 
+function isIsoDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+    const parsed = new Date(`${value}T00:00:00.000Z`)
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+/**
+ * Get the batches for an event, grouped by their finish date in Jakarta time.
+ * A batch remains active through its end date; a null end date is ongoing.
+ */
+export async function getEventBatches(eventId: string): Promise<EventBatchListData | null> {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+        return null
+    }
+
+    const supabase = createAdminClient()
+    const access = await getEventAccess(supabase, session.user.id, eventId)
+
+    if (!access) {
+        return null
+    }
+
+    const [eventResult, batchesResult] = await Promise.all([
+        supabase
+            .from('events')
+            .select('id, name, logo_url, status')
+            .eq('id', eventId)
+            .single(),
+        supabase
+            .from('batches')
+            .select('id, name, start_date, end_date, price, notes, created_at')
+            .eq('event_id', eventId)
+            .order('start_date', { ascending: false }),
+    ])
+
+    if (eventResult.error || !eventResult.data || batchesResult.error) {
+        console.error('Error fetching event batches:', eventResult.error || batchesResult.error)
+        return null
+    }
+
+    const today = getJakartaDateString()
+    const batches: BatchListItem[] = (batchesResult.data || []).map((batch) => ({
+        id: batch.id,
+        name: batch.name,
+        startDate: batch.start_date,
+        endDate: batch.end_date,
+        price: Number(batch.price || 0),
+        notes: batch.notes,
+        createdAt: batch.created_at,
+    }))
+
+    const activeBatches = batches.filter((batch) => !batch.endDate || batch.endDate >= today)
+    const completedBatches = batches.filter((batch) => batch.endDate !== null && batch.endDate < today)
+    const canManageBatch = isAdminOrDeveloper(access.userRole) || access.eventRole === 'pic'
+
+    return {
+        event: {
+            id: eventResult.data.id,
+            name: eventResult.data.name,
+            logoUrl: eventResult.data.logo_url,
+            status: eventResult.data.status,
+        },
+        activeBatches,
+        completedBatches,
+        userRole: access.userRole,
+        userEventRole: access.eventRole,
+        canCreateBatch: canManageBatch,
+        canEditBatch: canManageBatch,
+        canDeleteBatch: isAdminOrDeveloper(access.userRole),
+    }
+}
+
 /**
  * Create a new batch for an event (Admin/Developer/PIC only)
  */
@@ -31,31 +133,9 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
 
     const supabase = createAdminClient()
 
-    // Get user profile and check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
-        return { error: 'Profil tidak ditemukan' }
-    }
-
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
-
-    // If not admin/dev, check if user is PIC for this event
-    if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', input.eventId)
-            .eq('user_id', session.user.id)
-            .single()
-
-        if (!assignment || (assignment.role !== 'pic' && assignment.role !== 'advertiser')) {
-            return { error: 'Tidak memiliki akses untuk menambahkan batch' }
-        }
+    const access = await getEventAccess(supabase, session.user.id, input.eventId)
+    if (!access || (!isAdminOrDeveloper(access.userRole) && access.eventRole !== 'pic')) {
+        return { error: 'Tidak memiliki akses untuk menambahkan batch' }
     }
 
     // Validate event exists
@@ -78,22 +158,19 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
         return { error: 'Nama batch maksimal 100 karakter' }
     }
 
-    if (!input.startDate) {
+    if (!input.startDate || !isIsoDate(input.startDate)) {
         return { error: 'Tanggal mulai wajib diisi' }
     }
 
     // Validate date range only if end date is provided
     if (input.endDate) {
-        const startDate = new Date(input.startDate)
-        const endDate = new Date(input.endDate)
-
-        if (endDate < startDate) {
+        if (!isIsoDate(input.endDate) || input.endDate < input.startDate) {
             return { error: 'Tanggal selesai harus setelah tanggal mulai' }
         }
     }
 
     // Validate price
-    if (input.price !== undefined && input.price < 0) {
+    if (input.price !== undefined && (!Number.isFinite(input.price) || input.price < 0)) {
         return { error: 'Harga tidak boleh negatif' }
     }
 
@@ -118,6 +195,7 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
 
     // Revalidate event detail page
     revalidateTag(`event-${input.eventId}`, 'default')
+    revalidateTag('dashboard', 'default')
 
     return { success: true, batchId: batch.id }
 }
@@ -153,6 +231,11 @@ export async function getBatch(batchId: string) {
         return null
     }
 
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access) {
+        return null
+    }
+
     return batch
 }
 
@@ -174,7 +257,7 @@ export async function updateBatch(
     // Get batch to find event_id
     const { data: batch } = await supabase
         .from('batches')
-        .select('event_id')
+        .select('event_id, start_date, end_date')
         .eq('id', batchId)
         .single()
 
@@ -182,30 +265,28 @@ export async function updateBatch(
         return { error: 'Batch tidak ditemukan' }
     }
 
-    // Check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
-        return { error: 'Profil tidak ditemukan' }
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access || (!isAdminOrDeveloper(access.userRole) && access.eventRole !== 'pic')) {
+        return { error: 'Tidak memiliki akses' }
     }
 
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
+    if (input.name !== undefined && (typeof input.name !== 'string' || input.name.trim().length < 1 || input.name.trim().length > 100)) {
+        return { error: 'Nama batch harus terdiri dari 1-100 karakter' }
+    }
+    if (input.startDate !== undefined && !isIsoDate(input.startDate)) {
+        return { error: 'Tanggal mulai tidak valid' }
+    }
+    if (input.endDate !== undefined && input.endDate !== null && !isIsoDate(input.endDate)) {
+        return { error: 'Tanggal selesai tidak valid' }
+    }
+    if (input.price !== undefined && (!Number.isFinite(input.price) || input.price < 0)) {
+        return { error: 'Harga tidak boleh negatif' }
+    }
 
-    if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', batch.event_id)
-            .eq('user_id', session.user.id)
-            .single()
-
-        if (!assignment || (assignment.role !== 'pic' && assignment.role !== 'advertiser')) {
-            return { error: 'Tidak memiliki akses' }
-        }
+    const startDate = input.startDate ?? batch.start_date
+    const endDate = input.endDate === undefined ? batch.end_date : input.endDate
+    if (endDate && endDate < startDate) {
+        return { error: 'Tanggal selesai harus setelah tanggal mulai' }
     }
 
     // Build update object
@@ -232,7 +313,7 @@ export async function updateBatch(
 }
 
 /**
- * Delete batch (Admin/Developer/PIC only)
+ * Delete batch (Admin/Developer only)
  */
 export async function deleteBatch(batchId: string): Promise<BatchResult> {
     const session = await auth()
@@ -254,30 +335,9 @@ export async function deleteBatch(batchId: string): Promise<BatchResult> {
         return { error: 'Batch tidak ditemukan' }
     }
 
-    // Check permissions
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile) {
-        return { error: 'Profil tidak ditemukan' }
-    }
-
-    const isAdminOrDev = profile.role === 'admin' || profile.role === 'developer'
-
-    if (!isAdminOrDev) {
-        const { data: assignment } = await supabase
-            .from('event_assignments')
-            .select('role')
-            .eq('event_id', batch.event_id)
-            .eq('user_id', session.user.id)
-            .single()
-
-        if (!assignment || assignment.role !== 'pic') {
-            return { error: 'Tidak memiliki akses' }
-        }
+    const access = await getEventAccess(supabase, session.user.id, batch.event_id)
+    if (!access || !isAdminOrDeveloper(access.userRole)) {
+        return { error: 'Tidak memiliki akses' }
     }
 
     const { error } = await supabase
@@ -291,6 +351,7 @@ export async function deleteBatch(batchId: string): Promise<BatchResult> {
     }
 
     revalidateTag(`event-${batch.event_id}`, 'default')
+    revalidateTag('dashboard', 'default')
 
     return { success: true }
 }

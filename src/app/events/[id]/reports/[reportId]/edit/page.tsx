@@ -25,6 +25,15 @@ import { getReport, updateReport, deleteReport } from "@/app/actions/reports"
 import { getBatch } from "@/app/actions/batches"
 import { cn } from "@/lib/utils"
 
+function formatCurrency(value: string) {
+    const num = value.replace(/\D/g, "")
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+}
+
+function parseCurrency(value: string): number {
+    return parseInt(value.replace(/\./g, "") || "0", 10)
+}
+
 export default function EditReportPage() {
     const router = useRouter()
     const params = useParams()
@@ -97,15 +106,6 @@ export default function EditReportPage() {
         }
         loadReport()
     }, [reportId])
-
-    const formatCurrency = (value: string) => {
-        const num = value.replace(/\D/g, "")
-        return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-    }
-
-    const parseCurrency = (value: string): number => {
-        return parseInt(value.replace(/\./g, "") || "0", 10)
-    }
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

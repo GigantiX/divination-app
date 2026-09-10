@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { AvatarEmoji } from "@/components/ui/avatar-emoji"
 import { NavigationLayout } from "@/components/ui/nav-layout"
-import { RoleBadge } from "@/components/ui/role-badge"
 import { cn } from "@/lib/utils"
 import { getPeopleList, type PeopleMember } from "@/app/actions/people"
 

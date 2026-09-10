@@ -3,6 +3,8 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidateTag } from 'next/cache'
+import { getEventRole, getUserRole, isAdminOrDeveloper } from '@/lib/authorization'
+import { getJakartaDateString } from '@/lib/date'
 
 export interface CreateReportInput {
     batchId: string
@@ -20,31 +22,6 @@ export interface ReportResult {
     reportId?: string
 }
 
-async function getUserProfileRole(supabase: ReturnType<typeof createAdminClient>, userId: string) {
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single()
-
-    return profile?.role ?? null
-}
-
-async function getEventAssignmentRole(
-    supabase: ReturnType<typeof createAdminClient>,
-    eventId: string,
-    userId: string
-) {
-    const { data: assignment } = await supabase
-        .from('event_assignments')
-        .select('role')
-        .eq('event_id', eventId)
-        .eq('user_id', userId)
-        .maybeSingle()
-
-    return assignment?.role ?? null
-}
-
 /**
  * Create a new daily report (Admin/Developer/Advertiser)
  * Validates that user has permission and report date is valid
@@ -56,15 +33,30 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
         return { error: 'Tidak terautentikasi' }
     }
 
+    if (!parseIsoDate(input.reportDate)) {
+        return { error: 'Format tanggal tidak valid' }
+    }
+    if (
+        !Number.isInteger(input.leadsCount) || input.leadsCount < 0 ||
+        !Number.isInteger(input.closingCount) || input.closingCount < 0 ||
+        input.closingCount > input.leadsCount ||
+        !Number.isFinite(input.adsSpent) || input.adsSpent < 0
+    ) {
+        return { error: 'Nilai laporan tidak valid' }
+    }
+    if (!Number.isFinite(input.taxPercentage) || input.taxPercentage < 0 || input.taxPercentage > 100) {
+        return { error: 'Persentase pajak harus antara 0-100%' }
+    }
+
     const supabase = createAdminClient()
 
     // Get user profile
-    const role = await getUserProfileRole(supabase, session.user.id)
+    const role = await getUserRole(supabase, session.user.id)
     if (!role) {
         return { error: 'Profil tidak ditemukan' }
     }
 
-    const isAdminOrDev = role === 'admin' || role === 'developer'
+    const isAdminOrDev = isAdminOrDeveloper(role)
 
     // Get batch to verify it exists and get event_id
     const { data: batch } = await supabase
@@ -79,31 +71,17 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
 
     // If not admin/dev, check user is advertiser for this event
     if (!isAdminOrDev) {
-        const assignmentRole = await getEventAssignmentRole(supabase, batch.event_id, session.user.id)
+        const assignmentRole = await getEventRole(supabase, session.user.id, batch.event_id)
 
         if (assignmentRole !== 'advertiser') {
             return { error: 'Tidak memiliki akses untuk menambahkan laporan' }
         }
     }
 
-    // Validate input
-    if (!input.reportDate) {
-        return { error: 'Tanggal laporan wajib diisi' }
-    }
-
     // Prevent future-dated reports (use Jakarta timezone)
-    const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
-    const today = jakartaNow.toISOString().split('T')[0]
+    const today = getJakartaDateString()
     if (input.reportDate > today) {
         return { error: 'Tanggal laporan tidak boleh di masa depan' }
-    }
-
-    if (input.leadsCount < 0 || input.closingCount < 0 || input.adsSpent < 0) {
-        return { error: 'Nilai tidak boleh negatif' }
-    }
-
-    if (input.closingCount > input.leadsCount) {
-        return { error: 'Jumlah closing tidak boleh lebih dari leads' }
     }
 
     // Check for duplicate report (same user, same batch, same date)
@@ -117,11 +95,6 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
 
     if (existing) {
         return { error: 'Laporan untuk tanggal ini sudah ada. Silakan edit laporan yang sudah ada.' }
-    }
-
-    // Validate tax percentage
-    if (input.taxPercentage < 0 || input.taxPercentage > 100) {
-        return { error: 'Persentase pajak harus antara 0-100%' }
     }
 
     // Create report
@@ -173,17 +146,52 @@ export interface RangeReportResult {
     skipped: number
 }
 
+const MAX_REPORT_RANGE_DAYS = 366
+
+function parseIsoDate(date: string): Date | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
+    const parsed = new Date(`${date}T00:00:00.000Z`)
+    return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date
+        ? null
+        : parsed
+}
+
 export async function createReportRange(input: CreateReportRangeInput): Promise<RangeReportResult> {
     const session = await auth()
     if (!session?.user?.id) return { error: 'Tidak terautentikasi', created: 0, skipped: 0 }
 
+    const start = parseIsoDate(input.startDate)
+    const end = parseIsoDate(input.endDate)
+    if (!start || !end) return { error: 'Format tanggal tidak valid', created: 0, skipped: 0 }
+    if (start > end) return { error: 'Tanggal mulai tidak boleh setelah tanggal akhir', created: 0, skipped: 0 }
+
+    if (
+        !Number.isInteger(input.totalLeadsCount) || input.totalLeadsCount < 0 ||
+        !Number.isInteger(input.totalClosingCount) || input.totalClosingCount < 0 ||
+        input.totalClosingCount > input.totalLeadsCount ||
+        !Number.isFinite(input.totalAdsSpent) || input.totalAdsSpent < 0
+    ) {
+        return { error: 'Nilai laporan tidak valid', created: 0, skipped: 0 }
+    }
+    if (!Number.isFinite(input.taxPercentage) || input.taxPercentage < 0 || input.taxPercentage > 100) {
+        return { error: 'Persentase pajak harus antara 0-100%', created: 0, skipped: 0 }
+    }
+
+    const today = getJakartaDateString()
+    if (input.endDate > today) return { error: 'Tanggal akhir tidak boleh di masa depan', created: 0, skipped: 0 }
+
+    const days = Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1
+    if (days > MAX_REPORT_RANGE_DAYS) {
+        return { error: `Rentang laporan maksimal ${MAX_REPORT_RANGE_DAYS} hari`, created: 0, skipped: 0 }
+    }
+
     const supabase = createAdminClient()
 
     // Auth check (same as createReport)
-    const role = await getUserProfileRole(supabase, session.user.id)
+    const role = await getUserRole(supabase, session.user.id)
     if (!role) return { error: 'Profil tidak ditemukan', created: 0, skipped: 0 }
 
-    const isAdminOrDev = role === 'admin' || role === 'developer'
+    const isAdminOrDev = isAdminOrDeveloper(role)
 
     const { data: batch } = await supabase
         .from('batches')
@@ -194,40 +202,43 @@ export async function createReportRange(input: CreateReportRangeInput): Promise<
     if (!batch) return { error: 'Batch tidak ditemukan', created: 0, skipped: 0 }
 
     if (!isAdminOrDev) {
-        const assignmentRole = await getEventAssignmentRole(supabase, batch.event_id, session.user.id)
+        const assignmentRole = await getEventRole(supabase, session.user.id, batch.event_id)
         if (assignmentRole !== 'advertiser') {
             return { error: 'Tidak memiliki akses untuk menambahkan laporan', created: 0, skipped: 0 }
         }
     }
 
-    // Build list of dates in the range
-    const start = new Date(input.startDate)
-    const end = new Date(input.endDate)
-    if (start > end) return { error: 'Tanggal mulai tidak boleh setelah tanggal akhir', created: 0, skipped: 0 }
-
-    const jakartaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }))
-    const today = jakartaNow.toISOString().split('T')[0]
-    if (input.endDate > today) return { error: 'Tanggal akhir tidak boleh di masa depan', created: 0, skipped: 0 }
-
     const dates: string[] = []
     const cursor = new Date(start)
     while (cursor <= end) {
         dates.push(cursor.toISOString().split('T')[0])
-        cursor.setDate(cursor.getDate() + 1)
+        cursor.setUTCDate(cursor.getUTCDate() + 1)
     }
-
-    const days = dates.length
 
     // Divide spend/leads/sales equally; first day absorbs the remainder
     const baseSpend = Math.floor(input.totalAdsSpent / days)
     const baseLeads = Math.floor(input.totalLeadsCount / days)
     const baseSales = Math.floor(input.totalClosingCount / days)
 
-    let created = 0
-    let skipped = 0
+    const { data: existingReports, error: existingError } = await supabase
+        .from('reports')
+        .select('report_date')
+        .eq('batch_id', input.batchId)
+        .eq('user_id', session.user.id)
+        .gte('report_date', input.startDate)
+        .lte('report_date', input.endDate)
+
+    if (existingError) {
+        return { error: 'Gagal memeriksa laporan yang sudah ada', created: 0, skipped: 0 }
+    }
+
+    const existingDates = new Set((existingReports || []).map((report) => report.report_date))
+    const rows = []
 
     for (let i = 0; i < dates.length; i++) {
         const date = dates[i]
+        if (existingDates.has(date)) continue
+
         const isFirst = i === 0
 
         const daySpend  = isFirst ? input.totalAdsSpent - baseSpend * (days - 1) : baseSpend
@@ -236,39 +247,28 @@ export async function createReportRange(input: CreateReportRangeInput): Promise<
         const rawSales  = isFirst ? input.totalClosingCount - baseSales * (days - 1) : baseSales
         const daySales  = Math.min(rawSales, dayLeads)
 
-        // Skip if duplicate exists
-        const { data: existing } = await supabase
-            .from('reports')
-            .select('id')
-            .eq('batch_id', input.batchId)
-            .eq('user_id', session.user.id)
-            .eq('report_date', date)
-            .maybeSingle()
+        rows.push({
+            batch_id: input.batchId,
+            user_id: session.user.id,
+            report_date: date,
+            leads_count: dayLeads,
+            closing_count: daySales,
+            ads_spent: daySpend,
+            tax_percentage: input.taxPercentage,
+            notes: input.notes?.trim() || null,
+        })
+    }
 
-        if (existing) { skipped++; continue }
-
-        const { error: insertError } = await supabase
-            .from('reports')
-            .insert({
-                batch_id: input.batchId,
-                user_id: session.user.id,
-                report_date: date,
-                leads_count: dayLeads,
-                closing_count: daySales,
-                ads_spent: daySpend,
-                tax_percentage: input.taxPercentage,
-                notes: input.notes?.trim() || null,
-            })
-
+    if (rows.length > 0) {
+        const { error: insertError } = await supabase.from('reports').insert(rows)
         if (insertError) {
-            console.error('Error creating range report for', date, insertError)
-        } else {
-            created++
+            console.error('Error creating range reports:', insertError)
+            return { error: 'Gagal membuat laporan rentang', created: 0, skipped: existingDates.size }
         }
     }
 
     revalidateTag(`event-${batch.event_id}`, 'default')
-    return { success: true, created, skipped }
+    return { success: true, created: rows.length, skipped: existingDates.size }
 }
 
 /**
@@ -283,12 +283,12 @@ export async function getReport(reportId: string) {
 
     const supabase = createAdminClient()
 
-    const role = await getUserProfileRole(supabase, session.user.id)
+    const role = await getUserRole(supabase, session.user.id)
     if (!role) {
         return null
     }
 
-    const isAdminOrDev = role === 'admin' || role === 'developer'
+    const isAdminOrDev = isAdminOrDeveloper(role)
 
     const { data, error } = await supabase
         .from('reports')
@@ -319,7 +319,7 @@ export async function getReport(reportId: string) {
             return null
         }
 
-        const assignmentRole = await getEventAssignmentRole(supabase, batchData.event_id, session.user.id)
+        const assignmentRole = await getEventRole(supabase, session.user.id, batchData.event_id)
         if (assignmentRole !== 'advertiser' && assignmentRole !== 'pic') {
             return null
         }
@@ -367,12 +367,12 @@ export async function updateReport(
     }
 
     // Check permissions
-    const role = await getUserProfileRole(supabase, session.user.id)
+    const role = await getUserRole(supabase, session.user.id)
     if (!role) {
         return { error: 'Profil tidak ditemukan' }
     }
 
-    const isAdminOrDev = role === 'admin' || role === 'developer'
+    const isAdminOrDev = isAdminOrDeveloper(role)
     const isOwner = report.user_id === session.user.id
     const batchData = report.batches as unknown as { event_id: string } | null
 
@@ -381,7 +381,7 @@ export async function updateReport(
     }
 
     if (!isAdminOrDev) {
-        const assignmentRole = await getEventAssignmentRole(supabase, batchData.event_id, session.user.id)
+        const assignmentRole = await getEventRole(supabase, session.user.id, batchData.event_id)
         if (assignmentRole !== 'advertiser' || !isOwner) {
             return { error: 'Tidak memiliki akses untuk mengedit laporan ini' }
         }
@@ -454,12 +454,12 @@ export async function deleteReport(reportId: string): Promise<ReportResult> {
     }
 
     // Check permissions
-    const role = await getUserProfileRole(supabase, session.user.id)
+    const role = await getUserRole(supabase, session.user.id)
     if (!role) {
         return { error: 'Profil tidak ditemukan' }
     }
 
-    const isAdminOrDev = role === 'admin' || role === 'developer'
+    const isAdminOrDev = isAdminOrDeveloper(role)
     const isOwner = report.user_id === session.user.id
     const batchData = report.batches as unknown as { event_id: string } | null
 
@@ -468,7 +468,7 @@ export async function deleteReport(reportId: string): Promise<ReportResult> {
     }
 
     if (!isAdminOrDev) {
-        const assignmentRole = await getEventAssignmentRole(supabase, batchData.event_id, session.user.id)
+        const assignmentRole = await getEventRole(supabase, session.user.id, batchData.event_id)
         if (assignmentRole !== 'advertiser' || !isOwner) {
             return { error: 'Tidak memiliki akses' }
         }

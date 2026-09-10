@@ -3,7 +3,6 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Calendar, Plus, Inbox, Loader2 } from "lucide-react"
 import useSWR from "swr"
 
@@ -20,8 +19,6 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ data }: DashboardClientProps) {
-    const router = useRouter()
-
     const { mutate } = useSWR('/dashboard', getDashboardData, {
         fallbackData: data,
         revalidateOnFocus: false,
@@ -265,7 +262,7 @@ function EventCard({ event, isAdmin, isToggling, onToggleClick }: EventCardProps
     const isActive = event.status === "active"
 
     return (
-        <Link href={`/events/${event.id}`} className="block">
+        <Link href={`/events/${event.id}/batches`} className="block">
             <Card className={cn(
                 "group overflow-hidden transition-all duration-300 border border-border bg-card hover:border-border hover:shadow-lg hover:-translate-y-0.5",
                 !isActive && "opacity-75 grayscale-[0.2]"

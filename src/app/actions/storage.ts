@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { uploadFile, deleteFile } from '@/lib/storage'
+import { getUserRole, isAdminOrDeveloper } from '@/lib/authorization'
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -23,13 +24,8 @@ async function requireAdminOrDeveloper() {
 
     const supabase = createAdminClient()
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'developer')) {
+    const role = await getUserRole(supabase, session.user.id)
+    if (!isAdminOrDeveloper(role)) {
         return { error: 'Tidak memiliki akses' as const }
     }
 
@@ -142,4 +138,3 @@ export async function deleteEventLogo(
 
     return { success: true }
 }
-

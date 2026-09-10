@@ -47,6 +47,16 @@ describe('middleware auth guard', () => {
     expect(res?.headers.get('x-middleware-next')).toBe('1');
   });
 
+  it.each(['/forgot-password', '/reset-password?token=example'])(
+    'should allow unauthenticated users to access password reset path (%s)',
+    async (path) => {
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
+      const req = createRequest(`http://localhost:3000${path}`);
+      const res = await middleware(req);
+      expect(res?.headers.get('x-middleware-next')).toBe('1');
+    }
+  );
+
   it('should allow any user to access public non-auth paths (/about)', async () => {
     vi.mocked(auth as any).mockResolvedValueOnce(null);
     const req = createRequest('http://localhost:3000/about');

@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Upload, Loader2, Check, X, ImageIcon } from "lucide-react"
+import { ChevronLeft, Loader2, Check, X, ImageIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,7 +24,6 @@ export default function NewEventPage() {
 
     // Image state
     const [preview, setPreview] = React.useState<string | null>(null)
-    const [imageFile, setImageFile] = React.useState<File | null>(null)
     const [isCompressing, setIsCompressing] = React.useState(false)
     const [compressedBlob, setCompressedBlob] = React.useState<Blob | null>(null)
     const [originalSize, setOriginalSize] = React.useState<number>(0)
@@ -42,7 +41,6 @@ export default function NewEventPage() {
         }
 
         setError(null)
-        setImageFile(file)
         setOriginalSize(file.size)
         setIsCompressing(true)
 
@@ -65,7 +63,6 @@ export default function NewEventPage() {
 
     const clearImage = () => {
         setPreview(null)
-        setImageFile(null)
         setCompressedBlob(null)
         setOriginalSize(0)
         setCompressedSize(0)

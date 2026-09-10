@@ -1,7 +1,6 @@
 'use server'
 
 import { signIn, signOut } from '@/auth'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hashPassword } from '@/lib/password'
 import { getRandomEmoji } from '@/lib/emojis'
@@ -19,8 +18,10 @@ export async function loginAction(
     _previousState: LoginActionState,
     formData: FormData
 ): Promise<LoginActionState> {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    const emailValue = formData.get('email')
+    const passwordValue = formData.get('password')
+    const email = typeof emailValue === 'string' ? emailValue.trim().toLowerCase() : ''
+    const password = typeof passwordValue === 'string' ? passwordValue : ''
 
     if (!email || !password) {
         return { error: 'Email dan password wajib diisi' }
@@ -52,9 +53,12 @@ export async function loginAction(
  * Uses admin client to bypass RLS for profile creation
  */
 export async function registerAction(formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const displayName = formData.get('displayName') as string
+    const emailValue = formData.get('email')
+    const passwordValue = formData.get('password')
+    const displayNameValue = formData.get('displayName')
+    const email = typeof emailValue === 'string' ? emailValue.trim().toLowerCase() : ''
+    const password = typeof passwordValue === 'string' ? passwordValue : ''
+    const displayName = typeof displayNameValue === 'string' ? displayNameValue.trim() : ''
 
     // Validate required fields
     if (!email || !password || !displayName) {
@@ -75,6 +79,9 @@ export async function registerAction(formData: FormData) {
     // Validate display name
     if (displayName.length < 2) {
         return { error: 'Nama minimal 2 karakter' }
+    }
+    if (displayName.length > 100) {
+        return { error: 'Nama maksimal 100 karakter' }
     }
 
     // Use admin client to bypass RLS

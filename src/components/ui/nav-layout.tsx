@@ -7,9 +7,14 @@ import { BottomNav } from "./bottom-nav"
 interface NavigationLayoutProps {
     children: React.ReactNode
     isAdmin?: boolean
+    showBottomNav?: boolean
 }
 
-export function NavigationLayout({ children, isAdmin = false }: NavigationLayoutProps) {
+export function NavigationLayout({
+    children,
+    isAdmin = false,
+    showBottomNav = true,
+}: NavigationLayoutProps) {
     return (
         <div className="flex min-h-screen bg-background-secondary text-foreground">
             {/* Desktop Sidebar */}
@@ -17,13 +22,12 @@ export function NavigationLayout({ children, isAdmin = false }: NavigationLayout
 
             {/* Main Content Area */}
             {/* Using md:pl-64 to push content right when Sidebar is visible */}
-            {/* Using pb-16 to add padding for the BottomNav on mobile */}
-            <main className="flex-1 flex flex-col min-w-0 pb-20 md:pb-0 md:pl-64 transition-all duration-300">
+            <main className={`flex min-w-0 flex-1 flex-col transition-all duration-300 md:pb-0 md:pl-64 ${showBottomNav ? "pb-20" : "pb-0"}`}>
                 {children}
             </main>
 
             {/* Mobile Bottom Navigation */}
-            <BottomNav isAdmin={isAdmin} />
+            {showBottomNav ? <BottomNav isAdmin={isAdmin} /> : null}
         </div>
     )
 }

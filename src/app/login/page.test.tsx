@@ -20,6 +20,7 @@ describe('LoginPage integration test', () => {
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Masuk$/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Lupa kata sandi/i })).toHaveAttribute('href', '/forgot-password');
   });
 
   it('toggles password visibility when clicking eye button', async () => {

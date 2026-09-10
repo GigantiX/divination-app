@@ -1,9 +1,9 @@
 'use server'
 
 import { auth } from '@/auth'
-import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidateTag } from 'next/cache'
+import { getEventAccess, getUserRole, isAdminOrDeveloper } from '@/lib/authorization'
 
 export interface CreateEventInput {
     name: string
@@ -29,13 +29,8 @@ export async function createEvent(input: CreateEventInput): Promise<EventResult>
     const supabase = createAdminClient()
 
     // Verify user is admin/developer
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'developer')) {
+    const role = await getUserRole(supabase, session.user.id)
+    if (!isAdminOrDeveloper(role)) {
         return { error: 'Tidak memiliki akses untuk membuat event' }
     }
 
@@ -83,6 +78,11 @@ export async function getEvent(eventId: string) {
 
     const supabase = createAdminClient()
 
+    const access = await getEventAccess(supabase, session.user.id, eventId)
+    if (!access) {
+        return null
+    }
+
     const { data: event, error } = await supabase
         .from('events')
         .select(`
@@ -117,13 +117,8 @@ export async function updateEvent(eventId: string, input: Partial<CreateEventInp
     const supabase = createAdminClient()
 
     // Verify user is admin/developer
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'developer')) {
+    const role = await getUserRole(supabase, session.user.id)
+    if (!isAdminOrDeveloper(role)) {
         return { error: 'Tidak memiliki akses' }
     }
 
@@ -171,13 +166,8 @@ export async function deleteEvent(eventId: string): Promise<EventResult> {
     const supabase = createAdminClient()
 
     // Verify user is admin/developer
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'developer')) {
+    const role = await getUserRole(supabase, session.user.id)
+    if (!isAdminOrDeveloper(role)) {
         return { error: 'Tidak memiliki akses' }
     }
 

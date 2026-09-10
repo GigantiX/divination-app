@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { uploadFile } from '@/lib/storage'
+import { getEventAccess, getUserRole, isAdminOrDeveloper } from '@/lib/authorization'
 
 const ALLOWED_PROOF_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_PROOF_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
@@ -31,13 +32,10 @@ export async function getBudgetRequests(): Promise<{ data?: BudgetRequest[], err
 
     const supabase = createAdminClient()
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
+    const role = await getUserRole(supabase, session.user.id)
+    if (!role) return { error: 'Profil tidak ditemukan' }
 
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'developer'
+    const isAdmin = isAdminOrDeveloper(role)
 
     let query = supabase
         .from('budget_requests')
@@ -64,10 +62,10 @@ export async function getBudgetRequests(): Promise<{ data?: BudgetRequest[], err
         return { error: 'Gagal mengambil data request budget' }
     }
 
-    const formattedData = data.map((item: any) => ({
+    const formattedData: BudgetRequest[] = data.map((item) => ({
         ...item,
-        event_name: item.events?.name,
-        user_name: item.profiles?.full_name,
+        event_name: (item.events as unknown as { name: string } | null)?.name,
+        user_name: (item.profiles as unknown as { full_name: string } | null)?.full_name,
     }))
 
     return { data: formattedData }
@@ -79,13 +77,10 @@ export async function getAvailableEventsForBudget(): Promise<{ data?: { id: stri
 
     const supabase = createAdminClient()
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
+    const role = await getUserRole(supabase, session.user.id)
+    if (!role) return { error: 'Profil tidak ditemukan' }
 
-    if (profile?.role === 'admin' || profile?.role === 'developer') {
+    if (isAdminOrDeveloper(role)) {
         const { data, error } = await supabase
             .from('events')
             .select('id, name, status')
@@ -107,10 +102,10 @@ export async function getAvailableEventsForBudget(): Promise<{ data?: { id: stri
         if (error) return { error: 'Gagal mengambil event' }
         
         // Map the relation array
-        const events = data.map((item: any) => ({
-            id: item.events.id,
-            name: item.events.name
-        })).sort((a: any, b: any) => a.name.localeCompare(b.name))
+        const events = data.map((item) => {
+            const event = item.events as unknown as { id: string; name: string }
+            return { id: event.id, name: event.name }
+        }).sort((a, b) => a.name.localeCompare(b.name))
         
         return { data: events }
     }
@@ -120,10 +115,13 @@ export async function submitBudgetRequest(eventId: string, amount: number): Prom
     const session = await auth()
     if (!session?.user?.id) return { error: 'Tidak terautentikasi' }
 
-    if (amount <= 0) return { error: 'Jumlah budget harus lebih dari 0' }
+    if (!Number.isFinite(amount) || amount <= 0) return { error: 'Jumlah budget harus lebih dari 0' }
     if (!eventId) return { error: 'Event harus dipilih' }
 
     const supabase = createAdminClient()
+
+    const access = await getEventAccess(supabase, session.user.id, eventId)
+    if (!access) return { error: 'Tidak memiliki akses ke event ini' }
 
     const { error } = await supabase
         .from('budget_requests')
@@ -179,10 +177,10 @@ export async function getPendingQueue(): Promise<{ data?: BudgetRequest[], error
         return { error: 'Gagal mengambil queue' }
     }
 
-    const formattedData = data.map((item: any) => ({
+    const formattedData: BudgetRequest[] = data.map((item) => ({
         ...item,
-        event_name: item.events?.name,
-        user_name: item.profiles?.full_name,
+        event_name: (item.events as unknown as { name: string } | null)?.name,
+        user_name: (item.profiles as unknown as { full_name: string } | null)?.full_name,
     }))
 
     return { data: formattedData }
@@ -212,8 +210,8 @@ export async function updateRequestStatus(
         return { error: 'Bukti transfer wajib diunggah untuk persetujuan' }
     }
 
-    const updateData: any = { status }
-    if (status === 'approved') {
+    const updateData: { status: 'approved' | 'rejected'; proof_image_url?: string } = { status }
+    if (status === 'approved' && proofFileUrl) {
         updateData.proof_image_url = proofFileUrl
     }
 

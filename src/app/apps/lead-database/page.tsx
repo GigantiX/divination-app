@@ -26,5 +26,5 @@ export default async function LeadDatabasePage() {
         redirect('/apps/lead-database/upload')
     }
 
-    return <LeadDatabaseClient profile={profile} />
+    return <LeadDatabaseClient />
 }

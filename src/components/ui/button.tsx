@@ -1,15 +1,6 @@
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
-
-// Since I didn't install class-variance-authority and radix-ui/react-slot in package.json manually, 
-// I should probably install them or write a simpler button without them?
-// The user asked for "front-end only page... checks context7".
-// Context7/shadcn usually implies these deps. 
-// I'll stick to simple prop-based components for now to avoid installing more deps unless I really need to.
-// Actually, simple is better.
 
 export interface ButtonProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement> {

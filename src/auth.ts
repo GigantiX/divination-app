@@ -13,8 +13,12 @@ export const { handlers, auth: _auth, signIn, signOut } = NextAuth({
                 password: { label: 'Password', type: 'password' },
             },
             authorize: async (credentials) => {
-                const email = credentials.email as string
-                const password = credentials.password as string
+                const email = typeof credentials.email === 'string'
+                    ? credentials.email.trim().toLowerCase()
+                    : ''
+                const password = typeof credentials.password === 'string'
+                    ? credentials.password
+                    : ''
 
                 if (!email || !password) {
                     throw new Error('Email dan password wajib diisi')
@@ -24,7 +28,7 @@ export const { handlers, auth: _auth, signIn, signOut } = NextAuth({
                 const supabase = createAdminClient()
                 const { data: profile, error } = await supabase
                     .from('profiles')
-                    .select('*')
+                    .select('id, password_hash, full_name, role')
                     .eq('username', email)
                     .single()
 

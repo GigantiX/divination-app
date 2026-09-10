@@ -14,7 +14,9 @@ export class MockQueryBuilder {
   update = vi.fn().mockReturnThis();
   delete = vi.fn().mockReturnThis();
   eq = vi.fn().mockReturnThis();
+  gt = vi.fn().mockReturnThis();
   gte = vi.fn().mockReturnThis();
+  is = vi.fn().mockReturnThis();
   lte = vi.fn().mockReturnThis();
   order = vi.fn().mockReturnThis();
   limit = vi.fn().mockReturnThis();
@@ -45,6 +47,7 @@ export const mockSupabaseClient = {
     signOut: vi.fn().mockResolvedValue({ error: null }),
   },
   from: vi.fn().mockImplementation(() => new MockQueryBuilder([])),
+  rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   storage: {
     from: vi.fn(() => ({
       upload: vi.fn().mockResolvedValue({ data: { path: 'mock-path' }, error: null }),
@@ -52,14 +55,6 @@ export const mockSupabaseClient = {
     })),
   },
 };
-
-vi.mock('@/lib/supabase/client', () => ({
-  createClient: vi.fn(() => mockSupabaseClient),
-}));
-
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn().mockResolvedValue(mockSupabaseClient),
-}));
 
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: vi.fn(() => mockSupabaseClient),

@@ -24,6 +24,7 @@ This directory contains SQL migration files for the Divination Dashboard databas
 | `20260407_add_oauth_identities.sql` | Creates the `oauth_identities` table for Facebook integration |
 | `20260522_add_facebook_access_token.sql` | Adds access token and expiration columns to `oauth_identities` |
 | `20260603_budget_requests.sql` | Creates the `budget_requests` table and its status enum |
+| `20260910_password_reset_tokens.sql` | Adds secure, expiring password-reset tokens and an atomic reset function |
 
 ## Running Migrations
 

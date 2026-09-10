@@ -16,9 +16,7 @@ import {
     Copy,
     Check,
     ChevronRight,
-    FileText,
     StickyNote,
-    ExternalLink,
     Save,
     History,
     Trash2,
@@ -30,7 +28,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { type UserProfile } from "@/app/actions/profile"
 import {
     getLeads,
     getLeadDetail,
@@ -40,7 +37,6 @@ import {
     getAllEventsForFilter,
     getBatchesForEvent,
     type Lead,
-    type LeadEvent,
 } from "@/app/actions/lead-database"
 import { ExportModal } from "./export-modal"
 
@@ -63,23 +59,9 @@ function formatDate(dateStr: string): string {
     })
 }
 
-function formatDateTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    })
-}
-
 // =====================================================
 // TYPES
 // =====================================================
-
-interface LeadDatabaseClientProps {
-    profile: UserProfile
-}
 
 type StatsData = {
     total_leads: number
@@ -91,7 +73,7 @@ type StatsData = {
 // MAIN COMPONENT
 // =====================================================
 
-export function LeadDatabaseClient({ profile }: LeadDatabaseClientProps) {
+export function LeadDatabaseClient() {
     // --- State ---
     const [leads, setLeads] = React.useState<Lead[]>([])
     const [totalLeads, setTotalLeads] = React.useState(0)

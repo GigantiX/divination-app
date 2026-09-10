@@ -4,7 +4,24 @@ import * as XLSX from 'xlsx'
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-function convertToCSV(data: any[]): string {
+type ExportRow = Record<string, unknown>
+
+function sanitizeSpreadsheetValue(value: unknown): unknown {
+    if (typeof value !== 'string') return value
+    return /^[\t\r\n ]*[=+\-@]/.test(value) ? `'${value}` : value
+}
+
+function sanitizeExportRows(data: ExportRow[]): ExportRow[] {
+    return data.map((row) => Object.fromEntries(
+        Object.entries(row).map(([key, value]) => [key, sanitizeSpreadsheetValue(value)])
+    ))
+}
+
+function sanitizeFilename(value: string): string {
+    return value.replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/^-+|-+$/g, '') || 'export'
+}
+
+function convertToCSV(data: ExportRow[]): string {
     if (data.length === 0) return ''
     const headers = Object.keys(data[0])
     const csvRows = []
@@ -15,7 +32,7 @@ function convertToCSV(data: any[]): string {
     // Data rows
     for (const row of data) {
         const values = headers.map(h => {
-            const val = row[h]
+            const val = sanitizeSpreadsheetValue(row[h])
             return `"${String(val === null || val === undefined ? '' : val).replace(/"/g, '""')}"`
           })
           csvRows.push(values.join(','))
@@ -60,7 +77,7 @@ export async function GET(request: NextRequest) {
         })
     }
 
-    let exportData: any[] = []
+    let exportData: ExportRow[] = []
     let filename = `export-${type}-${Date.now()}`
 
     try {
@@ -96,7 +113,13 @@ export async function GET(request: NextRequest) {
             const batchIds = batches?.map(b => b.id) || []
 
             // Fetch Reports
-            let reports: any[] = []
+            let reports: Array<{
+                batch_id: string
+                ads_spent: number | string | null
+                tax_percentage: number | string | null
+                leads_count: number | null
+                closing_count: number | null
+            }> = []
             if (batchIds.length > 0) {
                 const { data: reportData } = await supabase
                     .from('reports')
@@ -159,9 +182,24 @@ export async function GET(request: NextRequest) {
 
             const { data: batches } = await batchesQuery
             const batchIds = batches?.map(b => b.id) || []
-            const batchMap = new Map(batches?.map(b => [b.id, { name: b.name, eventName: (b.events as any)?.name }]) || [])
+            const batchMap = new Map(batches?.map((batch) => [
+                batch.id,
+                {
+                    name: batch.name,
+                    eventName: (batch.events as unknown as { name: string } | null)?.name,
+                },
+            ]) || [])
 
-            let reports: any[] = []
+            let reports: Array<{
+                report_date: string
+                ads_spent: number | string | null
+                tax_percentage: number | string | null
+                leads_count: number | null
+                closing_count: number | null
+                notes: string | null
+                batch_id: string
+                profiles: unknown
+            }> = []
             if (batchIds.length > 0) {
                 const { data: reportData } = await supabase
                     .from('reports')
@@ -189,7 +227,7 @@ export async function GET(request: NextRequest) {
                     'Tanggal': r.report_date,
                     'Nama Event': bInfo?.eventName || '',
                     'Nama Batch': bInfo?.name || '',
-                    'Reporter': (r.profiles as any)?.full_name || 'Tidak Diketahui',
+                    'Reporter': (r.profiles as { full_name?: string } | null)?.full_name || 'Tidak Diketahui',
                     'Ad Spend (Raw)': spend,
                     'Tax (%)': tax,
                     'Spend dengan Pajak (IDR)': spendWithTax,
@@ -216,8 +254,8 @@ export async function GET(request: NextRequest) {
             exportData = (requests || []).map(r => {
                 return {
                     'Tanggal': new Date(r.created_at).toLocaleString('id-ID'),
-                    'Pemohon': (r.profiles as any)?.full_name || 'Tidak Diketahui',
-                    'Nama Event': (r.events as any)?.name || 'Tidak Diketahui',
+                    'Pemohon': (r.profiles as unknown as { full_name?: string } | null)?.full_name || 'Tidak Diketahui',
+                    'Nama Event': (r.events as unknown as { name?: string } | null)?.name || 'Tidak Diketahui',
                     'Jumlah Request (IDR)': Number(r.amount || 0),
                     'Status Persetujuan': r.status === 'process' ? 'Pending' : r.status === 'approved' ? 'Disetujui' : 'Ditolak',
                     'URL Bukti Transfer': r.proof_image_url || ''
@@ -234,7 +272,7 @@ export async function GET(request: NextRequest) {
 
         // 4. Return formatted file response
         if (format === 'xlsx') {
-            const worksheet = XLSX.utils.json_to_sheet(exportData)
+            const worksheet = XLSX.utils.json_to_sheet(sanitizeExportRows(exportData))
             const workbook = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Export')
             
@@ -243,7 +281,7 @@ export async function GET(request: NextRequest) {
             return new Response(arrayBuffer, {
                 headers: {
                     'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'Content-Disposition': `attachment; filename="${filename}.xlsx"`,
+                    'Content-Disposition': `attachment; filename="${sanitizeFilename(filename)}.xlsx"`,
                 }
             })
         } else {
@@ -255,11 +293,11 @@ export async function GET(request: NextRequest) {
             return new Response(csvWithBOM, {
                 headers: {
                     'Content-Type': 'text/csv; charset=utf-8',
-                    'Content-Disposition': `attachment; filename="${filename}.csv"`,
+                    'Content-Disposition': `attachment; filename="${sanitizeFilename(filename)}.csv"`,
                 }
             })
         }
-    } catch (error: any) {
+    } catch (error) {
         console.error('Export error:', error)
         return new Response(JSON.stringify({ error: 'Terjadi kesalahan internal saat membuat export' }), {
             status: 500,

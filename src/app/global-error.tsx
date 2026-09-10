@@ -5,10 +5,8 @@ import { ThemeScript } from "@/components/theme-provider"
 import "./globals.css"
 
 export default function GlobalError({
-    error,
     reset,
 }: {
-    error: Error & { digest?: string }
     reset: () => void
 }) {
     return (

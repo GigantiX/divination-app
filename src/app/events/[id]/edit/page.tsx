@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
-import { ChevronLeft, Upload, Loader2, Check, X, ImageIcon, Trash2 } from "lucide-react"
+import { ChevronLeft, Upload, Loader2, Check, ImageIcon, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
