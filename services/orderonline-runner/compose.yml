@@ -1,0 +1,70 @@
+services:
+  orderonline-runner:
+    container_name: orderonline-runner
+    build:
+      context: /opt/orderonline-playwright/runner
+      dockerfile: Dockerfile
+    image: axelabs/orderonline-runner:1.0.0
+    env_file:
+      - /opt/orderonline-playwright/.env
+    init: true
+    ipc: host
+    restart: unless-stopped
+    working_dir: /work/runner
+    command: ["node", "server.mjs"]
+    environment:
+      ORDERONLINE_LEGACY_PROFILE_DIR: /work/auth/profile
+      ORDERONLINE_DOWNLOADS_DIR: /work/imports
+      ORDERONLINE_DOWNLOAD_TTL_MS: "86400000"
+      ORDERONLINE_MAX_DOWNLOAD_BYTES: "10485760"
+      ORDERONLINE_LOGIN_TTL_MS: "900000"
+      ORDERONLINE_ORDERS_URL: https://app.orderonline.id/orders
+      ORDERONLINE_PROFILES_DIR: /work/auth/profiles
+      ORDERONLINE_RUNTIME_DIR: /work/runtime
+      ORDERONLINE_VIEWER_ORIGIN: https://orderonline-connect.axelabs.my.id
+      RUNNER_HOST: 0.0.0.0
+      RUNNER_PORT: "3007"
+    volumes:
+      - /opt/orderonline-playwright:/work
+    networks:
+      n8n_private:
+        aliases:
+          - orderonline-runner
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=d82kgrzhw6mcc6gnv5vag8hm
+      - traefik.http.routers.orderonline-runner-api.rule=Host(`orderonline-connect.axelabs.my.id`) && PathPrefix(`/api/`)
+      - traefik.http.routers.orderonline-runner-api.priority=100
+      - traefik.http.routers.orderonline-runner-api.entrypoints=https
+      - traefik.http.routers.orderonline-runner-api.tls=true
+      - traefik.http.routers.orderonline-runner-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.orderonline-runner-api.middlewares=orderonline-runner-security@docker,orderonline-runner-api-rate@docker
+      - traefik.http.routers.orderonline-runner-api.service=orderonline-runner-api
+      - traefik.http.services.orderonline-runner-api.loadbalancer.server.port=3007
+      - traefik.http.routers.orderonline-viewer.rule=Host(`orderonline-connect.axelabs.my.id`)
+      - traefik.http.routers.orderonline-viewer.entrypoints=https
+      - traefik.http.routers.orderonline-viewer.tls=true
+      - traefik.http.routers.orderonline-viewer.tls.certresolver=letsencrypt
+      - traefik.http.routers.orderonline-viewer.middlewares=orderonline-runner-security@docker
+      - traefik.http.routers.orderonline-viewer.service=orderonline-viewer
+      - traefik.http.services.orderonline-viewer.loadbalancer.server.port=6080
+      - traefik.http.middlewares.orderonline-runner-security.headers.contentSecurityPolicy=frame-ancestors 'self' https://divination.axelabs.my.id http://localhost:3000 http://127.0.0.1:3000
+      - traefik.http.middlewares.orderonline-runner-security.headers.customResponseHeaders.Referrer-Policy=no-referrer
+      - traefik.http.middlewares.orderonline-runner-security.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.orderonline-runner-api-rate.ratelimit.average=10
+      - traefik.http.middlewares.orderonline-runner-api-rate.ratelimit.burst=20
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3007/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  n8n_private:
+    external: true
+    name: d82kgrzhw6mcc6gnv5vag8hm

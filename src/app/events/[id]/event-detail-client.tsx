@@ -21,6 +21,7 @@ import {
     Target,
     Trash2,
     FileText,
+    MapPin,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
@@ -629,6 +630,7 @@ function OverviewContent({ data, chartData }: ContentProps) {
 
 function ReportsContent({ data }: ContentProps) {
     const [expandedAdvId, setExpandedAdvId] = React.useState<string | null>(null)
+    const sessionStats = data.sessionStats ?? []
 
     // Build unique list of groups by advertisers
     const groups = data.advertisers.map(adv => {
@@ -708,19 +710,22 @@ function ReportsContent({ data }: ContentProps) {
 
     if (groups.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="mb-6 rounded-full bg-muted p-6">
-                    <Inbox className="h-12 w-12 text-muted-foreground" />
+            <div className="space-y-4">
+                <SessionPerformanceSummary sessions={sessionStats} />
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="mb-6 rounded-full bg-muted p-6">
+                        <Inbox className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                    <h3 className="mb-2 text-xl font-semibold text-foreground">
+                        Belum Ada Laporan
+                    </h3>
+                    <p className="max-w-xs text-muted-foreground">
+                        {data.canAddReport
+                            ? "Tap tombol + untuk menambahkan laporan harian pertama."
+                            : "Belum ada laporan untuk batch ini."
+                        }
+                    </p>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Belum Ada Laporan
-                </h3>
-                <p className="text-muted-foreground max-w-xs">
-                    {data.canAddReport
-                        ? "Tap tombol + untuk menambahkan laporan harian pertama."
-                        : "Belum ada laporan untuk batch ini."
-                    }
-                </p>
             </div>
         )
     }
@@ -731,6 +736,7 @@ function ReportsContent({ data }: ContentProps) {
 
     return (
         <div className="space-y-4">
+            <SessionPerformanceSummary sessions={sessionStats} />
             {groups.map((adv) => {
                 const isExpanded = expandedAdvId === adv.id
                 return (
@@ -814,6 +820,7 @@ function ReportsContent({ data }: ContentProps) {
                                                         </div>
                                                         <div>
                                                             <h4 className="text-sm font-bold">{formatDate(report.date)}</h4>
+                                                            {report.session && <p className="mt-0.5 flex items-center gap-1 text-xs text-primary"><MapPin className="h-3 w-3" />{report.session.name}</p>}
                                                         </div>
                                                     </div>
                                                     {(data.canManageEvent || report.reporter.id === data.currentUserId) && (
@@ -855,6 +862,39 @@ function ReportsContent({ data }: ContentProps) {
                 <p className="text-sm text-muted-foreground">Akhir dari laporan</p>
             </div>
         </div>
+    )
+}
+
+function SessionPerformanceSummary({ sessions }: { sessions: EventDetailData['sessionStats'] }) {
+    if (sessions.length === 0) return null
+
+    return (
+        <section className="overflow-hidden rounded-xl border border-primary/25 bg-card shadow-sm" aria-label="Performa per Kota atau Sesi">
+            <header className="flex items-center gap-2 border-b border-primary/15 bg-primary/5 px-4 py-3">
+                <MapPin className="h-4 w-4 text-primary" />
+                <div>
+                    <h3 className="text-sm font-semibold text-foreground">Performa per Kota/Sesi</h3>
+                    <p className="text-xs text-muted-foreground">Akumulasi laporan pada batch ini.</p>
+                </div>
+            </header>
+            <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                {sessions.map((session) => (
+                    <div key={session.id} className="p-4">
+                        <p className="truncate text-sm font-semibold text-foreground">{session.name}</p>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                            <div className="rounded-lg bg-primary/10 px-3 py-2">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Leads</p>
+                                <p className="mt-1 text-lg font-bold text-primary">{session.leads.toLocaleString('id-ID')}</p>
+                            </div>
+                            <div className="rounded-lg bg-success/10 px-3 py-2">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Sales</p>
+                                <p className="mt-1 text-lg font-bold text-success">{session.sales.toLocaleString('id-ID')}</p>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
     )
 }
 

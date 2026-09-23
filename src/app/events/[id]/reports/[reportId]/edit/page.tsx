@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { getReport, updateReport, deleteReport } from "@/app/actions/reports"
 import { getBatch } from "@/app/actions/batches"
+import { BatchSessionSelect, type ReportBatchSession } from "@/components/reports/batch-session-select"
 import { cn } from "@/lib/utils"
 
 function formatCurrency(value: string) {
@@ -49,6 +50,9 @@ export default function EditReportPage() {
     const [batchId, setBatchId] = React.useState("")
     const [batchName, setBatchName] = React.useState<string | null>(null)
     const [reporterName, setReporterName] = React.useState("")
+    const [sessions, setSessions] = React.useState<ReportBatchSession[]>([])
+    const [batchSessionId, setBatchSessionId] = React.useState("")
+    const [sessionsLoaded, setSessionsLoaded] = React.useState(false)
 
     const [formData, setFormData] = React.useState({
         reportDate: "",
@@ -80,10 +84,15 @@ export default function EditReportPage() {
             setBatchId(report.batch_id)
             // Fetch batch name
             getBatch(report.batch_id).then(batch => {
-                if (batch) setBatchName(batch.name)
+                if (batch) {
+                    setBatchName(batch.name)
+                    setSessions(batch.sessions)
+                }
+                setSessionsLoaded(true)
             })
             const profileData = report.profiles as unknown as { full_name: string; emoji: string } | null
             setReporterName(profileData?.full_name || "Unknown")
+            setBatchSessionId(report.batch_session_id || "")
 
             setFormData({
                 reportDate: report.report_date,
@@ -153,6 +162,7 @@ export default function EditReportPage() {
             adsSpent,
             taxPercentage: getTaxPercentage(),
             notes: formData.notes || undefined,
+            batchSessionId: sessions.length > 0 ? batchSessionId || null : undefined,
         })
 
         if (result.error) {
@@ -190,7 +200,7 @@ export default function EditReportPage() {
     const spendNum = parseCurrency(formData.spend)
     const taxPct = getTaxPercentage()
     const spendWithTax = Math.round(spendNum * (1 + taxPct / 100))
-    const isValid = formData.spend && formData.leads && formData.sales && formData.reportDate
+    const isValid = formData.spend && formData.leads && formData.sales && formData.reportDate && sessionsLoaded && (sessions.length === 0 || !!batchSessionId)
 
     // Loading state
     if (isLoading) {
@@ -265,6 +275,8 @@ export default function EditReportPage() {
                                     </p>
                                 </div>
                             </div>
+
+                            <BatchSessionSelect sessions={sessions} value={batchSessionId} onChange={setBatchSessionId} disabled={isSaving || success} />
 
                             {/* Metrics Section */}
                             <div className="space-y-4">

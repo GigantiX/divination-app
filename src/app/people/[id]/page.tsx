@@ -140,6 +140,7 @@ export default function UserDetailPage() {
     if (!user) return null
 
     const isAdminOrDev = user.role === "admin" || user.role === "developer"
+    const canReceiveEventAssignment = user.role !== "developer"
 
     return (
         <div className="flex min-h-screen flex-col bg-muted">
@@ -219,8 +220,8 @@ export default function UserDetailPage() {
                     </div>
                 )}
 
-                {/* Assign to Event Button — Only for regular users */}
-                {!isAdminOrDev && (
+                {/* Admins can receive an event role for attribution; developers cannot. */}
+                {canReceiveEventAssignment && (
                     <Link href={`/people/${userId}/assign`}>
                         <Button className="w-full h-14 rounded-2xl text-base font-semibold mb-8 bg-primary hover:bg-primary-hover">
                             <Plus className="h-5 w-5 mr-2" />
@@ -232,7 +233,10 @@ export default function UserDetailPage() {
                 {isAdminOrDev && (
                     <div className="mb-8 rounded-lg bg-primary/15 px-4 py-3">
                         <p className="text-xs text-primary">
-                            ℹ️ {user.role === "developer" ? "Developer" : "Admin"} memiliki akses ke semua event secara otomatis.
+                            ℹ️ {user.role === "developer"
+                                ? "Developer memiliki akses ke semua event secara otomatis."
+                                : "Admin memiliki akses ke semua event secara otomatis dan tetap dapat ditugaskan sebagai PIC atau Advertiser."
+                            }
                         </p>
                     </div>
                 )}

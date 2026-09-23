@@ -74,4 +74,53 @@ describe('report range creation', () => {
         expect(result).toEqual({ error: 'Nilai laporan tidak valid' })
         expect(mockSupabaseClient.from).not.toHaveBeenCalled()
     })
+
+    it('requires a Kota/Sesi when the batch has configured sessions', async () => {
+        vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+            if (table === 'profiles') return new MockQueryBuilder({ role: 'admin' })
+            if (table === 'batches') return new MockQueryBuilder({ id: 'batch-1', event_id: 'event-1' })
+            if (table === 'batch_sessions') return new MockQueryBuilder([{ id: 'session-bandung', name: 'Kota Bandung' }])
+            return new MockQueryBuilder(null)
+        })
+
+        await expect(createReport({
+            batchId: 'batch-1',
+            reportDate: '2026-09-03',
+            leadsCount: 9,
+            closingCount: 3,
+            adsSpent: 300_000,
+            taxPercentage: 11,
+        })).resolves.toEqual({ error: 'Pilih Kota/Sesi untuk laporan ini' })
+    })
+
+    it('persists the selected Kota/Sesi on a new report', async () => {
+        const insertBuilder = new MockQueryBuilder({ id: 'report-1' })
+        let reportQueryCount = 0
+
+        vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+            if (table === 'profiles') return new MockQueryBuilder({ role: 'admin' })
+            if (table === 'batches') return new MockQueryBuilder({ id: 'batch-1', event_id: 'event-1' })
+            if (table === 'batch_sessions') return new MockQueryBuilder([{ id: 'session-bandung', name: 'Kota Bandung' }])
+            if (table === 'reports') {
+                reportQueryCount += 1
+                return reportQueryCount === 1 ? new MockQueryBuilder(null) : insertBuilder
+            }
+            return new MockQueryBuilder(null)
+        })
+
+        const result = await createReport({
+            batchId: 'batch-1',
+            batchSessionId: 'session-bandung',
+            reportDate: '2026-09-03',
+            leadsCount: 9,
+            closingCount: 3,
+            adsSpent: 300_000,
+            taxPercentage: 11,
+        })
+
+        expect(result).toEqual({ success: true, reportId: 'report-1' })
+        expect(insertBuilder.insert).toHaveBeenCalledWith(expect.objectContaining({
+            batch_session_id: 'session-bandung',
+        }))
+    })
 })

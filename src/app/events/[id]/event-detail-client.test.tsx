@@ -84,6 +84,7 @@ const mockEventDetailData: any = {
   advertisers: [],
   pics: [],
   reports: [],
+  sessionStats: [],
   userRole: 'admin',
   userEventRole: 'pic',
   currentUserId: 'user-admin',
@@ -118,6 +119,24 @@ describe('EventDetailClient integration test', () => {
     await userEvent.click(reportsTabButton);
 
     expect(reportsTabButton).toHaveClass('text-primary');
+  });
+
+  it('shows leads and sales for every configured Kota/Sesi', async () => {
+    render(<EventDetailClient data={{
+      ...mockEventDetailData,
+      sessionStats: [
+        { id: 'session-bandung', name: 'Kota Bandung', leads: 24, sales: 6 },
+        { id: 'session-jakarta', name: 'Kota Jakarta Selatan', leads: 18, sales: 4 },
+      ],
+    }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reports' }));
+
+    expect(screen.getByText('Performa per Kota/Sesi')).toBeInTheDocument();
+    expect(screen.getByText('Kota Bandung')).toBeInTheDocument();
+    expect(screen.getByText('Kota Jakarta Selatan')).toBeInTheDocument();
+    expect(screen.getAllByText('24')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('6')[0]).toBeInTheDocument();
   });
 
   it('allows range selection changes', async () => {

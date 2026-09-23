@@ -272,6 +272,7 @@ export async function getAssignableEvents(userId: string): Promise<AssignableEve
 
 /**
  * Assign a user to an event with a specific role (Admin/Developer only).
+ * Admin accounts may receive an event-specific role for attribution; developers cannot.
  */
 export async function assignUserToEvent(
     userId: string,
@@ -294,9 +295,10 @@ export async function assignUserToEvent(
         return { error: 'Pengguna tidak ditemukan' }
     }
 
-    // Admin/Developer don't need event assignments (they see all events)
-    if (profile.role === 'admin' || profile.role === 'developer') {
-        return { error: 'Admin dan Developer sudah memiliki akses ke semua event' }
+    // Developers retain global access and cannot receive event-specific roles.
+    // Admin assignments are allowed for attribution even though they also have global access.
+    if (profile.role === 'developer') {
+        return { error: 'Developer sudah memiliki akses ke semua event' }
     }
 
     // Verify event exists

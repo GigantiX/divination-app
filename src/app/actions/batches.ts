@@ -14,6 +14,12 @@ export interface BatchListItem {
     price: number
     notes: string | null
     createdAt: string
+    sessions: BatchSession[]
+}
+
+export interface BatchSession {
+    id: string
+    name: string
 }
 
 export interface EventBatchListData {
@@ -39,6 +45,7 @@ export interface CreateBatchInput {
     endDate?: string | null // Null = ongoing batch
     price?: number
     notes?: string
+    sessions?: string[]
 }
 
 export interface BatchResult {
@@ -51,6 +58,30 @@ function isIsoDate(value: string): boolean {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
     const parsed = new Date(`${value}T00:00:00.000Z`)
     return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+function validateSessionNames(sessions: unknown): { names: string[]; error?: string } {
+    if (sessions === undefined) return { names: [] }
+    if (!Array.isArray(sessions)) return { names: [], error: 'Daftar Kota/Sesi tidak valid' }
+    if (sessions.length > 30) return { names: [], error: 'Maksimal 30 Kota/Sesi dalam satu batch' }
+
+    const names: string[] = []
+    const seen = new Set<string>()
+
+    for (const session of sessions) {
+        if (typeof session !== 'string') return { names: [], error: 'Nama Kota/Sesi tidak valid' }
+        const name = session.trim().replace(/\s+/g, ' ')
+        if (!name || name.length > 100) {
+            return { names: [], error: 'Nama Kota/Sesi harus terdiri dari 1-100 karakter' }
+        }
+
+        const key = name.toLocaleLowerCase('id-ID')
+        if (seen.has(key)) return { names: [], error: 'Kota/Sesi tidak boleh duplikat' }
+        seen.add(key)
+        names.push(name)
+    }
+
+    return { names }
 }
 
 /**
@@ -79,7 +110,7 @@ export async function getEventBatches(eventId: string): Promise<EventBatchListDa
             .single(),
         supabase
             .from('batches')
-            .select('id, name, start_date, end_date, price, notes, created_at')
+            .select('id, name, start_date, end_date, price, notes, created_at, batch_sessions(id, name)')
             .eq('event_id', eventId)
             .order('start_date', { ascending: false }),
     ])
@@ -98,6 +129,9 @@ export async function getEventBatches(eventId: string): Promise<EventBatchListDa
         price: Number(batch.price || 0),
         notes: batch.notes,
         createdAt: batch.created_at,
+        sessions: Array.isArray(batch.batch_sessions)
+            ? batch.batch_sessions.map((session: BatchSession) => ({ id: session.id, name: session.name }))
+            : [],
     }))
 
     const activeBatches = batches.filter((batch) => !batch.endDate || batch.endDate >= today)
@@ -174,6 +208,9 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
         return { error: 'Harga tidak boleh negatif' }
     }
 
+    const validatedSessions = validateSessionNames(input.sessions)
+    if (validatedSessions.error) return { error: validatedSessions.error }
+
     // Create batch
     const { data: batch, error } = await supabase
         .from('batches')
@@ -191,6 +228,18 @@ export async function createBatch(input: CreateBatchInput): Promise<BatchResult>
     if (error) {
         console.error('Error creating batch:', error)
         return { error: 'Gagal membuat batch. Silakan coba lagi.' }
+    }
+
+    if (validatedSessions.names.length > 0) {
+        const { error: sessionError } = await supabase
+            .from('batch_sessions')
+            .insert(validatedSessions.names.map((name) => ({ batch_id: batch.id, name })))
+
+        if (sessionError) {
+            console.error('Error creating batch sessions:', sessionError)
+            await supabase.from('batches').delete().eq('id', batch.id)
+            return { error: 'Gagal menambahkan Kota/Sesi. Silakan coba lagi.' }
+        }
     }
 
     // Revalidate event detail page
@@ -222,7 +271,8 @@ export async function getBatch(batchId: string) {
             price,
             notes,
             event_id,
-            created_at
+            created_at,
+            batch_sessions(id, name)
         `)
         .eq('id', batchId)
         .single()
@@ -236,7 +286,12 @@ export async function getBatch(batchId: string) {
         return null
     }
 
-    return batch
+    return {
+        ...batch,
+        sessions: Array.isArray(batch.batch_sessions)
+            ? batch.batch_sessions.map((session: BatchSession) => ({ id: session.id, name: session.name }))
+            : [],
+    }
 }
 
 /**
@@ -257,7 +312,7 @@ export async function updateBatch(
     // Get batch to find event_id
     const { data: batch } = await supabase
         .from('batches')
-        .select('event_id, start_date, end_date')
+        .select('event_id, start_date, end_date, batch_sessions(id, name)')
         .eq('id', batchId)
         .single()
 
@@ -283,6 +338,9 @@ export async function updateBatch(
         return { error: 'Harga tidak boleh negatif' }
     }
 
+    const validatedSessions = input.sessions === undefined ? undefined : validateSessionNames(input.sessions)
+    if (validatedSessions?.error) return { error: validatedSessions.error }
+
     const startDate = input.startDate ?? batch.start_date
     const endDate = input.endDate === undefined ? batch.end_date : input.endDate
     if (endDate && endDate < startDate) {
@@ -297,14 +355,63 @@ export async function updateBatch(
     if (input.price !== undefined) updateData.price = input.price
     if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null
 
-    const { error } = await supabase
-        .from('batches')
-        .update(updateData)
-        .eq('id', batchId)
+    const existingSessions: BatchSession[] = Array.isArray(batch.batch_sessions)
+        ? batch.batch_sessions.map((session: BatchSession) => ({ id: session.id, name: session.name }))
+        : []
 
-    if (error) {
-        console.error('Error updating batch:', error)
-        return { error: 'Gagal mengupdate batch' }
+    const desiredSessions = validatedSessions?.names
+    const existingByName = new Map(existingSessions.map((session) => [session.name.toLocaleLowerCase('id-ID'), session]))
+    const sessionsToCreate = desiredSessions?.filter((name) => !existingByName.has(name.toLocaleLowerCase('id-ID'))) ?? []
+    const desiredNames = new Set((desiredSessions ?? []).map((name) => name.toLocaleLowerCase('id-ID')))
+    const sessionsToDelete = desiredSessions === undefined
+        ? []
+        : existingSessions.filter((session) => !desiredNames.has(session.name.toLocaleLowerCase('id-ID')))
+
+    if (sessionsToDelete.length > 0) {
+        const { data: reportsUsingSession } = await supabase
+            .from('reports')
+            .select('id')
+            .in('batch_session_id', sessionsToDelete.map((session) => session.id))
+            .limit(1)
+
+        if ((reportsUsingSession || []).length > 0) {
+            return { error: 'Kota/Sesi yang sudah memiliki laporan tidak dapat dihapus. Pindahkan atau hapus laporannya terlebih dahulu.' }
+        }
+    }
+
+    if (Object.keys(updateData).length > 0) {
+        const { error } = await supabase
+            .from('batches')
+            .update(updateData)
+            .eq('id', batchId)
+
+        if (error) {
+            console.error('Error updating batch:', error)
+            return { error: 'Gagal mengupdate batch' }
+        }
+    }
+
+    if (sessionsToCreate.length > 0) {
+        const { error } = await supabase
+            .from('batch_sessions')
+            .insert(sessionsToCreate.map((name) => ({ batch_id: batchId, name })))
+
+        if (error) {
+            console.error('Error adding batch sessions:', error)
+            return { error: 'Gagal menambahkan Kota/Sesi' }
+        }
+    }
+
+    if (sessionsToDelete.length > 0) {
+        const { error } = await supabase
+            .from('batch_sessions')
+            .delete()
+            .in('id', sessionsToDelete.map((session) => session.id))
+
+        if (error) {
+            console.error('Error removing batch sessions:', error)
+            return { error: 'Gagal menghapus Kota/Sesi' }
+        }
     }
 
     revalidateTag(`event-${batch.event_id}`, 'default')
