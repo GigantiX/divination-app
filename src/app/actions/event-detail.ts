@@ -20,6 +20,7 @@ export interface EventDetailBatch {
     startDate: string
     endDate: string | null // Null = ongoing batch
     price: number
+    sessions: Array<{ id: string; name: string }>
 }
 
 export interface EventDetailStats {
@@ -40,6 +41,7 @@ export interface EventDetailReport {
     leads: number
     sales: number
     notes: string | null
+    session: { id: string; name: string } | null
     reporter: {
         id: string
         name: string
@@ -70,6 +72,7 @@ export interface EventDetailData {
     })[]
     pics: EventDetailUser[]
     reports: EventDetailReport[]
+    sessionStats: Array<{ id: string; name: string; leads: number; sales: number }>
     userRole: 'developer' | 'admin' | 'user'
     userEventRole: 'pic' | 'advertiser' | null // User's role in this event
     currentUserId: string // Current logged-in user's ID
@@ -134,7 +137,7 @@ const _getEventDetail = async (
     // Get all batches for this event
     const { data: batches } = await supabase
         .from('batches')
-        .select('id, name, start_date, end_date, price')
+        .select('id, name, start_date, end_date, price, batch_sessions(id, name)')
         .eq('event_id', eventId)
         .order('start_date', { ascending: false })
 
@@ -144,6 +147,9 @@ const _getEventDetail = async (
         startDate: b.start_date,
         endDate: b.end_date,
         price: Number(b.price || 0),
+        sessions: Array.isArray(b.batch_sessions)
+            ? b.batch_sessions.map((session: { id: string; name: string }) => ({ id: session.id, name: session.name }))
+            : [],
     }))
 
     // Determine current batch (latest or specified)
@@ -218,6 +224,8 @@ const _getEventDetail = async (
         notes: string | null
         user_id: string
         profiles: unknown
+        batch_session_id: string | null
+        batch_sessions: unknown
     }> = []
 
     if (currentBatchId) {
@@ -232,6 +240,8 @@ const _getEventDetail = async (
                 closing_count,
                 notes,
                 user_id,
+                batch_session_id,
+                batch_sessions:batch_sessions(id, name),
                 profiles:profiles(id, full_name, emoji)
             `)
             .eq('batch_id', currentBatchId)
@@ -243,6 +253,7 @@ const _getEventDetail = async (
             rawReports = reportData
             reports = rawReports.map((r) => {
                 const reporter = r.profiles as unknown as { id: string; full_name: string; emoji: string } | null
+                const batchSession = r.batch_sessions as { id: string; name: string } | null
                 return {
                     id: r.id,
                     date: r.report_date,
@@ -250,6 +261,9 @@ const _getEventDetail = async (
                     leads: r.leads_count || 0,
                     sales: r.closing_count || 0,
                     notes: r.notes,
+                    session: r.batch_session_id && batchSession
+                        ? { id: batchSession.id, name: batchSession.name }
+                        : null,
                     reporter: {
                         id: reporter?.id || r.user_id,
                         name: reporter?.full_name || 'Unknown',
@@ -264,6 +278,21 @@ const _getEventDetail = async (
         (!dateFilter.gte || report.report_date >= dateFilter.gte) &&
         (!dateFilter.lte || report.report_date <= dateFilter.lte)
     )
+
+    const sessionTotals = new Map<string, { leads: number; sales: number }>()
+    for (const report of reportsInRange) {
+        if (!report.batch_session_id) continue
+        const totals = sessionTotals.get(report.batch_session_id) ?? { leads: 0, sales: 0 }
+        totals.leads += report.leads_count || 0
+        totals.sales += report.closing_count || 0
+        sessionTotals.set(report.batch_session_id, totals)
+    }
+
+    const sessionStats = (mappedBatches.find((batch) => batch.id === currentBatchId)?.sessions ?? []).map((session) => ({
+        id: session.id,
+        name: session.name,
+        ...(sessionTotals.get(session.id) ?? { leads: 0, sales: 0 }),
+    }))
 
     const aggregateReports = (rows: typeof rawReports) => rows.reduce(
         (totals, report) => {
@@ -324,6 +353,7 @@ const _getEventDetail = async (
         advertisers,
         pics,
         reports,
+        sessionStats,
         currentUserId: userId,
         userRole: profile.role as 'developer' | 'admin' | 'user',
         userEventRole,
@@ -347,7 +377,7 @@ export async function getEventDetail(
 
     return unstable_cache(
         (uid: string) => _getEventDetail(uid, eventId, batchId, range),
-        ['event-detail-v2', eventId, batchId ?? '_', range, session.user.id],
+        ['event-detail-v3', eventId, batchId ?? '_', range, session.user.id],
         { tags: [`event-${eventId}`], revalidate: false }
     )(session.user.id)
 }

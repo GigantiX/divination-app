@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { DatePicker } from "@/components/ui/date-picker"
+import { CitySessionEditor } from "@/components/batches/city-session-editor"
 import { createBatch } from "@/app/actions/batches"
 
 const strToDate = (s: string): Date => {
@@ -49,6 +50,7 @@ export default function NewBatchPage() {
     })
     const [startDateObj, setStartDateObj] = React.useState<Date | undefined>(strToDate(todayDate))
     const [endDateObj, setEndDateObj] = React.useState<Date | undefined>(undefined)
+    const [sessions, setSessions] = React.useState<string[]>([])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -76,6 +78,7 @@ export default function NewBatchPage() {
             endDate: isOngoing ? null : formData.endDate || null,
             price: formData.price ? Number(formData.price.replace(/\D/g, '')) : 0,
             notes: formData.notes || undefined,
+            sessions,
         })
 
         if (result.error) {
@@ -153,6 +156,8 @@ export default function NewBatchPage() {
                                     className="h-12"
                                 />
                             </div>
+
+                            <CitySessionEditor value={sessions} onChange={setSessions} disabled={isLoading || success} />
 
                             {/* Date Range Section */}
                             <div className="space-y-4">

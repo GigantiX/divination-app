@@ -44,6 +44,7 @@ const adminData: EventBatchListData = {
         price: 250000,
         notes: 'Fokus peserta Jakarta.',
         createdAt: '2026-08-20T03:00:00.000Z',
+        sessions: [],
     }],
     completedBatches: [{
         id: 'batch-completed',
@@ -53,6 +54,7 @@ const adminData: EventBatchListData = {
         price: 0,
         notes: null,
         createdAt: '2026-07-20T03:00:00.000Z',
+        sessions: [],
     }],
     userRole: 'admin',
     userEventRole: null,

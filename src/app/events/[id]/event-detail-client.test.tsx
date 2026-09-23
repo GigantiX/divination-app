@@ -84,6 +84,7 @@ const mockEventDetailData: any = {
   advertisers: [],
   pics: [],
   reports: [],
+  sessionStats: [],
   userRole: 'admin',
   userEventRole: 'pic',
   currentUserId: 'user-admin',
@@ -118,6 +119,29 @@ describe('EventDetailClient integration test', () => {
     await userEvent.click(reportsTabButton);
 
     expect(reportsTabButton).toHaveClass('text-primary');
+  });
+
+  it('shows leads and sales for every configured Kota/Sesi', async () => {
+    render(<EventDetailClient data={{
+      ...mockEventDetailData,
+      range: '7d',
+      sessionStats: [
+        { id: 'session-bandung', name: 'Kota Bandung', leads: 24, sales: 6 },
+        { id: 'session-jakarta', name: 'Kota Jakarta Selatan', leads: 18, sales: 4 },
+      ],
+    }} />);
+
+    const section = screen.getByRole('region', { name: 'Performa per Kota atau Sesi' });
+    expect(within(section).getByText('Performa per Kota/Sesi')).toBeInTheDocument();
+    expect(within(section).getByText('7 Hari Terakhir · 2 Kota/Sesi di batch ini')).toBeInTheDocument();
+    expect(within(section).getByText('Kota Bandung')).toBeInTheDocument();
+    expect(within(section).getByText('Kota Jakarta Selatan')).toBeInTheDocument();
+    expect(within(section).getByText('24')).toBeInTheDocument();
+    expect(within(section).getByText('6')).toBeInTheDocument();
+    expect(within(section).getByText('25% closing')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reports' }));
+    expect(screen.queryByRole('region', { name: 'Performa per Kota atau Sesi' })).not.toBeInTheDocument();
   });
 
   it('allows range selection changes', async () => {

@@ -11,6 +11,7 @@ export class MockQueryBuilder {
 
   select = vi.fn().mockReturnThis();
   insert = vi.fn().mockReturnThis();
+  upsert = vi.fn().mockReturnThis();
   update = vi.fn().mockReturnThis();
   delete = vi.fn().mockReturnThis();
   eq = vi.fn().mockReturnThis();

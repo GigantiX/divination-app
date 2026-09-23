@@ -4,6 +4,19 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-03",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true
+    }
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -24,6 +37,7 @@
     "NEXTAUTH_URL": "https://divination.axelabs.my.id",
     "NEXT_PUBLIC_APP_URL": "https://divination.axelabs.my.id",
     "APP_BASE_URL": "https://divination.axelabs.my.id",
+    "ORDERONLINE_RUNNER_URL": "https://orderonline-connect.axelabs.my.id",
     "FACEBOOK_APP_ID": "2025580961371089",
     "FACEBOOK_CONFIG_ID": "953187420387318"
   }

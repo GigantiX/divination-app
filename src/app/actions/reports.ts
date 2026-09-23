@@ -14,12 +14,46 @@ export interface CreateReportInput {
     adsSpent: number
     taxPercentage: number
     notes?: string
+    batchSessionId?: string | null
 }
 
 export interface ReportResult {
     success?: boolean
     error?: string
     reportId?: string
+}
+
+async function validateBatchSession(
+    supabase: ReturnType<typeof createAdminClient>,
+    batchId: string,
+    requestedSessionId: string | null | undefined
+): Promise<{ batchSessionId: string | null; error?: string }> {
+    if (requestedSessionId !== undefined && requestedSessionId !== null && typeof requestedSessionId !== 'string') {
+        return { batchSessionId: null, error: 'Kota/Sesi tidak valid' }
+    }
+
+    const { data: sessions, error } = await supabase
+        .from('batch_sessions')
+        .select('id')
+        .eq('batch_id', batchId)
+
+    if (error) {
+        console.error('Error fetching batch sessions:', error)
+        return { batchSessionId: null, error: 'Gagal memeriksa Kota/Sesi' }
+    }
+
+    if (!sessions || sessions.length === 0) return { batchSessionId: null }
+
+    const sessionId = requestedSessionId?.trim()
+    if (!sessionId) {
+        return { batchSessionId: null, error: 'Pilih Kota/Sesi untuk laporan ini' }
+    }
+
+    if (!sessions.some((session) => session.id === sessionId)) {
+        return { batchSessionId: null, error: 'Kota/Sesi tidak ditemukan pada batch ini' }
+    }
+
+    return { batchSessionId: sessionId }
 }
 
 /**
@@ -69,6 +103,9 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
         return { error: 'Batch tidak ditemukan' }
     }
 
+    const sessionValidation = await validateBatchSession(supabase, input.batchId, input.batchSessionId)
+    if (sessionValidation.error) return { error: sessionValidation.error }
+
     // If not admin/dev, check user is advertiser for this event
     if (!isAdminOrDev) {
         const assignmentRole = await getEventRole(supabase, session.user.id, batch.event_id)
@@ -85,13 +122,18 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
     }
 
     // Check for duplicate report (same user, same batch, same date)
-    const { data: existing } = await supabase
+    let existingQuery = supabase
         .from('reports')
         .select('id')
         .eq('batch_id', input.batchId)
         .eq('user_id', session.user.id)
         .eq('report_date', input.reportDate)
-        .maybeSingle()
+
+    existingQuery = sessionValidation.batchSessionId
+        ? existingQuery.eq('batch_session_id', sessionValidation.batchSessionId)
+        : existingQuery.is('batch_session_id', null)
+
+    const { data: existing } = await existingQuery.maybeSingle()
 
     if (existing) {
         return { error: 'Laporan untuk tanggal ini sudah ada. Silakan edit laporan yang sudah ada.' }
@@ -109,6 +151,7 @@ export async function createReport(input: CreateReportInput): Promise<ReportResu
             ads_spent: input.adsSpent,
             tax_percentage: input.taxPercentage,
             notes: input.notes?.trim() || null,
+            batch_session_id: sessionValidation.batchSessionId,
         })
         .select('id')
         .single()
@@ -137,6 +180,7 @@ export interface CreateReportRangeInput {
     totalAdsSpent: number
     taxPercentage: number
     notes?: string
+    batchSessionId?: string | null
 }
 
 export interface RangeReportResult {
@@ -201,6 +245,9 @@ export async function createReportRange(input: CreateReportRangeInput): Promise<
 
     if (!batch) return { error: 'Batch tidak ditemukan', created: 0, skipped: 0 }
 
+    const sessionValidation = await validateBatchSession(supabase, input.batchId, input.batchSessionId)
+    if (sessionValidation.error) return { error: sessionValidation.error, created: 0, skipped: 0 }
+
     if (!isAdminOrDev) {
         const assignmentRole = await getEventRole(supabase, session.user.id, batch.event_id)
         if (assignmentRole !== 'advertiser') {
@@ -220,13 +267,19 @@ export async function createReportRange(input: CreateReportRangeInput): Promise<
     const baseLeads = Math.floor(input.totalLeadsCount / days)
     const baseSales = Math.floor(input.totalClosingCount / days)
 
-    const { data: existingReports, error: existingError } = await supabase
+    let existingReportsQuery = supabase
         .from('reports')
         .select('report_date')
         .eq('batch_id', input.batchId)
         .eq('user_id', session.user.id)
         .gte('report_date', input.startDate)
         .lte('report_date', input.endDate)
+
+    existingReportsQuery = sessionValidation.batchSessionId
+        ? existingReportsQuery.eq('batch_session_id', sessionValidation.batchSessionId)
+        : existingReportsQuery.is('batch_session_id', null)
+
+    const { data: existingReports, error: existingError } = await existingReportsQuery
 
     if (existingError) {
         return { error: 'Gagal memeriksa laporan yang sudah ada', created: 0, skipped: 0 }
@@ -256,6 +309,7 @@ export async function createReportRange(input: CreateReportRangeInput): Promise<
             ads_spent: daySpend,
             tax_percentage: input.taxPercentage,
             notes: input.notes?.trim() || null,
+            batch_session_id: sessionValidation.batchSessionId,
         })
     }
 
@@ -303,7 +357,9 @@ export async function getReport(reportId: string) {
             tax_percentage,
             notes,
             created_at,
+            batch_session_id,
             profiles:profiles(full_name, emoji),
+            batch_sessions:batch_sessions(id, name),
             batches:batches(event_id)
         `)
         .eq('id', reportId)
@@ -337,6 +393,8 @@ export async function getReport(reportId: string) {
         notes: data.notes,
         created_at: data.created_at,
         profiles: data.profiles,
+        batch_session_id: data.batch_session_id,
+        batch_sessions: data.batch_sessions,
     }
 }
 
@@ -404,6 +462,13 @@ export async function updateReport(
         return { error: 'Persentase pajak harus antara 0-100%' }
     }
 
+    let batchSessionId: string | null | undefined
+    if (input.batchSessionId !== undefined) {
+        const sessionValidation = await validateBatchSession(supabase, report.batch_id, input.batchSessionId)
+        if (sessionValidation.error) return { error: sessionValidation.error }
+        batchSessionId = sessionValidation.batchSessionId
+    }
+
     // Build update object
     const updateData: Record<string, unknown> = {}
     if (input.reportDate !== undefined) updateData.report_date = input.reportDate
@@ -412,6 +477,7 @@ export async function updateReport(
     if (input.adsSpent !== undefined) updateData.ads_spent = input.adsSpent
     if (input.taxPercentage !== undefined) updateData.tax_percentage = input.taxPercentage
     if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null
+    if (batchSessionId !== undefined) updateData.batch_session_id = batchSessionId
 
     const { error } = await supabase
         .from('reports')
