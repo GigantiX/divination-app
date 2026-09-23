@@ -563,6 +563,8 @@ function OverviewContent({ data, chartData }: ContentProps) {
                     </div>
                 </div>
 
+                <SessionPerformanceSummary sessions={data.sessionStats ?? []} periodLabel={chartTitle} />
+
                 {/* Chart Section */}
                 {chartData && (
                     <Card className="rounded-2xl border-none shadow-sm">
@@ -630,7 +632,6 @@ function OverviewContent({ data, chartData }: ContentProps) {
 
 function ReportsContent({ data }: ContentProps) {
     const [expandedAdvId, setExpandedAdvId] = React.useState<string | null>(null)
-    const sessionStats = data.sessionStats ?? []
 
     // Build unique list of groups by advertisers
     const groups = data.advertisers.map(adv => {
@@ -710,22 +711,19 @@ function ReportsContent({ data }: ContentProps) {
 
     if (groups.length === 0) {
         return (
-            <div className="space-y-4">
-                <SessionPerformanceSummary sessions={sessionStats} />
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="mb-6 rounded-full bg-muted p-6">
-                        <Inbox className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                    <h3 className="mb-2 text-xl font-semibold text-foreground">
-                        Belum Ada Laporan
-                    </h3>
-                    <p className="max-w-xs text-muted-foreground">
-                        {data.canAddReport
-                            ? "Tap tombol + untuk menambahkan laporan harian pertama."
-                            : "Belum ada laporan untuk batch ini."
-                        }
-                    </p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-6 rounded-full bg-muted p-6">
+                    <Inbox className="h-12 w-12 text-muted-foreground" />
                 </div>
+                <h3 className="mb-2 text-xl font-semibold text-foreground">
+                    Belum Ada Laporan
+                </h3>
+                <p className="max-w-xs text-muted-foreground">
+                    {data.canAddReport
+                        ? "Tap tombol + untuk menambahkan laporan harian pertama."
+                        : "Belum ada laporan untuk batch ini."
+                    }
+                </p>
             </div>
         )
     }
@@ -736,7 +734,6 @@ function ReportsContent({ data }: ContentProps) {
 
     return (
         <div className="space-y-4">
-            <SessionPerformanceSummary sessions={sessionStats} />
             {groups.map((adv) => {
                 const isExpanded = expandedAdvId === adv.id
                 return (
@@ -865,33 +862,40 @@ function ReportsContent({ data }: ContentProps) {
     )
 }
 
-function SessionPerformanceSummary({ sessions }: { sessions: EventDetailData['sessionStats'] }) {
+function SessionPerformanceSummary({ sessions, periodLabel }: { sessions: EventDetailData['sessionStats']; periodLabel: string }) {
     if (sessions.length === 0) return null
 
     return (
-        <section className="overflow-hidden rounded-xl border border-primary/25 bg-card shadow-sm" aria-label="Performa per Kota atau Sesi">
-            <header className="flex items-center gap-2 border-b border-primary/15 bg-primary/5 px-4 py-3">
-                <MapPin className="h-4 w-4 text-primary" />
-                <div>
+        <section aria-label="Performa per Kota atau Sesi">
+            <header className="mb-3 flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <MapPin className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-foreground">Performa per Kota/Sesi</h3>
-                    <p className="text-xs text-muted-foreground">Akumulasi laporan pada batch ini.</p>
+                    <p className="text-xs text-muted-foreground">{periodLabel} · {sessions.length} Kota/Sesi di batch ini</p>
                 </div>
             </header>
-            <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+            <div className="grid gap-3 sm:grid-cols-2">
                 {sessions.map((session) => (
-                    <div key={session.id} className="p-4">
-                        <p className="truncate text-sm font-semibold text-foreground">{session.name}</p>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                            <div className="rounded-lg bg-primary/10 px-3 py-2">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Leads</p>
-                                <p className="mt-1 text-lg font-bold text-primary">{session.leads.toLocaleString('id-ID')}</p>
-                            </div>
-                            <div className="rounded-lg bg-success/10 px-3 py-2">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Sales</p>
-                                <p className="mt-1 text-lg font-bold text-success">{session.sales.toLocaleString('id-ID')}</p>
-                            </div>
+                    <article key={session.id} className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-sm">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                            <h4 className="min-w-0 break-words text-sm font-semibold text-foreground">{session.name}</h4>
+                            <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
+                                {session.leads > 0 ? Math.round((session.sales / session.leads) * 100) : 0}% closing
+                            </span>
                         </div>
-                    </div>
+                        <dl className="mt-4 grid grid-cols-2 gap-2">
+                            <div className="min-w-0 rounded-xl bg-primary/10 px-3 py-2.5">
+                                <dt className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Leads</dt>
+                                <dd className="mt-1 break-words text-xl font-bold leading-tight text-primary">{session.leads.toLocaleString('id-ID')}</dd>
+                            </div>
+                            <div className="min-w-0 rounded-xl bg-success/10 px-3 py-2.5">
+                                <dt className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Sales</dt>
+                                <dd className="mt-1 break-words text-xl font-bold leading-tight text-success">{session.sales.toLocaleString('id-ID')}</dd>
+                            </div>
+                        </dl>
+                    </article>
                 ))}
             </div>
         </section>

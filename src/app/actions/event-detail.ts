@@ -279,19 +279,20 @@ const _getEventDetail = async (
         (!dateFilter.lte || report.report_date <= dateFilter.lte)
     )
 
-    const sessionStats = (mappedBatches.find((batch) => batch.id === currentBatchId)?.sessions ?? []).map((session) => {
-        const totals = rawReports
-            .filter((report) => report.batch_session_id === session.id)
-            .reduce(
-                (summary, report) => ({
-                    leads: summary.leads + (report.leads_count || 0),
-                    sales: summary.sales + (report.closing_count || 0),
-                }),
-                { leads: 0, sales: 0 }
-            )
+    const sessionTotals = new Map<string, { leads: number; sales: number }>()
+    for (const report of reportsInRange) {
+        if (!report.batch_session_id) continue
+        const totals = sessionTotals.get(report.batch_session_id) ?? { leads: 0, sales: 0 }
+        totals.leads += report.leads_count || 0
+        totals.sales += report.closing_count || 0
+        sessionTotals.set(report.batch_session_id, totals)
+    }
 
-        return { id: session.id, name: session.name, ...totals }
-    })
+    const sessionStats = (mappedBatches.find((batch) => batch.id === currentBatchId)?.sessions ?? []).map((session) => ({
+        id: session.id,
+        name: session.name,
+        ...(sessionTotals.get(session.id) ?? { leads: 0, sales: 0 }),
+    }))
 
     const aggregateReports = (rows: typeof rawReports) => rows.reduce(
         (totals, report) => {

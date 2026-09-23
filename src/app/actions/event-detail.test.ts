@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { getEventDetail, getEventChartData } from './event-detail';
 import { auth } from '@/auth';
 import { mockSupabaseClient, MockQueryBuilder } from '@/tests/mocks/supabase';
+import { getJakartaDateString } from '@/lib/date';
 
 // Mock next/cache
 vi.mock('next/cache', () => ({
@@ -104,6 +105,41 @@ describe('event-detail server actions', () => {
       expect(result?.userRole).toBe('admin');
       expect(result?.canManageEvent).toBe(true);
       expect(vi.mocked(mockSupabaseClient.from).mock.calls.filter(([table]) => table === 'reports')).toHaveLength(1);
+    });
+
+    it('aggregates Kota/Sesi totals for the selected overview range', async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: 'admin-user', role: 'admin' } } as any);
+      const today = getJakartaDateString();
+
+      vi.mocked(mockSupabaseClient.from).mockImplementation((table) => {
+        if (table === 'profiles') return new MockQueryBuilder({ id: 'admin-user', role: 'admin' });
+        if (table === 'events') return new MockQueryBuilder({ id: 'event-123', name: 'Test Event' });
+        if (table === 'batches') return new MockQueryBuilder([{
+          id: 'batch-1', name: 'Batch 1', price: 100,
+          batch_sessions: [
+            { id: 'jakarta', name: 'Jakarta' },
+            { id: 'bandung', name: 'Bandung' },
+            { id: 'surabaya', name: 'Surabaya' },
+          ],
+        }]);
+        if (table === 'event_assignments') return new MockQueryBuilder([]);
+        if (table === 'reports') return new MockQueryBuilder([
+          { id: 'today-jakarta', report_date: today, batch_session_id: 'jakarta', leads_count: 12, closing_count: 3, user_id: 'admin-user' },
+          { id: 'old-jakarta', report_date: '2020-01-01', batch_session_id: 'jakarta', leads_count: 100, closing_count: 20, user_id: 'admin-user' },
+          { id: 'today-bandung', report_date: today, batch_session_id: 'bandung', leads_count: 4, closing_count: 1, user_id: 'admin-user' },
+        ]);
+        return new MockQueryBuilder(null);
+      });
+
+      const result = await getEventDetail('event-123', 'batch-1', 'today');
+
+      expect(result?.stats.totalLeads).toBe(16);
+      expect(result?.stats.totalSales).toBe(4);
+      expect(result?.sessionStats).toEqual([
+        { id: 'jakarta', name: 'Jakarta', leads: 12, sales: 3 },
+        { id: 'bandung', name: 'Bandung', leads: 4, sales: 1 },
+        { id: 'surabaya', name: 'Surabaya', leads: 0, sales: 0 },
+      ]);
     });
 
     it('should return details for developer with range today', async () => {
