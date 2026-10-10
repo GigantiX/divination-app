@@ -26,9 +26,12 @@ import {
     getEventsForLeadUpload,
     getBatchesForEvent,
     uploadContacts,
+    importOrderOnlineLeads,
     type ContactInput,
     type UploadResult,
+    type OrderImportResult,
 } from "@/app/actions/lead-database"
+import { parseDelimitedRows, parseOrderOnlineLeadCsv, type OrderOnlineLeadRow } from "@/lib/orderonline-lead-csv"
 
 // --- Contact Picker API type declaration ---
 declare global {
@@ -87,16 +90,10 @@ function parseVCF(content: string): ContactInput[] {
 
 function parseCSV(content: string): ContactInput[] {
     const contacts: ContactInput[] = []
-    const lines = content
-        .split(/\r?\n/)
-        .map((l) => l.trim())
-        .filter(Boolean)
+    const lines = parseDelimitedRows(content)
     if (lines.length < 2) return contacts
 
-    // Detect separator
-    const headerLine = lines[0]
-    const separator = headerLine.includes(";") ? ";" : ","
-    const headers = headerLine.split(separator).map((h) => h.trim().toLowerCase())
+    const headers = lines[0].map((h) => h.trim().toLowerCase())
 
     // Find name column
     const nameIdx = headers.findIndex(
@@ -130,7 +127,7 @@ function parseCSV(content: string): ContactInput[] {
     if (nameIdx === -1 || phoneIdx === -1) return contacts
 
     for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(separator).map((c) => c.trim())
+        const cols = lines[i]
         const name = cols[nameIdx] || ""
         const phone = cols[phoneIdx] || ""
 
@@ -145,7 +142,7 @@ function parseCSV(content: string): ContactInput[] {
 }
 
 // --- Tab types ---
-type TabType = "contact" | "file" | "manual"
+type TabType = "contact" | "file" | "manual" | "orderonline"
 
 // --- Component ---
 
@@ -157,6 +154,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
 
     // Contacts ready for upload
     const [contacts, setContacts] = React.useState<ContactInput[]>([])
+    const [orders, setOrders] = React.useState<OrderOnlineLeadRow[]>([])
 
     // Contact Picker
     const [contactPickerSupported, setContactPickerSupported] = React.useState(false)
@@ -165,6 +163,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
     const [fileError, setFileError] = React.useState("")
     const [fileName, setFileName] = React.useState("")
     const fileInputRef = React.useRef<HTMLInputElement>(null)
+    const orderFileInputRef = React.useRef<HTMLInputElement>(null)
 
     // Manual entry
     const [manualRows, setManualRows] = React.useState<ContactInput[]>([
@@ -181,6 +180,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
     // Submit
     const [isSubmitting, setIsSubmitting] = React.useState(false)
     const [uploadResult, setUploadResult] = React.useState<UploadResult | null>(null)
+    const [orderResult, setOrderResult] = React.useState<OrderImportResult | null>(null)
     const [submitError, setSubmitError] = React.useState("")
 
     // Check contact picker support
@@ -273,6 +273,30 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
         reader.readAsText(file)
     }
 
+    const handleOrderFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFileError("")
+        setOrders([])
+        const file = e.target.files?.[0]
+        if (!file) return
+        setFileName(file.name)
+        if (!file.name.toLowerCase().endsWith('.csv') || file.size > 950_000) {
+            setFileError('Gunakan CSV OrderOnline berukuran di bawah 950 KB.')
+            return
+        }
+        try {
+            const parsed = parseOrderOnlineLeadCsv(await file.text())
+            if (!parsed?.length) {
+                setFileError('CSV OrderOnline harus memiliki kolom order_id, name, phone, dan payment_status.')
+            } else if (parsed.length > 200) {
+                setFileError('Maksimal 200 pesanan per unggahan. Pecah file CSV menjadi beberapa bagian.')
+            } else {
+                setOrders(parsed)
+            }
+        } catch (error) {
+            setFileError(error instanceof Error ? error.message : 'Gagal membaca CSV.')
+        }
+    }
+
     // --- Manual Entry ---
     const addManualRow = () => {
         setManualRows((prev) => [...prev, { name: "", phone: "" }])
@@ -317,10 +341,17 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
     // --- Submit ---
     const handleSubmit = async () => {
         setSubmitError("")
-        if (contacts.length === 0) return
+        if (activeTab === 'orderonline' ? orders.length === 0 : contacts.length === 0) return
         if (!selectedEventId || !selectedBatchId) return
 
         setIsSubmitting(true)
+        if (activeTab === 'orderonline') {
+            const res = await importOrderOnlineLeads(orders, selectedEventId, selectedBatchId)
+            if (res.error) setSubmitError(res.error)
+            if (res.data) setOrderResult(res.data)
+            setIsSubmitting(false)
+            return
+        }
         const res = await uploadContacts(contacts, selectedEventId, selectedBatchId)
 
         if (res.error) {
@@ -338,7 +369,9 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
     // --- Reset after success ---
     const handleDone = () => {
         setUploadResult(null)
+        setOrderResult(null)
         setContacts([])
+        setOrders([])
         setSelectedEventId("")
         setSelectedBatchId("")
         setBatches([])
@@ -364,6 +397,11 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
             label: "Input Manual",
             icon: <UserPlus className="h-4 w-4" />,
         },
+        {
+            key: "orderonline",
+            label: "CSV OrderOnline",
+            icon: <FileUp className="h-4 w-4" />,
+        },
     ]
 
     return (
@@ -381,7 +419,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                             </h1>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Upload kontak peserta event ke database lead.
+                            Upload kontak atau pesanan OrderOnline ke database lead.
                         </p>
                     </div>
                     <Link href="/apps/lead-database/history" passHref>
@@ -504,6 +542,21 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                         )}
 
                         {/* Manual Entry Tab */}
+                        {activeTab === "orderonline" && (
+                            <div className="space-y-3">
+                                <p className="text-sm text-muted-foreground">
+                                    Impor file <strong>Orders CSV</strong> dari OrderOnline. Nama, email, telepon, alamat,
+                                    produk, status pesanan, dan pembayaran disimpan per order. Data pembeli belum otomatis menjadi data peserta.
+                                </p>
+                                <input ref={orderFileInputRef} type="file" accept=".csv,text/csv"
+                                    onChange={handleOrderFileSelect}
+                                    className="block w-full rounded-lg border border-border bg-card p-3 text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-success/15 file:px-3 file:py-1 file:text-success" />
+                                {fileName && <p className="text-xs text-muted-foreground">{fileName}</p>}
+                                {fileError && <p className="text-sm text-destructive">{fileError}</p>}
+                            </div>
+                        )}
+
+                        {/* Manual Entry Tab */}
                         {activeTab === "manual" && (
                             <div>
                                 <div className="space-y-3">
@@ -583,7 +636,21 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                 </Card>
 
                 {/* Contact Preview Section */}
-                <Card className="mb-4 border-border shadow-sm">
+                {activeTab === 'orderonline' ? (
+                    <Card className="mb-4 border-border shadow-sm"><CardContent className="p-4 sm:p-5">
+                        <h3 className="text-sm font-semibold text-foreground">Pratinjau Pesanan · {orders.length}</h3>
+                        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+                            {orders.slice(0, 10).map((order, index) => (
+                                <div key={`${order.order_id}-${index}`} className="rounded-lg border border-border p-3 text-sm">
+                                    <p className="font-medium">{order.name || 'Tanpa nama'} · #{order.order_id || 'Tanpa ID'}</p>
+                                    <p className="text-xs text-muted-foreground">{order.product || 'Tanpa produk'} · {order.status || 'Status belum ada'} / {order.payment_status || 'Pembayaran belum ada'}</p>
+                                </div>
+                            ))}
+                            {orders.length > 10 && <p className="text-xs text-muted-foreground">+{orders.length - 10} pesanan lain</p>}
+                        </div>
+                        {orders.length === 0 && <p className="mt-2 text-sm text-muted-foreground">Pilih CSV OrderOnline untuk melihat pratinjau.</p>}
+                    </CardContent></Card>
+                ) : <Card className="mb-4 border-border shadow-sm">
                     <CardContent className="p-4 sm:p-5">
                         <div className="mb-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -647,7 +714,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                             </p>
                         )}
                     </CardContent>
-                </Card>
+                </Card>}
 
                 {/* Event & Batch Selection */}
                 <Card className="mb-4 border-border shadow-sm">
@@ -728,7 +795,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                 <Button
                     className="w-full bg-primary hover:bg-primary-hover text-primary-foreground flex items-center justify-center gap-2 h-12 text-base font-semibold"
                     disabled={
-                        contacts.length === 0 ||
+                        (activeTab === 'orderonline' ? orders.length === 0 : contacts.length === 0) ||
                         !selectedEventId ||
                         !selectedBatchId ||
                         isSubmitting
@@ -743,14 +810,14 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                     ) : (
                         <>
                             <Upload className="h-5 w-5" />
-                            Upload Kontak
+                            {activeTab === 'orderonline' ? 'Impor Pesanan' : 'Upload Kontak'}
                         </>
                     )}
                 </Button>
             </div>
 
             {/* Result Modal */}
-            {uploadResult && (
+            {(uploadResult || orderResult) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
                     <Card className="w-full max-w-sm border-none shadow-xl">
                         <CardContent className="p-0">
@@ -759,13 +826,20 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                     <CheckCircle2 className="h-7 w-7 text-success" />
                                 </div>
                                 <h3 className="mb-1 text-lg font-bold text-foreground">
-                                    Upload Selesai!
+                                    {orderResult ? 'Impor Pesanan Selesai!' : 'Upload Selesai!'}
                                 </h3>
                                 <p className="mb-5 text-sm text-muted-foreground">
                                     Berikut ringkasan hasil upload
                                 </p>
 
-                                <div className="space-y-3 text-left">
+                                {orderResult ? (
+                                    <div className="space-y-2 text-left text-sm">
+                                        <p>{orderResult.new_orders} pesanan baru · {orderResult.updated_orders} pesanan diperbarui</p>
+                                        <p>{orderResult.new_leads} lead baru · {orderResult.existing_leads} lead sudah ada</p>
+                                        <p>{orderResult.duplicate_rows} baris duplikat dalam file · {orderResult.failed} gagal</p>
+                                        {orderResult.failed > 0 && <p className="break-words text-destructive">Order gagal: {orderResult.failed_order_ids.join(', ')}</p>}
+                                    </div>
+                                ) : uploadResult && <div className="space-y-3 text-left">
                                     <div className="flex items-center gap-3 rounded-lg bg-success/15 px-4 py-3">
                                         <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
                                         <div>
@@ -803,7 +877,7 @@ export function UploadClient({ profile }: { profile: UserProfile }) {
                                             </div>
                                         </div>
                                     )}
-                                </div>
+                                </div>}
                             </div>
                             <div className="border-t p-4">
                                 <Button

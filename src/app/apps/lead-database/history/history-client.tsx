@@ -62,7 +62,7 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                         Riwayat Upload
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Daftar kontak yang telah Anda upload sebelumnya.
+                        Riwayat upload kontak dan impor pesanan OrderOnline.
                     </p>
                 </div>
 
@@ -102,7 +102,7 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                                                 {item.event_name}
                                             </h3>
                                             <p className="text-sm text-muted-foreground">
-                                                {item.batch_name}
+                                                {item.batch_name} · {item.source === 'orderonline_csv' ? 'CSV OrderOnline' : 'Kontak'}
                                             </p>
                                         </div>
                                         <span className="shrink-0 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-md flex items-center gap-1">
@@ -110,6 +110,12 @@ export function HistoryClient({ profile }: { profile: UserProfile }) {
                                             {formatDate(item.uploaded_at)}
                                         </span>
                                     </div>
+
+                                    {item.source === 'orderonline_csv' && (
+                                        <p className="mb-3 text-xs text-muted-foreground">
+                                            {item.new_orders} pesanan baru · {item.updated_orders} diperbarui · {item.duplicate_rows} baris duplikat
+                                        </p>
+                                    )}
 
                                     {/* Stats Row */}
                                     <div className="flex items-center gap-4 text-sm">

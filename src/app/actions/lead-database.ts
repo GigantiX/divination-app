@@ -7,6 +7,7 @@
 import { auth } from '@/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getEventAccess } from '@/lib/authorization'
+import type { OrderOnlineLeadRow } from '@/lib/orderonline-lead-csv'
 
 // --- Types ---
 
@@ -26,8 +27,53 @@ export type Lead = {
     aliases: string[]
     notes: string | null
     events: LeadEvent[]
+    orders?: LeadOrder[]
     created_at: string
     updated_at: string
+}
+
+export type LeadOrder = {
+    id: string
+    order_id: string
+    event_id: string
+    batch_id: string
+    customer_name: string
+    customer_email: string | null
+    customer_phone: string
+    address: string | null
+    province: string | null
+    city: string | null
+    subdistrict: string | null
+    zip: string | null
+    product_name: string | null
+    product_code: string | null
+    quantity: number
+    order_status: string | null
+    payment_status: string | null
+    payment_method: string | null
+    product_price: number | null
+    discount: number | null
+    gross_revenue: number | null
+    net_revenue: number | null
+    order_created_at: string | null
+    paid_at: string | null
+    completed_at: string | null
+    ticket_code: string | null
+    attendee_name: string | null
+    attendee_email: string | null
+    attendee_phone: string | null
+    imported_at: string
+}
+
+export type OrderImportResult = {
+    total: number
+    new_leads: number
+    existing_leads: number
+    new_orders: number
+    updated_orders: number
+    duplicate_rows: number
+    failed: number
+    failed_order_ids: string[]
 }
 
 export type UploadResult = {
@@ -46,6 +92,10 @@ export type UploadHistoryItem = {
     new_leads: number
     existing_leads: number
     failed: number
+    source: string
+    new_orders: number
+    updated_orders: number
+    duplicate_rows: number
     uploaded_at: string
 }
 
@@ -69,6 +119,33 @@ function normalizePhone(phone: string): string {
 
 function isValidPhone(phone: string): boolean {
     return phone.length >= 8 && /^\d+$/.test(phone)
+}
+
+function parseOrderOnlineDate(value: string): string | null {
+    if (!value.trim()) return null
+    const match = value.trim().match(/^(\d{2})-(\d{2})-(\d{4})\s*-\s*(\d{2}):(\d{2})$/)
+    if (!match) return null
+    const [, day, month, year, hour, minute] = match
+    const iso = `${year}-${month}-${day}T${hour}:${minute}:00+07:00`
+    const parsed = new Date(iso)
+    const local = new Date(parsed.getTime() + 7 * 60 * 60 * 1000)
+    if (Number.isNaN(parsed.getTime()) ||
+        local.getUTCFullYear() !== Number(year) || local.getUTCMonth() + 1 !== Number(month) ||
+        local.getUTCDate() !== Number(day) || local.getUTCHours() !== Number(hour) ||
+        local.getUTCMinutes() !== Number(minute)) return null
+    return iso
+}
+
+function parseAmount(value: string): number | null {
+    if (!value.trim()) return null
+    const normalized = value.trim().replace(/,/g, '')
+    if (!/^-?\d+(\.\d{1,2})?$/.test(normalized)) return null
+    const amount = Number(normalized)
+    return Number.isSafeInteger(amount * 100) ? amount : null
+}
+
+function optionalText(value: string, max = 500): string | null {
+    return value.trim() ? value.trim().slice(0, max) : null
 }
 
 // --- Server Action Functions ---
@@ -335,6 +412,201 @@ export async function uploadContacts(
     }
 }
 
+/** Import OrderOnline orders without collapsing separate orders for the same phone. */
+export async function importOrderOnlineLeads(
+    rows: OrderOnlineLeadRow[],
+    eventId: string,
+    batchId: string
+): Promise<{ data?: OrderImportResult; error?: string }> {
+    const session = await auth()
+    if (!session?.user?.id) return { error: 'Tidak terautentikasi' }
+    if (!Array.isArray(rows) || rows.length === 0 || rows.length > 200) {
+        return { error: 'Pilih CSV OrderOnline berisi 1–200 pesanan per unggahan.' }
+    }
+    if (!eventId || !batchId) return { error: 'Event dan batch wajib dipilih.' }
+
+    try {
+        const supabase = createAdminClient()
+        const access = await getEventAccess(supabase, session.user.id, eventId)
+        if (!access) return { error: 'Anda tidak memiliki akses ke event ini.' }
+        const { data: batch, error: batchError } = await supabase
+            .from('batches').select('id').eq('id', batchId).eq('event_id', eventId).single()
+        if (batchError || !batch) return { error: 'Batch tidak cocok dengan event.' }
+
+        // Fail before writing leads when the local migration has not been applied.
+        const { error: schemaError } = await supabase.from('lead_orders').select('id').limit(1)
+        if (schemaError) return { error: 'Tabel pesanan belum tersedia. Jalankan migrasi 20260925_add_lead_orders.sql dahulu.' }
+
+        const unique = new Map<string, OrderOnlineLeadRow>()
+        const failedIds: string[] = []
+        let duplicateRows = 0
+        for (const row of rows) {
+            if (!row || typeof row !== 'object' ||
+                !['order_id', 'name', 'email', 'phone', 'address', 'province', 'city', 'subdistrict',
+                    'zip', 'product', 'product_code', 'quantity', 'status', 'payment_status',
+                    'payment_method', 'product_price', 'discount', 'gross_revenue', 'net_revenue',
+                    'created_at', 'paid_at', 'completed_at'].every(
+                    key => typeof row[key as keyof OrderOnlineLeadRow] === 'string'
+                )) {
+                failedIds.push('(baris tidak valid)')
+                continue
+            }
+            const orderId = row.order_id.trim()
+            const phone = normalizePhone(row.phone)
+            if (!orderId || orderId.length > 120 || !isValidPhone(phone) || !row.name.trim() ||
+                (row.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email.trim())) ||
+                (row.quantity.trim() && (!/^\d+$/.test(row.quantity.trim()) || Number(row.quantity) < 1)) ||
+                ['product_price', 'discount', 'gross_revenue', 'net_revenue'].some(
+                    field => row[field as keyof OrderOnlineLeadRow]?.trim() && parseAmount(row[field as keyof OrderOnlineLeadRow]) === null
+                ) ||
+                ['created_at', 'paid_at', 'completed_at'].some(
+                    field => row[field as keyof OrderOnlineLeadRow]?.trim() && parseOrderOnlineDate(row[field as keyof OrderOnlineLeadRow]) === null
+                )) {
+                failedIds.push(orderId || '(tanpa order_id)')
+                continue
+            }
+            if (unique.has(orderId)) {
+                duplicateRows++
+                continue
+            }
+            unique.set(orderId, row)
+        }
+
+        if (unique.size === 0) return { error: 'Tidak ada pesanan valid. Periksa order_id, nama, telepon, email, angka, dan tanggal.' }
+
+        const { data: upload, error: uploadError } = await supabase.from('lead_uploads').insert({
+            user_id: session.user.id,
+            event_id: eventId,
+            batch_id: batchId,
+            source: 'orderonline_csv',
+            total_contacts: rows.length,
+            new_leads: 0,
+            existing_leads: 0,
+            new_orders: 0,
+            updated_orders: 0,
+            duplicate_rows: duplicateRows,
+            failed: failedIds.length,
+        }).select('id').single()
+        if (uploadError || !upload) throw uploadError || new Error('Upload record unavailable')
+
+        let newLeads = 0
+        let existingLeads = 0
+        let newOrders = 0
+        let updatedOrders = 0
+        const leadCache = new Map<string, string>()
+
+        for (const row of unique.values()) {
+            const phone = normalizePhone(row.phone)
+            const orderId = row.order_id.trim()
+            try {
+                // An order is assigned to one event/batch. A re-import must not silently move it.
+                const { data: priorOrder, error: priorError } = await supabase.from('lead_orders')
+                    .select('id, event_id, batch_id').eq('source', 'orderonline').eq('order_id', orderId).maybeSingle()
+                if (priorError) throw priorError
+                if (priorOrder && (priorOrder.event_id !== eventId || priorOrder.batch_id !== batchId)) {
+                    failedIds.push(orderId)
+                    continue
+                }
+
+                let leadId = leadCache.get(phone)
+                if (!leadId) {
+                    const { data: existing, error: leadReadError } = await supabase.from('leads')
+                        .select('id').eq('phone', phone).maybeSingle()
+                    if (leadReadError) throw leadReadError
+                    if (existing) {
+                        leadId = existing.id
+                        existingLeads++
+                    } else {
+                        const { data: created, error: createError } = await supabase.from('leads')
+                            .insert({ phone, primary_name: row.name.trim().slice(0, 250) })
+                            .select('id').single()
+                        if (createError) {
+                            if (createError.code !== '23505') throw createError
+                            const { data: retry, error: retryError } = await supabase.from('leads')
+                                .select('id').eq('phone', phone).single()
+                            if (retryError || !retry) throw retryError || createError
+                            leadId = retry.id
+                            existingLeads++
+                        } else {
+                            leadId = created.id
+                            newLeads++
+                        }
+                    }
+                    if (!leadId) throw new Error('Lead ID unavailable')
+                    leadCache.set(phone, leadId)
+                }
+
+                const { error: junctionError } = await supabase.from('lead_events').insert({
+                    lead_id: leadId, event_id: eventId, batch_id: batchId,
+                    upload_id: upload.id, alias_name: row.name.trim().slice(0, 250),
+                    uploaded_by: session.user.id,
+                })
+                if (junctionError && junctionError.code !== '23505') throw junctionError
+
+                const orderValues = {
+                    lead_id: leadId,
+                    customer_name: row.name.trim().slice(0, 250),
+                    customer_email: optionalText(row.email, 320),
+                    customer_phone: phone,
+                    address: optionalText(row.address, 1000),
+                    province: optionalText(row.province),
+                    city: optionalText(row.city),
+                    subdistrict: optionalText(row.subdistrict),
+                    zip: optionalText(row.zip, 30),
+                    product_name: optionalText(row.product),
+                    product_code: optionalText(row.product_code, 120),
+                    quantity: row.quantity.trim() ? Number(row.quantity) : 1,
+                    order_status: optionalText(row.status, 100),
+                    payment_status: optionalText(row.payment_status, 100),
+                    payment_method: optionalText(row.payment_method, 100),
+                    product_price: parseAmount(row.product_price),
+                    discount: parseAmount(row.discount),
+                    gross_revenue: parseAmount(row.gross_revenue),
+                    net_revenue: parseAmount(row.net_revenue),
+                    order_created_at: parseOrderOnlineDate(row.created_at),
+                    paid_at: parseOrderOnlineDate(row.paid_at),
+                    completed_at: parseOrderOnlineDate(row.completed_at),
+                    imported_at: new Date().toISOString(),
+                }
+                if (priorOrder) {
+                    const { error } = await supabase.from('lead_orders').update(orderValues)
+                        .eq('id', priorOrder.id).eq('event_id', eventId).eq('batch_id', batchId)
+                    if (error) throw error
+                    updatedOrders++
+                } else {
+                    const { error } = await supabase.from('lead_orders').insert({
+                        ...orderValues, source: 'orderonline', order_id: orderId,
+                        event_id: eventId, batch_id: batchId,
+                        upload_id: upload.id, imported_by: session.user.id,
+                    })
+                    if (error) throw error
+                    newOrders++
+                }
+            } catch (error) {
+                console.error('importOrderOnlineLeads order failed:', error)
+                failedIds.push(orderId)
+            }
+        }
+
+        const { error: updateError } = await supabase.from('lead_uploads').update({
+            new_leads: newLeads, existing_leads: existingLeads,
+            new_orders: newOrders, updated_orders: updatedOrders,
+            failed: failedIds.length,
+        }).eq('id', upload.id)
+        if (updateError) throw updateError
+
+        return { data: {
+            total: rows.length, new_leads: newLeads, existing_leads: existingLeads,
+            new_orders: newOrders, updated_orders: updatedOrders,
+            duplicate_rows: duplicateRows, failed: failedIds.length,
+            failed_order_ids: failedIds,
+        } }
+    } catch (error) {
+        console.error('importOrderOnlineLeads error:', error)
+        return { error: 'Impor gagal. Periksa migrasi database dan coba lagi.' }
+    }
+}
+
 /**
  * Get all leads with optional filters (Admin only)
  */
@@ -502,6 +774,13 @@ export async function getLeadDetail(leadId: string): Promise<{ data?: Lead; erro
 
         if (eventsError) throw eventsError
 
+        const { data: orders, error: ordersError } = await supabase
+            .from('lead_orders')
+            .select('id, order_id, event_id, batch_id, customer_name, customer_email, customer_phone, address, province, city, subdistrict, zip, product_name, product_code, quantity, order_status, payment_status, payment_method, product_price, discount, gross_revenue, net_revenue, order_created_at, paid_at, completed_at, ticket_code, attendee_name, attendee_email, attendee_phone, imported_at')
+            .eq('lead_id', leadId)
+            .order('order_created_at', { ascending: false, nullsFirst: false })
+        if (ordersError) throw ordersError
+
         const aliases = new Set<string>()
         const events: LeadEvent[] = (leadEventsData || []).map((le: any) => {
             aliases.add(le.alias_name)
@@ -523,6 +802,7 @@ export async function getLeadDetail(leadId: string): Promise<{ data?: Lead; erro
                 aliases: Array.from(aliases),
                 notes: lead.notes,
                 events,
+                orders: orders || [],
                 created_at: lead.created_at,
                 updated_at: lead.updated_at,
             }
@@ -530,6 +810,48 @@ export async function getLeadDetail(leadId: string): Promise<{ data?: Lead; erro
     } catch (err) {
         console.error('getLeadDetail error:', err)
         return { error: 'Gagal memuat detail lead' }
+    }
+}
+
+/** Buyer and attendee can be different people; preserve the CSV buyer fields. */
+export async function updateLeadOrderAttendee(
+    orderId: string,
+    values: { ticket_code: string; attendee_name: string; attendee_email: string; attendee_phone: string }
+): Promise<{ success?: boolean; error?: string }> {
+    const session = await auth()
+    if (!session?.user?.id) return { error: 'Tidak terautentikasi' }
+    if (!orderId || !values ||
+        ['ticket_code', 'attendee_name', 'attendee_email', 'attendee_phone'].some(
+            key => typeof values[key as keyof typeof values] !== 'string'
+        )) {
+        return { error: 'Data peserta tidak valid.' }
+    }
+    const ticketCode = values.ticket_code.trim()
+    const attendeeName = values.attendee_name.trim()
+    const attendeeEmail = values.attendee_email.trim()
+    const attendeePhone = values.attendee_phone.trim()
+    if (ticketCode.length > 120 || attendeeName.length > 250 || attendeeEmail.length > 320 ||
+        attendeePhone.length > 50 || (attendeeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(attendeeEmail)) ||
+        (attendeePhone && !isValidPhone(normalizePhone(attendeePhone)))) {
+        return { error: 'Periksa kode tiket, nama, email, dan nomor telepon peserta.' }
+    }
+    try {
+        const supabase = createAdminClient()
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+        if (profile?.role !== 'admin' && profile?.role !== 'developer') return { error: 'Tidak memiliki akses.' }
+        const { data: updated, error } = await supabase.from('lead_orders').update({
+            ticket_code: ticketCode || null,
+            attendee_name: attendeeName || null,
+            attendee_email: attendeeEmail || null,
+            attendee_phone: attendeePhone ? normalizePhone(attendeePhone) : null,
+        }).eq('id', orderId).select('id').single()
+        if (error?.code === '23505') return { error: 'Kode tiket sudah digunakan oleh pesanan lain pada event ini.' }
+        if (error) throw error
+        if (!updated) return { error: 'Pesanan tidak ditemukan.' }
+        return { success: true }
+    } catch (error) {
+        console.error('updateLeadOrderAttendee error:', error)
+        return { error: 'Gagal menyimpan data peserta.' }
     }
 }
 
@@ -631,6 +953,10 @@ export async function getUploadHistory(): Promise<{ data?: UploadHistoryItem[]; 
                 new_leads,
                 existing_leads,
                 failed,
+                source,
+                new_orders,
+                updated_orders,
+                duplicate_rows,
                 created_at,
                 events ( name ),
                 batches ( name )
@@ -648,6 +974,10 @@ export async function getUploadHistory(): Promise<{ data?: UploadHistoryItem[]; 
             new_leads: item.new_leads,
             existing_leads: item.existing_leads,
             failed: item.failed,
+            source: item.source,
+            new_orders: item.new_orders,
+            updated_orders: item.updated_orders,
+            duplicate_rows: item.duplicate_rows,
             uploaded_at: item.created_at,
         }))
 
