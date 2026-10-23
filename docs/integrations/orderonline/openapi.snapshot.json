@@ -1,0 +1,1721 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OrderOnline API — Divination documentation snapshot",
+    "version": "1.0.0",
+    "description": "Documentation data only. Consolidated from the 11 official endpoint definitions captured on 2026-10-22 (Asia/Jakarta). Not a live-verified integration."
+  },
+  "servers": [
+    {
+      "url": "https://api.orderonline.id",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/v1/auth": {
+      "post": {
+        "summary": "Authenticate with a personal access token",
+        "description": "Exchanges a personal access token for a JWT access token.",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid token or inactive account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/profile": {
+      "get": {
+        "summary": "Get user profile",
+        "description": "Retrieve the profile of the authenticated user.",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          },
+          "404": {
+            "description": "User not found."
+          }
+        }
+      }
+    },
+    "/v1/orders": {
+      "get": {
+        "summary": "Get list of orders",
+        "description": "Retrieve a list of orders (submissions) for the authenticated user.",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of orders to return. Max value is 1000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 50
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Start date for filtering orders (e.g. YYYY-MM-DD).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "End date for filtering orders (e.g. YYYY-MM-DD).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Search keyword (e.g. customer name or phone).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by order status.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "payment_status",
+            "in": "query",
+            "description": "Filter by payment status.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "product_id",
+            "in": "query",
+            "description": "Filter by product ID.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Field to sort by.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort direction (asc or desc).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new order",
+        "description": "Create an order via a minimal input payload.",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or process failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          }
+        }
+      }
+    },
+    "/v1/orders/{submission_id}": {
+      "get": {
+        "summary": "Get order details",
+        "description": "Retrieve order (submission) details by ID or order_id.",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "path",
+            "required": true,
+            "description": "The MongoDB ID or numeric order_id of the submission.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved order details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          }
+        }
+      }
+    },
+    "/v1/products": {
+      "get": {
+        "summary": "Get list of products",
+        "description": "Retrieve a list of products.",
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of products to return. Max value is 1000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 25
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Search keyword for product name.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by product status (e.g. live).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category_slug",
+            "in": "query",
+            "description": "Filter by category slug.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Field to sort by (default: name).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort direction (asc or desc).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved product list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          }
+        }
+      }
+    },
+    "/v1/products/{product_id}": {
+      "get": {
+        "summary": "Get product details",
+        "description": "Retrieve product details by MongoDB ID.",
+        "tags": [
+          "Products"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "description": "The MongoDB ID of the product.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved product details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          }
+        }
+      }
+    },
+    "/v1/subdistricts": {
+      "get": {
+        "summary": "Get list of subdistricts",
+        "description": "Retrieve a list of shipping subdistricts.",
+        "tags": [
+          "Subdistricts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of subdistricts to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 20
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number to retrieve.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Search keyword for subdistrict name.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved subdistricts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubdistrictsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          }
+        }
+      }
+    },
+    "/v1/subdistricts/{subdistrict_id}": {
+      "get": {
+        "summary": "Get subdistrict details",
+        "description": "Retrieve subdistrict details by numeric subdistrict_id.",
+        "tags": [
+          "Subdistricts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "subdistrict_id",
+            "in": "path",
+            "required": true,
+            "description": "The numeric ID of the subdistrict.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved subdistrict details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubdistrictDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing JWT token."
+          },
+          "404": {
+            "description": "Subdistrict not found."
+          }
+        }
+      }
+    },
+    "/v1/shipping/cost": {
+      "get": {
+        "summary": "Get shipping cost quotes",
+        "description": "Quotes shipping cost per courier and service for a given origin, destination and package weight.\n\n- `couriers` must be a **JSON-encoded array string** of courier codes, e.g. `[\"jne\",\"jnt\"]`. An empty array falls back to the platform default priority list (oexpress, jne, jnt, ninja, sap, idexpress, spx).\n- `weight` is in **grams**.\n- With `payment_method=cod` only COD-capable services are returned and COD fees apply.",
+        "tags": [
+          "Shipping"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "origin_id",
+            "in": "query",
+            "required": true,
+            "description": "Origin subdistrict ID (see `/v1/subdistricts`).",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 338
+          },
+          {
+            "name": "destination_id",
+            "in": "query",
+            "required": true,
+            "description": "Destination subdistrict ID.",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1234
+          },
+          {
+            "name": "couriers",
+            "in": "query",
+            "required": true,
+            "description": "JSON-encoded array of courier codes. Known codes: `oexpress`, `jne`, `jnt`, `ninja`, `sap`, `idexpress`, `spx`, `sicepat`.",
+            "schema": {
+              "type": "string",
+              "format": "json"
+            },
+            "example": "[\"jne\",\"jnt\"]"
+          },
+          {
+            "name": "weight",
+            "in": "query",
+            "required": true,
+            "description": "Package weight in grams.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "example": 1000
+          },
+          {
+            "name": "payment_method",
+            "in": "query",
+            "required": false,
+            "description": "Payment method of the order being quoted. Affects COD fees and which services are offered.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bank_transfer",
+                "cod",
+                "instant"
+              ],
+              "default": "bank_transfer"
+            }
+          },
+          {
+            "name": "volume",
+            "in": "query",
+            "required": false,
+            "description": "JSON-encoded volumetric dimensions in cm, used for volumetric weight by couriers that support it.",
+            "schema": {
+              "type": "string",
+              "format": "json"
+            },
+            "example": "{\"length\":20,\"width\":15,\"height\":10}"
+          },
+          {
+            "name": "with_fallback",
+            "in": "query",
+            "required": false,
+            "description": "Fall back to cached rates when a courier API is unreachable.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "description": "Quote mode. Leave at the default unless instructed otherwise.",
+            "schema": {
+              "type": "string",
+              "default": "normal"
+            }
+          },
+          {
+            "name": "exclude_couriers",
+            "in": "query",
+            "required": false,
+            "description": "Courier codes to exclude from `couriers`. Send as repeated `exclude_couriers[]=jne` query params.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "origin_coordinate",
+            "in": "query",
+            "required": false,
+            "description": "`lat,lng` of the origin. Only used by distance-based couriers.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "-6.914744,107.609810"
+          },
+          {
+            "name": "destination_coordinate",
+            "in": "query",
+            "required": false,
+            "description": "`lat,lng` of the destination. Only used by distance-based couriers.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "description": "Free-text marker of who requested the quote. Logged only.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "use_cache_header",
+            "in": "query",
+            "required": false,
+            "description": "When true the response carries `Cache-Control: max-age=300, must-revalidate` and a `Cache-Tag` header.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quotes retrieved. `data` is an array of courier objects (may be empty if no courier serves the route).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShippingCostResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No courier could quote the route (e.g. subdistrict not covered). `data` is an empty string and `message` explains why.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Missing, invalid or expired JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed. Body is a map of field name to list of messages (Lumen default), not the standard envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "origin_id": [
+                    "The origin id field is required."
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/shipping/track/{submission_id}": {
+      "get": {
+        "summary": "Track a shipment",
+        "description": "Returns the courier tracking history and current delivery status of an order's shipment.\n\n`submission_id` accepts three forms: the submission MongoDB ObjectId, the numeric `order_id`, or a receipt (AWB) number. A non-ObjectId value is first looked up as a receipt number and resolved to its order.\n\nResults are scoped to the authenticated account (team members see their owner's orders); an order belonging to another account returns 404.\n\nTracking data is served from the stored copy when the order is already `delivered`; otherwise the courier is queried and the stored shipping status is refreshed as a side effect.\n\nEvery response is wrapped in the standard envelope: `data`, `message`, `error_code` (0 on success) and `request_id`. The HTTP status code reflects the outcome.",
+        "tags": [
+          "Shipping"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "path",
+            "required": true,
+            "description": "Submission ObjectId, numeric order ID, or receipt (AWB) number.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "273122529"
+          },
+          {
+            "name": "is_return_histories",
+            "in": "query",
+            "required": false,
+            "description": "Include `history` and `logistic` in the response. Set false to receive only the status fields.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tracking retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShippingTrackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The order has no receipt number yet, or the courier returned an error. `data` is an empty string.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "data": "",
+                  "message": "Receipt number not exist",
+                  "error_code": 0,
+                  "request_id": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Missing, invalid or expired JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order matches `submission_id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "data": "",
+                  "message": "Order ID not found",
+                  "error_code": 0,
+                  "request_id": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error while tracking. `message` carries the exception text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Personal access token to authenticate."
+          },
+          "meta": {
+            "type": "string",
+            "description": "Optional metadata as a JSON string."
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Login success"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "example": "Bearer"
+              },
+              "access_token": {
+                "type": "string"
+              }
+            }
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard envelope for a failed request. The HTTP status code carries the outcome; `data` is usually an empty string or empty array.",
+        "properties": {
+          "data": {
+            "nullable": true,
+            "description": "Empty string, empty array or null on errors.",
+            "example": ""
+          },
+          "message": {
+            "type": "string",
+            "example": "Order ID not found"
+          },
+          "error_code": {
+            "type": "integer",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "description": "Authenticated user profile. For non-owner roles, store-level fields (username, store, package, expired_date, credit, bank_accounts, created_at) are taken from the parent owner account.",
+            "properties": {
+              "user_id": {
+                "type": "string",
+                "example": "5b5542469f05aa28a00e1700"
+              },
+              "name": {
+                "type": "string",
+                "example": "Budi Santoso"
+              },
+              "email": {
+                "type": "string",
+                "example": "budi@example.com"
+              },
+              "username": {
+                "type": "string",
+                "example": "budistore"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true,
+                "example": "081234567890"
+              },
+              "picture": {
+                "type": "string",
+                "nullable": true
+              },
+              "role": {
+                "type": "string",
+                "example": "owner"
+              },
+              "parent_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "Owner user ID. Only set for non-owner roles."
+              },
+              "capabilities": {
+                "type": "array",
+                "description": "Granted capabilities. Only relevant for non-owner roles.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "is_active": {
+                "type": "boolean",
+                "example": true
+              },
+              "store": {
+                "type": "object",
+                "nullable": true,
+                "description": "Store information."
+              },
+              "package": {
+                "type": "string",
+                "nullable": true,
+                "example": "premium"
+              },
+              "expired_date": {
+                "type": "string",
+                "nullable": true,
+                "example": "2027-01-01 00:00:00"
+              },
+              "credit": {
+                "type": "number",
+                "nullable": true,
+                "example": 0
+              },
+              "bank_accounts": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "created_at": {
+                "type": "string",
+                "example": "2024-01-01 00:00:00"
+              }
+            }
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "OrdersResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Submission data"
+            },
+            "example": [
+              {
+                "_id": "6a1ea1ed9f06a59ee508b450",
+                "order_id": 273122529,
+                "product_id": "5b5542469f05aa28a00e1712",
+                "customer_data": {
+                  "name": "Test",
+                  "phone": "+628080080808"
+                }
+              }
+            ]
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "OrderDetailResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "description": "Order (submission) details",
+            "example": {
+              "_id": "6a1ea1ed9f06a59ee508b450",
+              "order_id": 273122529,
+              "product_id": "5b5542469f05aa28a00e1712",
+              "customer_data": {
+                "name": "Test",
+                "phone": "+628080080808"
+              }
+            }
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "item_details",
+          "customer_details"
+        ],
+        "properties": {
+          "item_details": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "price"
+              ],
+              "properties": {
+                "product_id": {
+                  "type": "string",
+                  "description": "If provided, maps directly to this product ID. Name becomes optional.",
+                  "example": "5b5542469f05aa28a00e1712"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Test Product API 123"
+                },
+                "price": {
+                  "type": "number",
+                  "example": 150000
+                },
+                "quantity": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "weight": {
+                  "type": "integer",
+                  "example": 200
+                }
+              }
+            }
+          },
+          "customer_details": {
+            "type": "object",
+            "required": [
+              "name",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "Budi Santoso"
+              },
+              "phone": {
+                "type": "string",
+                "example": "081234567890"
+              },
+              "email": {
+                "type": "string",
+                "example": "budi@example.com"
+              },
+              "subdistrict_name": {
+                "type": "string",
+                "example": "Andir"
+              },
+              "subdistrict_id": {
+                "type": "integer",
+                "description": "Required if courier or service is provided. Maps directly to this subdistrict ID. Subdistrict name, zip will be ignored.",
+                "example": 338
+              },
+              "zip": {
+                "type": "string",
+                "description": "If provided, maps directly to this zip code. Subdistrict name will be ignored.",
+                "example": "40231"
+              }
+            }
+          },
+          "payment_method": {
+            "type": "string",
+            "enum": [
+              "bank_transfer",
+              "cod",
+              "instant"
+            ],
+            "example": "instant"
+          },
+          "courier": {
+            "type": "string",
+            "enum": [
+              "jne",
+              "sap",
+              "jnt",
+              "ninja",
+              "idexpress"
+            ],
+            "example": "jne"
+          },
+          "service": {
+            "type": "string",
+            "example": "REG"
+          }
+        }
+      },
+      "CreateOrderResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Order successfully created"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "submission_id": {
+                "type": "string"
+              },
+              "order_id": {
+                "type": "integer"
+              },
+              "snap_token": {
+                "type": "string",
+                "nullable": true
+              },
+              "total_price": {
+                "type": "number"
+              }
+            }
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "ProductsResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Product data"
+            },
+            "example": [
+              {
+                "_id": "664cba4f7abb43d1d30a2c0a",
+                "name": "Beyblade Reds",
+                "slug": "beyblade-red",
+                "price": 99000,
+                "type": "simple"
+              }
+            ]
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "ProductDetailResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "description": "Product details",
+            "example": {
+              "_id": "664cba4f7abb43d1d30a2c0a",
+              "name": "Beyblade Reds",
+              "slug": "beyblade-red",
+              "price": 99000,
+              "type": "simple",
+              "weight": 1000,
+              "status": "live"
+            }
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "SubdistrictsResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Shipping Subdistrict data"
+            },
+            "example": [
+              {
+                "subdistrict_id": 338,
+                "subdistrict_name": "Andir",
+                "province_id": 9,
+                "province_name": "Jawa Barat",
+                "city_id": 23,
+                "city_name": "Bandung",
+                "zip": "40231"
+              }
+            ]
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "SubdistrictDetailResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "description": "Shipping Subdistrict details",
+            "example": {
+              "subdistrict_id": 338,
+              "subdistrict_name": "Andir",
+              "province_id": 9,
+              "province_name": "Jawa Barat",
+              "city_id": 23,
+              "city_name": "Bandung",
+              "zip": "40231"
+            }
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "ShippingCostResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "One entry per courier that returned a quote.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Courier code. Matches the code sent in `couriers`, except J&T which is requested as `jnt` but returned as `J&T`.",
+                  "example": "jne"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Jalur Nugraha Ekakurir (JNE)"
+                },
+                "costs": {
+                  "type": "array",
+                  "description": "Available services for this courier.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "service": {
+                        "type": "string",
+                        "description": "Service code, as accepted by `service` on `POST /v1/orders`.",
+                        "example": "REG"
+                      },
+                      "description": {
+                        "type": "string",
+                        "example": "Layanan Reguler"
+                      },
+                      "cost": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "number",
+                              "description": "Shipping cost in IDR.",
+                              "example": 12000
+                            },
+                            "etd": {
+                              "type": "string",
+                              "description": "Estimated delivery time as reported by the courier, usually in days.",
+                              "example": "2-3"
+                            },
+                            "note": {
+                              "type": "string",
+                              "example": ""
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "insurance": {
+                  "type": "object",
+                  "nullable": true,
+                  "description": "Insurance rate config for this courier, or null when the courier has none.",
+                  "properties": {
+                    "percentage": {
+                      "type": "number",
+                      "description": "Percent of goods value.",
+                      "example": 0.3
+                    },
+                    "admin_fee": {
+                      "type": "number",
+                      "description": "Flat admin fee in IDR.",
+                      "example": 5000
+                    }
+                  }
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Where the quote came from (e.g. `api`). Not present for every courier.",
+                  "example": "api"
+                }
+              }
+            },
+            "example": [
+              {
+                "code": "jne",
+                "name": "Jalur Nugraha Ekakurir (JNE)",
+                "costs": [
+                  {
+                    "service": "REG",
+                    "description": "Layanan Reguler",
+                    "cost": [
+                      {
+                        "value": 12000,
+                        "etd": "2-3",
+                        "note": ""
+                      }
+                    ]
+                  },
+                  {
+                    "service": "YES",
+                    "description": "Yakin Esok Sampai",
+                    "cost": [
+                      {
+                        "value": 20000,
+                        "etd": "1-1",
+                        "note": ""
+                      }
+                    ]
+                  }
+                ],
+                "insurance": null,
+                "source": "api"
+              },
+              {
+                "code": "J&T",
+                "name": "J&T Express",
+                "costs": [
+                  {
+                    "service": "EZ",
+                    "description": "Regular",
+                    "cost": [
+                      {
+                        "value": 11000,
+                        "etd": "2-3",
+                        "note": ""
+                      }
+                    ]
+                  }
+                ],
+                "insurance": null
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "example": ""
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      },
+      "ShippingTrackResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "history": {
+                "type": "array",
+                "description": "Courier tracking events, oldest first. Omitted when `is_return_histories=false`.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "description": "Event time as reported by the courier (format varies per courier).",
+                      "example": "2026-10-08 14:21:00"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Courier's raw status text.",
+                      "example": "DELIVERED"
+                    },
+                    "notes": {
+                      "type": "string",
+                      "example": "Delivered to [BUDI | 08-10-2026 14:21 | BANDUNG]"
+                    }
+                  }
+                }
+              },
+              "delivery_status": {
+                "type": "string",
+                "description": "Normalised delivery status stored on the order.",
+                "enum": [
+                  "processing",
+                  "manifested",
+                  "delivered",
+                  "returned",
+                  "return_started",
+                  "cancelled",
+                  "lost",
+                  "broken",
+                  "failed_pickup",
+                  ""
+                ],
+                "example": "delivered"
+              },
+              "receipt_number_status": {
+                "type": "string",
+                "description": "Status recorded on the receipt number record. Usually mirrors `delivery_status`.",
+                "example": "delivered"
+              },
+              "logistic": {
+                "description": "Logistic record for the order (SLA, pickup and problem-tracking data), or an empty array when none exists. Omitted when `is_return_histories=false`.",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "maxItems": 0
+                  }
+                ]
+              },
+              "delivery_driver": {
+                "type": "string",
+                "description": "Courier driver info when the courier provides it. Not always present."
+              }
+            },
+            "example": {
+              "history": [
+                {
+                  "date": "2026-10-06 09:12:00",
+                  "status": "MANIFESTED",
+                  "notes": "SHIPMENT RECEIVED BY JNE COUNTER OFFICER AT [BANDUNG]"
+                },
+                {
+                  "date": "2026-10-08 14:21:00",
+                  "status": "DELIVERED",
+                  "notes": "DELIVERED TO [BUDI | 08-10-2026 14:21 | BANDUNG]"
+                }
+              ],
+              "delivery_status": "delivered",
+              "receipt_number_status": "delivered",
+              "logistic": []
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Success"
+          },
+          "error_code": {
+            "type": "integer",
+            "description": "0 on success.",
+            "example": 0
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Echo of the `X-Request-Id` header, or a generated UUID.",
+            "example": "0b0d4a0e-6b3a-4a52-9f0b-3f9e4b1b1a1c"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "x-divination-snapshot": {
+    "captured_on": "2026-10-22",
+    "timezone": "Asia/Jakarta",
+    "source_index": "https://developers.orderonline.id/llms.txt",
+    "operation_count": 11,
+    "sources": [
+      {
+        "url": "https://developers.orderonline.id/reference/auth.md",
+        "updated_at": "2026-10-07T07:24:22.000Z",
+        "sha256": "914407029bff2f676b4e9da3f2f377c9f4389e1500aef09086e43821ed0fd40b"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-profile.md",
+        "updated_at": "2026-10-09T03:22:30.000Z",
+        "sha256": "92e953b46674237d6752915831d6b4173dd4bf0ac3a9b149136db558af7339c0"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/orders.md",
+        "updated_at": "2026-08-28T09:55:36.000Z",
+        "sha256": "244b6689eedc3c3c3742eb5c0ebfc66c07e0fbcbcc041acde14818e37dce4c34"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-orders-submission-id.md",
+        "updated_at": "2026-08-28T10:01:06.000Z",
+        "sha256": "841cf76a73f3e4ade5609af0ca0e117567020ab66fc3ec4529b4e80d94c353a1"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/post_v1-orders.md",
+        "updated_at": "2026-10-07T07:24:22.000Z",
+        "sha256": "177253ae0420b32ddcd465c040cfd252f65edd02c39f1c9fe697f223d7869a21"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-products.md",
+        "updated_at": "2026-08-28T10:01:06.000Z",
+        "sha256": "6526eb9248900487feb7cfb4ac18fcdde3d56a05e0c889b0cc7baf3cc0510b79"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-products-product-id.md",
+        "updated_at": "2026-08-28T10:01:06.000Z",
+        "sha256": "3bd5ca2fbf138dde654a5a13e5786f472b5b345766ef1b71121867ea979cf375"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-subdistricts.md",
+        "updated_at": "2026-10-09T03:22:30.000Z",
+        "sha256": "82504a2d3da14f0f36d2e12d1037f07738b9558212be199f95469592560058ba"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-subdistricts-subdistrict-id.md",
+        "updated_at": "2026-10-09T03:22:30.000Z",
+        "sha256": "1f13a6735b904cee3ca9b6ad2a2d58b06471375b90c284465ff8c612663b40a4"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-shipping-cost.md",
+        "updated_at": "2026-10-09T03:22:30.000Z",
+        "sha256": "0c728d817eb617d2a974b3f9707b7073a001f3d03b5a2e5f0c8285491e061e0f"
+      },
+      {
+        "url": "https://developers.orderonline.id/reference/get_v1-shipping-track-submission-id.md",
+        "updated_at": "2026-10-09T03:22:30.000Z",
+        "sha256": "af3ed47eddd90cfbf8b82076a9b2c66b295876357b1b9ef476244ccd629176b8"
+      },
+      {
+        "url": "https://developers.orderonline.id/llms.txt",
+        "sha256": "b8bf9b45fb27c62d8452ac210fd07de142ce05efafc25f61323fd1e41d06589f"
+      },
+      {
+        "url": "https://developers.orderonline.id/docs/getting-started.md",
+        "sha256": "73b2bef893da23745b6646752f73a6887bfa44f6302e4b581438ac1a131fc479"
+      },
+      {
+        "url": "https://developers.orderonline.id/docs/webhooks.md",
+        "sha256": "c76da24034079fb5489c95a7ec0b7d7c53c395888562e9338e08875a767cd699"
+      }
+    ],
+    "notes": [
+      "Only endpoint OpenAPI definitions are consolidated here; guide and webhook analysis are in reference.md.",
+      "No real credentials or account data were used.",
+      "Unspecified behavior must not be treated as an API guarantee."
+    ]
+  }
+}

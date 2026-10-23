@@ -158,6 +158,12 @@ src/
 └── middleware.ts        # Auth route protection
 ```
 
+## Integration References
+
+- [OrderOnline API reference and saved endpoint contracts](docs/integrations/orderonline/reference.md)
+- [Connected Apps setup and runtime secrets](docs/integrations/orderonline/setup.md)
+- [Connected Apps implementation plan](docs/architecture/connected-apps-implementation-plan.md) — Settings, multiple encrypted API keys, shared admin/developer access.
+
 ## Branch Strategy
 
 | Branch | Purpose |

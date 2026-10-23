@@ -10,6 +10,7 @@ import {
     LogOut,
     Loader2,
     Smile,
+    Plug,
     X,
 } from "lucide-react"
 
@@ -159,6 +160,15 @@ export function SettingsClient({ profile, facebookConnection }: SettingsClientPr
                 {/* Menu Items */}
                 <Card className="border-none shadow-sm mb-4">
                     <CardContent className="p-0">
+                        {(profile.role === 'admin' || profile.role === 'developer') && (
+                            <Link href="/settings/connected-apps" className="flex items-center justify-between border-b border-border p-4 transition-colors hover:bg-accent">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15"><Plug className="h-5 w-5 text-primary" /></div>
+                                    <div><p className="font-medium text-foreground">Connected Apps</p><p className="text-xs text-muted-foreground">Kelola koneksi aplikasi dan API key</p></div>
+                                </div>
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                            </Link>
+                        )}
                         {/* Facebook Connect */}
                         <div className="border-b border-border p-4">
                             <div className="flex items-center justify-between gap-3">
