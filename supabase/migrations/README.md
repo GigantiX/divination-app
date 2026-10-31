@@ -27,6 +27,7 @@ This directory contains SQL migration files for the Divination Dashboard databas
 | `20260910_password_reset_tokens.sql` | Adds secure, expiring password-reset tokens and an atomic reset function |
 | `20260918_add_orderonline_connections.sql` | Historical schema for the retired OrderOnline browser connection flow |
 | `20260918_add_participant_attendance.sql` | Historical schema for the retired Participant Attendance feature |
+| `20261031042347_add_seminar_schedules.sql` | Event-scoped Schedule Manager with separate draft/published documents and server-only access |
 
 ## Retired Participant Attendance schema
 
