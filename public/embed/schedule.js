@@ -1,4 +1,4 @@
-/* Divination Schedule Widget v1. Native DOM + Shadow DOM; no framework required. */
+/* Divination Schedule Widget v2. Native DOM + Shadow DOM; no framework required. */
 ;(function () {
     'use strict'
     if (window.DivinationSchedules) { window.DivinationSchedules.scan(); return }
@@ -25,6 +25,15 @@
         .cta[aria-disabled="true"]{background:#5d626b;color:#fff;cursor:default;box-shadow:none;transform:none;filter:none}
         @container (min-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grid .city{padding:28px 22px}.grid .city h3{font-size:28px}.grid .date,.grid .time{font-size:21px}.grid .venue{font-size:20px}}
         @keyframes dv-arrow{0%,100%{transform:translateY(-5px);opacity:.6}50%{transform:translateY(6px);opacity:1}}@keyframes dv-pulse{0%,100%{box-shadow:0 0 0 0 #ff000000}50%{box-shadow:0 0 0 7px #ff000020}}
+        .city{position:relative;text-align:var(--align,center);border-style:var(--border-style,solid);box-shadow:var(--card-shadow,0 2px 12px #0000000a)}.city-header{margin-bottom:22px}.city-header h3{margin-bottom:0}.city-index,.city-kicker,.date-stamp{display:none}.session-body{min-width:0}.city-prefix{display:inline}.city-title{min-width:0}.cta{border:2px solid transparent;border-radius:var(--cta-radius,max(6px,var(--radius)))}
+        .widget[data-button="outline"] .cta:not(:disabled):not([aria-disabled="true"]){background:transparent;color:var(--accent);border-color:var(--accent);box-shadow:none}
+        .widget[data-template="ticket"] .city{overflow:hidden;border-top:6px solid var(--accent)}.widget[data-template="ticket"] .city-header{border-bottom:1px dashed currentColor;padding-bottom:20px}.widget[data-template="ticket"] .city-prefix{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.65;margin-bottom:5px}.widget[data-template="ticket"] .city h3{font-size:clamp(24px,5cqi,32px)}.widget[data-template="ticket"] .city::after{content:"";position:absolute;top:112px;left:-10px;width:20px;height:20px;border-radius:50%;background:var(--bg)}
+        .widget[data-template="ticket"] .session,.widget[data-template="editorial"] .session{display:grid;grid-template-columns:58px minmax(0,1fr);gap:18px}.widget[data-template="ticket"] .date-stamp,.widget[data-template="editorial"] .date-stamp{display:flex;flex-direction:column;align-items:center;justify-content:center;align-self:start;border:1px solid currentColor;border-radius:10px;padding:12px 4px;color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.08em}.date-stamp strong{font-size:32px;line-height:1.1;letter-spacing:-.05em}.date-stamp span{margin-top:4px}.widget[data-template="ticket"] .date,.widget[data-template="editorial"] .date{font-size:16px}.widget[data-template="ticket"] .time,.widget[data-template="editorial"] .time{font-size:19px}.widget[data-template="ticket"] .venue,.widget[data-template="editorial"] .venue{font-size:18px}.widget[data-template="ticket"] .cta{width:100%;font-size:15px}.widget[data-template="ticket"] .session+.session{border-top-style:dashed}
+        .widget[data-template="editorial"] .city-header{padding-bottom:24px;border-bottom:3px double currentColor}.widget[data-template="editorial"] .city-prefix{display:block;font-family:Verdana,sans-serif;text-transform:uppercase;font-size:10px;letter-spacing:.25em;margin-bottom:12px}.widget[data-template="editorial"] .city h3{font-size:clamp(30px,6cqi,48px);font-weight:500;letter-spacing:-.045em}.widget[data-template="editorial"] .date-stamp{border-radius:0;border-width:0 0 2px;padding-top:0}.widget[data-template="editorial"] .date-stamp strong{font-size:42px;font-weight:400}.widget[data-template="editorial"] .session-name{letter-spacing:.17em;font-size:10px}.widget[data-template="editorial"] .cta{font-family:Verdana,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:12px;min-height:46px;padding:10px 18px}
+        .widget[data-template="spotlight"] .city{overflow:hidden}.widget[data-template="spotlight"] .city-header{display:flex;align-items:center;gap:20px;padding-bottom:24px;border-bottom:1px solid #80808040}.widget[data-template="spotlight"] .city-index{display:block;font-size:64px;font-weight:900;letter-spacing:-.08em;line-height:1;color:transparent;-webkit-text-stroke:1px var(--accent);opacity:.8;flex-shrink:0}.widget[data-template="spotlight"] .city-kicker{display:block;margin-bottom:8px;color:var(--accent);font-size:10px;letter-spacing:.23em}.widget[data-template="spotlight"] .city-prefix{display:none}.widget[data-template="spotlight"] h3{font-size:clamp(24px,5cqi,34px);letter-spacing:-.04em}.widget[data-template="spotlight"] .session-name{display:inline-block;color:var(--accent);border:1px solid currentColor;border-radius:99px;padding:4px 12px;font-size:10px}.widget[data-template="spotlight"] .date{margin-top:10px}.widget[data-template="spotlight"] .cta{width:100%}
+        .widget[data-template="timeline"] .city-header{border-bottom:1px solid #80808030;padding-bottom:20px}.widget[data-template="timeline"] .city-prefix{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.2em;margin-bottom:6px;color:var(--accent)}.widget[data-template="timeline"] h3{font-size:clamp(26px,5cqi,36px);letter-spacing:-.045em}.widget[data-template="timeline"] .session{position:relative;padding-left:26px;border-left:2px solid var(--accent);padding-bottom:8px}.widget[data-template="timeline"] .session::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;border:3px solid var(--accent);border-radius:50%;background:var(--card)}.widget[data-template="timeline"] .session+.session{border-top:0;margin-top:0;padding-top:32px}.widget[data-template="timeline"] .session+.session::before{top:38px}.widget[data-template="timeline"] .date{font-size:20px}.widget[data-template="timeline"] .time{font-size:18px;font-weight:500}.widget[data-template="timeline"] .venue{font-size:19px}.widget[data-template="timeline"] .session-name{color:var(--accent);font-size:10px}
+        .widget[data-template="minimal"] .city-header{border-left:4px solid var(--accent);padding-left:18px}.widget[data-template="minimal"] h3{font-size:30px;letter-spacing:-.05em}.widget[data-template="minimal"] .city-prefix{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.2em;opacity:.6;margin-bottom:6px}.widget[data-template="minimal"] .date{font-size:20px}.widget[data-template="minimal"] .time{font-size:19px;font-weight:500}.widget[data-template="warm"] .city-header{padding:12px 0 22px;border-bottom:1px solid #80808030}.widget[data-template="warm"] .city-prefix{display:block;font-size:14px;font-style:italic;font-weight:400;margin-bottom:6px}.widget[data-template="warm"] h3{font-size:36px;font-weight:500}.widget[data-template="warm"] .date{font-size:22px;font-weight:400}
+        @container(max-width:380px){.widget[data-template="ticket"] .session,.widget[data-template="editorial"] .session{grid-template-columns:42px minmax(0,1fr);gap:12px}.widget[data-template="ticket"] .date-stamp strong{font-size:27px}.widget[data-template="spotlight"] .city-header{gap:14px}.widget[data-template="spotlight"] .city-index{font-size:46px}.widget[data-template="ticket"] .cta{padding:12px 10px}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}`
 
     function element(tag, className, text) {
@@ -92,6 +101,14 @@
         var disposed = false, intervals = [], animations = [], timerChecks = [], buttons = []
         var root = shadow(host), widget = element('section', 'widget'), inner = element('div', 'inner')
         var theme = doc.theme
+        widget.dataset.template = theme.preset || 'classic'
+        widget.dataset.button = theme.buttonStyle || 'solid'
+        var shadows = { none: 'none', soft: '0 8px 28px #0000000d', bold: '0 18px 44px #00000030' }
+        widget.style.setProperty('--align', theme.alignment || 'center')
+        widget.style.setProperty('--border-style', theme.border || 'solid')
+        widget.style.setProperty('--card-shadow', shadows[theme.shadow] || shadows.soft)
+        if (theme.buttonStyle === 'pill') widget.style.setProperty('--cta-radius', '99px')
+
         var fonts = { sans: '"Trebuchet MS",Verdana,sans-serif', serif: 'Georgia,"Times New Roman",serif', rounded: '"Arial Rounded MT Bold","Trebuchet MS",sans-serif' }
         Object.entries({ '--bg': theme.background, '--card': theme.card, '--ink': theme.text, '--accent': theme.accent, '--button': theme.buttonText, '--radius': theme.radius + 'px', '--gap': theme.gap + 'px', '--width': theme.maxWidth + 'px', '--font': fonts[theme.font] || fonts.sans }).forEach(function (entry) { widget.style.setProperty(entry[0], entry[1]) })
         widget.setAttribute('aria-label', doc.heading || 'Jadwal seminar')
@@ -177,14 +194,23 @@
             cities.forEach(function (city) { city.sessions.sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time) }) })
             cities.sort(function (a, b) { return (a.sessions[0].date + a.sessions[0].time).localeCompare(b.sessions[0].date + b.sessions[0].time) })
         }
-        cities.forEach(function (city) {
-            var card = element('article', 'city'); card.append(element('h3', '', (doc.cityPrefix ? doc.cityPrefix + ' ' : '') + (city.name || 'Nama kota')))
+        cities.forEach(function (city, cityIndex) {
+            var card = element('article', 'city'), header = element('header', 'city-header'), title = element('h3'), titleBlock = element('div', 'city-title')
+            if (doc.cityPrefix) title.append(element('span', 'city-prefix', doc.cityPrefix + ' '))
+            title.append(element('span', 'city-name', city.name || 'Nama kota'))
+            var ordinal = element('span', 'city-index', String(cityIndex + 1).padStart(2, '0')); ordinal.setAttribute('aria-hidden', 'true')
+            titleBlock.append(element('p', 'city-kicker', 'SEMINAR / ' + String(cityIndex + 1).padStart(2, '0')), title)
+            header.append(ordinal, titleBlock); card.append(header)
             city.sessions.forEach(function (session, index) {
-                var block = element('div', 'session')
-                if (session.name || city.sessions.length > 1) block.append(element('p', 'session-name', session.name || 'Sesi ' + (index + 1)))
-                block.append(element('p', 'date', dateLabel(session.date)), element('p', 'time', session.time ? 'Jam ' + session.time.replace(':', '.') + (session.endTime ? ' – ' + session.endTime.replace(':', '.') : '') + ' ' + zones[session.timezone] : 'Jam belum diisi'), element('p', 'venue', session.venue || 'Venue belum diisi'))
-                if (session.address) block.append(element('p', 'address', session.address))
-                var sessionClosed = timer(session.countdown, session.id, block)
+                var block = element('div', 'session'), body = element('div', 'session-body'), stamp = element('div', 'date-stamp')
+                stamp.setAttribute('aria-hidden', 'true')
+                var stampDate = new Date(session.date + 'T12:00:00Z')
+                stamp.append(element('strong', '', session.date ? session.date.slice(8) : '—'), element('span', '', Number.isFinite(stampDate.getTime()) ? new Intl.DateTimeFormat('id-ID', { month: 'short', timeZone: 'UTC' }).format(stampDate).toUpperCase() : 'TGL'))
+                block.append(stamp, body)
+                if (session.name || city.sessions.length > 1) body.append(element('p', 'session-name', session.name || 'Sesi ' + (index + 1)))
+                body.append(element('p', 'date', dateLabel(session.date)), element('p', 'time', session.time ? 'Jam ' + session.time.replace(':', '.') + (session.endTime ? ' – ' + session.endTime.replace(':', '.') : '') + ' ' + zones[session.timezone] : 'Jam belum diisi'), element('p', 'venue', session.venue || 'Venue belum diisi'))
+                if (session.address) body.append(element('p', 'address', session.address))
+                var sessionClosed = timer(session.countdown, session.id, body)
                 var seats = session.seats, remaining = seats.mode === 'actual' ? Math.max(0, seats.capacity - seats.booked) : seats.remaining
                 if (seats.mode !== 'off') {
                     var seatBlock = element('div', 'seats', template(seats.label, city.name, session.name, remaining))
@@ -193,7 +219,7 @@
                         meter.setAttribute('role', 'meter'); meter.setAttribute('aria-label', 'Kursi tersisa'); meter.setAttribute('aria-valuemin', '0'); meter.setAttribute('aria-valuemax', String(seats.capacity)); meter.setAttribute('aria-valuenow', String(remaining))
                         fill.style.width = Math.min(100, Math.max(0, remaining / seats.capacity * 100)) + '%'; meter.append(fill); seatBlock.append(meter)
                     }
-                    block.append(seatBlock)
+                    body.append(seatBlock)
                 }
                 var soldOut = session.status === 'sold_out' || (seats.mode === 'actual' && remaining === 0)
                 var blocked = soldOut || session.status !== 'open' || (!options.preview && !safeUrl(session.checkoutUrl))
@@ -216,7 +242,7 @@
                     })
                 } else { button.type = 'button'; button.disabled = blocked; if (options.preview) button.title = 'Preview — link pendaftaran tidak dibuka' }
                 buttons.push({ node: button, blocked: blocked, label: openLabel, closedLabel: closedLabel, isClosed: sessionClosed, expiryText: session.countdown && session.countdown.expiredText })
-                block.append(button); card.append(block)
+                body.append(button); card.append(block)
             })
             cityList.append(card)
         })

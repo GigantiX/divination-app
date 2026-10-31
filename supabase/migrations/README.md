@@ -28,6 +28,7 @@ This directory contains SQL migration files for the Divination Dashboard databas
 | `20260918_add_orderonline_connections.sql` | Historical schema for the retired OrderOnline browser connection flow |
 | `20260918_add_participant_attendance.sql` | Historical schema for the retired Participant Attendance feature |
 | `20261031042347_add_seminar_schedules.sql` | Event-scoped Schedule Manager with separate draft/published documents and server-only access |
+| `20261031073357_personalize_seminar_schedules.sql` | Account-owned Schedule Manager index and server-side DELETE grant |
 
 ## Retired Participant Attendance schema
 

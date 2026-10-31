@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildTrackedUrl, duplicateCity, newScheduleDocument, newSession } from './model'
 import type { ScheduleDocument } from './types'
+import { applyTemplate, SCHEDULE_TEMPLATES } from './templates'
 import '../../../public/embed/schedule.js'
 
 let cleanup: (() => void) | undefined
@@ -22,6 +23,18 @@ beforeEach(() => {
 afterEach(() => { cleanup?.(); cleanup = undefined; document.body.replaceChildren(); vi.useRealTimers(); vi.unstubAllGlobals() })
 
 describe('standalone Elementor schedule widget', () => {
+    it.each(SCHEDULE_TEMPLATES)('renders $name without changing session links or text', template => {
+        const doc = fixture()
+        doc.theme = { ...applyTemplate(doc.theme, template.id), accent: '#123456', buttonStyle: 'outline' }
+        const { root } = mount(doc)
+        const widget = root.querySelector<HTMLElement>('.widget')!
+        expect(widget.dataset.template).toBe(template.id)
+        expect(widget.dataset.button).toBe('outline')
+        expect(widget.style.getPropertyValue('--accent')).toBe('#123456')
+        expect(root.querySelector('.date-stamp')!.getAttribute('aria-hidden')).toBe('true')
+        expect(root.querySelector('.date')!.textContent).toContain('7 November 2026')
+        expect(root.querySelector('a.cta')!.getAttribute('href')).toContain('product=1')
+    })
     it('renders each session with its own checkout link and the parent LP tracking', () => {
         const doc = fixture(), second = newSession()
         Object.assign(second, { date: '2026-11-08', time: '08:00', venue: 'Hotel Malang', checkoutUrl: 'https://checkout.orderonline.id/malang-2?product=2' })
