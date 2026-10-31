@@ -25,6 +25,34 @@ This directory contains SQL migration files for the Divination Dashboard databas
 | `20260522_add_facebook_access_token.sql` | Adds access token and expiration columns to `oauth_identities` |
 | `20260603_budget_requests.sql` | Creates the `budget_requests` table and its status enum |
 | `20260910_password_reset_tokens.sql` | Adds secure, expiring password-reset tokens and an atomic reset function |
+| `20260918_add_orderonline_connections.sql` | Historical schema for the retired OrderOnline browser connection flow |
+| `20260918_add_participant_attendance.sql` | Historical schema for the retired Participant Attendance feature |
+| `20261031042347_add_seminar_schedules.sql` | Event-scoped Schedule Manager with separate draft/published documents and server-only access |
+
+## Retired Participant Attendance schema
+
+Participant Attendance and its browser-based OrderOnline runner were removed from
+the application on 2026-10-10. The standalone OrderOnline CSV importer in Lead
+Database remains in use, including `lead_orders` and its migration.
+
+Keep the two historical `20260918` migration files unchanged. Removing application
+code does not require reverting database migrations. Existing tables
+`attendance_imports`, `attendance_participants`, `attendance_checkins`, and
+`orderonline_connections` are retained for now; this retirement does not apply any
+remote schema changes or delete database records. The original migrations enable
+RLS and scope access to the event team or connection owner/admin.
+
+If the replacement flow makes these tables unnecessary, retire them through a
+new forward migration after reviewing database dependencies and backing up any
+remaining data. Drop dependent tables before their parents and avoid `CASCADE`,
+so unexpected dependencies cause the migration to stop rather than removing
+unrelated objects. Preserve shared tables and functions such as `leads`,
+`lead_orders`, `events`, `profiles`, `has_event_access`, and
+`trigger_set_timestamp`.
+
+Do not use `supabase migration repair --status reverted` to remove this feature:
+that command changes migration tracking only and does not undo SQL. See the
+[Supabase migration workflow](https://supabase.com/docs/guides/deployment/database-migrations).
 
 ## Running Migrations
 

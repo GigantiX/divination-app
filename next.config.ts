@@ -4,6 +4,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""
 const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : ""
 
 const nextConfig: NextConfig = {
+    // Next.js development logs include Server Function arguments by default.
+    // Connected Apps submits API keys through these functions.
+    logging: { serverFunctions: false },
     images: {
         unoptimized: true,
         remotePatterns: [

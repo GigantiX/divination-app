@@ -36,7 +36,9 @@ import {
     getLeadStats,
     getAllEventsForFilter,
     getBatchesForEvent,
+    updateLeadOrderAttendee,
     type Lead,
+    type LeadOrder,
 } from "@/app/actions/lead-database"
 import { ExportModal } from "./export-modal"
 
@@ -57,6 +59,52 @@ function formatDate(dateStr: string): string {
         month: "short",
         year: "numeric",
     })
+}
+
+function LeadOrderAttendeeEditor({ order }: { order: LeadOrder }) {
+    const [values, setValues] = React.useState({
+        ticket_code: order.ticket_code || '',
+        attendee_name: order.attendee_name || '',
+        attendee_email: order.attendee_email || '',
+        attendee_phone: order.attendee_phone || '',
+    })
+    const [saving, setSaving] = React.useState(false)
+    const [message, setMessage] = React.useState('')
+
+    async function save() {
+        setSaving(true)
+        setMessage('')
+        const result = await updateLeadOrderAttendee(order.id, values)
+        setMessage(result.success ? 'Data peserta tersimpan.' : result.error || 'Gagal menyimpan.')
+        setSaving(false)
+    }
+
+    return (
+        <div className="mt-3 border-t border-border pt-3">
+            <p className="mb-2 text-xs font-semibold text-foreground">Data peserta & tiket (opsional)</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+                {([
+                    ['ticket_code', 'Kode tiket'],
+                    ['attendee_name', 'Nama peserta'],
+                    ['attendee_email', 'Email peserta'],
+                    ['attendee_phone', 'Telepon peserta'],
+                ] as const).map(([key, label]) => (
+                    <label key={key} className="text-xs text-muted-foreground">
+                        {label}
+                        <input className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground"
+                            value={values[key]}
+                            onChange={event => setValues(previous => ({ ...previous, [key]: event.target.value }))} />
+                    </label>
+                ))}
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2">
+                <span className={cn('text-xs', message.includes('tersimpan') ? 'text-success' : 'text-destructive')}>{message}</span>
+                <Button type="button" size="sm" variant="outline" onClick={save} disabled={saving}>
+                    {saving ? 'Menyimpan...' : 'Simpan peserta'}
+                </Button>
+            </div>
+        </div>
+    )
 }
 
 // =====================================================
@@ -591,6 +639,48 @@ export function LeadDatabaseClient() {
                                         </div>
                                     </div>
 
+                                    {/* OrderOnline orders stay separate even when buyer phone matches. */}
+                                    <div>
+                                        <div className="mb-3 flex items-center gap-2">
+                                            <Download className="h-4 w-4 text-muted-foreground" />
+                                            <h4 className="text-sm font-semibold text-foreground">Pesanan OrderOnline ({selectedLead.orders?.length || 0})</h4>
+                                        </div>
+                                        {!selectedLead.orders?.length ? (
+                                            <p className="text-xs text-muted-foreground">Belum ada pesanan yang diimpor untuk lead ini.</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {selectedLead.orders.map(order => (
+                                                    <div key={order.id} className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                                            <span className="font-semibold text-foreground">#{order.order_id}</span>
+                                                            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium',
+                                                                order.payment_status?.toLowerCase() === 'paid'
+                                                                    ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning')}
+                                                            >Pembayaran: {order.payment_status || 'Belum diketahui'}</span>
+                                                        </div>
+                                                        <p className="mt-2 font-medium text-foreground">{order.product_name || 'Produk tidak tercatat'}{order.quantity > 1 ? ` × ${order.quantity}` : ''}</p>
+                                                        <p className="mt-1 text-xs text-muted-foreground">Status pesanan: {order.order_status || 'Belum diketahui'} · Metode: {order.payment_method || '—'}</p>
+                                                        <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                                                            <span>Nama pembeli</span><span className="text-foreground">{order.customer_name}</span>
+                                                            <span>Email</span><span className="break-all text-foreground">{order.customer_email || '—'}</span>
+                                                            <span>Telepon</span><span className="text-foreground">{order.customer_phone}</span>
+                                                            <span>Alamat</span><span className="text-foreground">{[order.address, order.subdistrict, order.city, order.province, order.zip].filter(Boolean).join(', ') || '—'}</span>
+                                                            <span>Kode produk</span><span className="text-foreground">{order.product_code || '—'}</span>
+                                                            <span>Harga produk</span><span className="text-foreground">{order.product_price == null ? '—' : `Rp ${Number(order.product_price).toLocaleString('id-ID')}`}</span>
+                                                            <span>Diskon</span><span className="text-foreground">{order.discount == null ? '—' : `Rp ${Number(order.discount).toLocaleString('id-ID')}`}</span>
+                                                            <span>Pendapatan kotor</span><span className="text-foreground">{order.gross_revenue == null ? '—' : `Rp ${Number(order.gross_revenue).toLocaleString('id-ID')}`}</span>
+                                                            <span>Pendapatan bersih</span><span className="text-foreground">{order.net_revenue == null ? '—' : `Rp ${Number(order.net_revenue).toLocaleString('id-ID')}`}</span>
+                                                            <span>Dibuat</span><span className="text-foreground">{order.order_created_at ? formatDate(order.order_created_at) : '—'}</span>
+                                                            <span>Dibayar</span><span className="text-foreground">{order.paid_at ? formatDate(order.paid_at) : '—'}</span>
+                                                            <span>Selesai</span><span className="text-foreground">{order.completed_at ? formatDate(order.completed_at) : '—'}</span>
+                                                        </div>
+                                                        <LeadOrderAttendeeEditor order={order} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {/* Event History */}
                                     <div>
                                         <div className="flex items-center gap-2 mb-3">
@@ -692,7 +782,7 @@ export function LeadDatabaseClient() {
                                                             Hapus lead ini?
                                                         </p>
                                                         <p className="mt-1 text-xs text-destructive">
-                                                            Lead <strong>{selectedLead?.primary_name}</strong> dan semua riwayat event-nya akan dihapus permanen.
+                                                            Lead <strong>{selectedLead?.primary_name}</strong>, riwayat event, dan semua pesanan terkait akan dihapus permanen.
                                                         </p>
                                                         <div className="mt-3 flex items-center gap-2">
                                                             <Button

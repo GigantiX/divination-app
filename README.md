@@ -158,6 +158,13 @@ src/
 └── middleware.ts        # Auth route protection
 ```
 
+## Integration References
+
+- [Schedule Manager: event schedules, Elementor embeds, and tracking](docs/apps/schedule-manager.md)
+- [OrderOnline API reference and saved endpoint contracts](docs/integrations/orderonline/reference.md)
+- [Connected Apps setup and runtime secrets](docs/integrations/orderonline/setup.md)
+- [Connected Apps implementation plan](docs/architecture/connected-apps-implementation-plan.md) — Settings, multiple encrypted API keys, shared admin/developer access.
+
 ## Branch Strategy
 
 | Branch | Purpose |

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { WalletCards, Database, ChevronRight, Clock3, Settings2, Wrench, Calendar, ClipboardCheck } from "lucide-react"
+import { WalletCards, Database, ChevronRight, Clock3, Settings2, Wrench, Calendar, CalendarDays } from "lucide-react"
 
 import { NavigationLayout } from "@/components/ui/nav-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -49,10 +49,10 @@ const features: Feature[] = [
         iconBg: "bg-primary/15",
     },
     {
-        id: "participant-attendance",
-        title: "Participant Attendance",
-        description: "Import peserta dan catat kehadiran event",
-        icon: ClipboardCheck,
+        id: "schedule-manager",
+        title: "Schedule Manager",
+        description: "Kelola jadwal seminar dan embed ke landing page",
+        icon: CalendarDays,
         iconColor: "text-success",
         iconBg: "bg-success/15",
     },
@@ -106,8 +106,8 @@ export function AppsClient({ profile }: AppsClientProps) {
                                 : "/apps/lead-database/upload"
                         } else if (feature.id === "event-calendar") {
                             featureHref = "/apps/event-calendar"
-                        } else if (feature.id === "participant-attendance") {
-                            featureHref = "/apps/participant-attendance"
+                        } else if (feature.id === "schedule-manager") {
+                            featureHref = "/apps/schedule-manager"
                         }
 
                         // Render as a link if the feature has a route
