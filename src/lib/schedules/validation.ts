@@ -1,4 +1,6 @@
 import { TIMEZONES } from './model'
+import { THEME_PRESETS } from './templates'
+import type { ScheduleTemplate } from './types'
 import type { CountdownSettings, ScheduleDocument } from './types'
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -122,10 +124,14 @@ export function validateScheduleDocument(value: unknown, publish = false): Sched
         emptyMessage: text(input.emptyMessage, 'Pesan jadwal kosong', 300), cityPrefix: text(input.cityPrefix, 'Awalan judul kota', 60),
         hidePast: bool(input.hidePast), sort: oneOf(input.sort, ['manual', 'date'], 'Urutan kota'), cities,
         theme: {
-            preset: oneOf(theme.preset, ['classic', 'minimal', 'warm'], 'Template'), background: color(theme.background), card: color(theme.card),
+            preset: oneOf(theme.preset, Object.keys(THEME_PRESETS) as ScheduleTemplate[], 'Template'), background: color(theme.background), card: color(theme.card),
             text: color(theme.text), accent: color(theme.accent), buttonText: color(theme.buttonText),
             font: oneOf(theme.font, ['sans', 'serif', 'rounded'], 'Font'), layout: oneOf(theme.layout, ['stack', 'grid'], 'Layout'),
             radius: number(theme.radius, 0, 32, 'Radius kartu'), gap: number(theme.gap, 12, 64, 'Jarak kartu'), maxWidth: number(theme.maxWidth, 360, 1400, 'Lebar widget'),
+            alignment: oneOf(theme.alignment ?? 'center', ['left', 'center'] as const, 'Perataan teks'),
+            shadow: oneOf(theme.shadow ?? 'soft', ['none', 'soft', 'bold'] as const, 'Bayangan kartu'),
+            border: oneOf(theme.border ?? 'solid', ['none', 'solid', 'dashed'] as const, 'Garis kartu'),
+            buttonStyle: oneOf(theme.buttonStyle ?? 'solid', ['solid', 'outline', 'pill'] as const, 'Gaya tombol'),
         },
         cta: {
             label: text(cta.label, 'Teks CTA', 120), soldOutLabel: text(cta.soldOutLabel, 'Label sold out', 120), closedLabel: text(cta.closedLabel, 'Label ditutup', 120),

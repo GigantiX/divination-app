@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ScheduleEditor } from './schedule-editor'
 import { ScheduleManagerClient } from './schedule-manager-client'
-import { changeScheduleStatus, duplicateSchedule, saveSchedule } from '@/app/actions/schedules'
+import { changeScheduleStatus, deleteSchedule, duplicateSchedule, saveSchedule } from '@/app/actions/schedules'
 import { newScheduleDocument } from '@/lib/schedules/model'
 import type { ScheduleDocument, ScheduleRecord } from '@/lib/schedules/types'
 
 const navigation = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => navigation, usePathname: () => '/apps/schedule-manager' }))
 vi.mock('@/components/ui/nav-layout', () => ({ NavigationLayout: ({ children }: { children: React.ReactNode }) => <main>{children}</main> }))
-vi.mock('@/app/actions/schedules', () => ({ saveSchedule: vi.fn(), duplicateSchedule: vi.fn(), changeScheduleStatus: vi.fn() }))
+vi.mock('@/app/actions/schedules', () => ({ saveSchedule: vi.fn(), deleteSchedule: vi.fn(), duplicateSchedule: vi.fn(), changeScheduleStatus: vi.fn() }))
 vi.mock('./schedule-preview', () => ({
-    SchedulePreview: ({ document }: { document: ScheduleDocument }) => <output data-testid="preview">{document.cities.length} kota / {document.cities.reduce((total, city) => total + city.sessions.length, 0)} sesi / {document.cta.label}</output>,
+    SchedulePreview: ({ document }: { document: ScheduleDocument }) => <output data-testid="preview">{document.cities.length} kota / {document.cities.reduce((total, city) => total + city.sessions.length, 0)} sesi / {document.cta.label} / {document.theme.preset} / {document.theme.accent}</output>,
     EmbedDialog: () => <div>Kode embed schedule</div>,
 }))
 
@@ -66,13 +66,35 @@ describe('Schedule Manager editor flow', () => {
         expect(vi.mocked(saveSchedule).mock.calls[0][0].publish).toBe(true)
     })
 
-    it('gives advertisers a read-only editor and keeps preview available', () => {
+    it('keeps fields disabled when the editor is explicitly read-only', () => {
         const schedule = record()
         render(<ScheduleEditor profile={{ ...profile, role: 'user' }} events={events} initialDocument={schedule.document} initialSchedule={schedule} canManage={false} />)
         expect(screen.getByLabelText(/^Nama schedule/)).toBeDisabled()
         expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument()
         expect(screen.queryByRole('button', { name: 'Simpan draft' })).not.toBeInTheDocument()
         expect(screen.getByTestId('preview')).toBeInTheDocument()
+    })
+
+    it('lets a regular account edit and delete its own schedule', async () => {
+        const schedule = record()
+        vi.mocked(deleteSchedule).mockResolvedValue({ success: true, data: { id: ID } })
+        render(<ScheduleEditor profile={{ ...profile, role: 'user' }} events={events} initialDocument={schedule.document} initialSchedule={schedule} canManage />)
+        expect(screen.getByRole('button', { name: 'Simpan draft' })).toBeEnabled()
+        fireEvent.click(screen.getByRole('button', { name: 'Hapus schedule' }))
+        await waitFor(() => expect(deleteSchedule).toHaveBeenCalledWith(ID, 1))
+        expect(navigation.push).toHaveBeenCalledWith(`/apps/schedule-manager?event=${EVENT}`)
+    })
+
+    it('selects a structural template, customizes its color, and restores its defaults', () => {
+        render(<ScheduleEditor profile={profile} events={events} defaultEventId={EVENT} initialDocument={newScheduleDocument()} canManage />)
+        fireEvent.click(screen.getByRole('tab', { name: 'Tampilan' }))
+        expect(screen.getAllByRole('button', { name: /^Pilih template/ })).toHaveLength(7)
+        fireEvent.click(screen.getByRole('button', { name: 'Pilih template The Editorial' }))
+        expect(screen.getByTestId('preview')).toHaveTextContent('editorial / #586337')
+        fireEvent.change(screen.getByLabelText('Aksen & tombol'), { target: { value: '#123456' } })
+        expect(screen.getByTestId('preview')).toHaveTextContent('editorial / #123456')
+        fireEvent.click(screen.getByRole('button', { name: 'Reset gaya' }))
+        expect(screen.getByTestId('preview')).toHaveTextContent('editorial / #586337')
     })
 
     it('restores an archived schedule as a draft before editing', async () => {
@@ -89,6 +111,18 @@ describe('Schedule Manager editor flow', () => {
 describe('event grouping and schedule detail', () => {
     const schedule = record()
     const overview = { success: true as const, data: { events, schedules: [{ ...schedule, cityCount: 2, sessionCount: 3, cityNames: ['Malang', 'Mojokerto'] }] } }
+    it('shows an empty home with a plus action instead of events without schedules', () => {
+        render(<ScheduleManagerClient profile={{ ...profile, role: 'user' }} overview={{ success: true, data: { events, schedules: [] } }} />)
+        expect(screen.getByText('Belum ada jadwal')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'Create jadwal pertama' })).toHaveAttribute('href', '/apps/schedule-manager/new')
+        expect(screen.queryByRole('link', { name: /Seminar Properti/ })).not.toBeInTheDocument()
+    })
+    it('hides catalog-only events and counts only supplied account-owned schedules', () => {
+        const catalog = [...events, { id: ID, name: 'Seminar Lain', logoUrl: null, canManage: true }]
+        render(<ScheduleManagerClient profile={profile} overview={{ ...overview, data: { ...overview.data, events: catalog } }} />)
+        expect(screen.getByRole('link', { name: /Seminar Properti/ })).toHaveTextContent('1 schedule')
+        expect(screen.queryByRole('link', { name: /Seminar Lain/ })).not.toBeInTheDocument()
+    })
     it('shows existing events and schedule counts on the start page', () => {
         render(<ScheduleManagerClient profile={profile} overview={overview} />)
         expect(screen.getByRole('link', { name: /Seminar Properti/ })).toHaveAttribute('href', `/apps/schedule-manager?event=${EVENT}`)

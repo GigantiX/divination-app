@@ -1,16 +1,12 @@
 import type { CountdownSettings, ScheduleCity, ScheduleDocument, ScheduleSession, ScheduleTimezone } from './types'
+import { THEME_PRESETS } from './templates'
+export { THEME_PRESETS } from './templates'
 
 export const TIMEZONES: { value: ScheduleTimezone; label: string; offset: string }[] = [
     { value: 'Asia/Jakarta', label: 'WIB', offset: '+07:00' },
     { value: 'Asia/Makassar', label: 'WITA', offset: '+08:00' },
     { value: 'Asia/Jayapura', label: 'WIT', offset: '+09:00' },
 ]
-
-export const THEME_PRESETS: Record<ScheduleDocument['theme']['preset'], Pick<ScheduleDocument['theme'], 'background' | 'card' | 'text' | 'accent' | 'buttonText' | 'radius'>> = {
-    classic: { background: '#040f2b', card: '#f5f7fc', text: '#08235f', accent: '#ff1616', buttonText: '#ffffff', radius: 4 },
-    minimal: { background: '#f0f4f8', card: '#ffffff', text: '#132b40', accent: '#126b60', buttonText: '#ffffff', radius: 20 },
-    warm: { background: '#f3eadb', card: '#fffaf2', text: '#4b3026', accent: '#b44426', buttonText: '#ffffff', radius: 12 },
-}
 
 export function newCountdown(): CountdownSettings {
     return { mode: 'off', deadline: '', timezone: 'Asia/Jakarta', minutes: 30, label: 'Diskon berakhir dalam', expiredText: 'Periode diskon telah berakhir', expiryAction: 'message' }

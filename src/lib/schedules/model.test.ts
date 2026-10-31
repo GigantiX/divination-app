@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildTrackedUrl, documentSummary, duplicateDocument, embedCode, newScheduleDocument } from './model'
 import { validateAnimationUpload, validateScheduleDocument } from './validation'
+import { applyTemplate, SCHEDULE_TEMPLATES } from './templates'
 
 function complete() {
     const doc = newScheduleDocument()
@@ -10,6 +11,18 @@ function complete() {
 }
 
 describe('schedule document boundaries', () => {
+    it.each(SCHEDULE_TEMPLATES)('validates $name with editable colors and styles', template => {
+        const doc = complete()
+        doc.theme = { ...applyTemplate(doc.theme, template.id), accent: '#123456', shadow: 'bold', border: 'dashed' }
+        expect(validateScheduleDocument(doc, true).theme).toMatchObject({ preset: template.id, accent: '#123456', shadow: 'bold', border: 'dashed' })
+    })
+    it('keeps previously published documents compatible and rejects CSS injection in new controls', () => {
+        const doc = complete()
+        delete doc.theme.alignment; delete doc.theme.shadow; delete doc.theme.border; delete doc.theme.buttonStyle
+        expect(validateScheduleDocument(doc).theme).toMatchObject({ alignment: 'center', shadow: 'soft', border: 'solid', buttonStyle: 'solid' })
+        doc.theme.shadow = 'none;display:none' as never
+        expect(() => validateScheduleDocument(doc)).toThrow('Bayangan kartu')
+    })
     it('permits incomplete drafts but requires publishable cities, sessions and links', () => {
         expect(validateScheduleDocument(newScheduleDocument()).cities).toHaveLength(1)
         expect(() => validateScheduleDocument(newScheduleDocument(), true)).toThrow('nama setiap kota')

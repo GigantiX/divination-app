@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { auth } from '@/auth'
 import { MockQueryBuilder, mockSupabaseClient } from '@/tests/mocks/supabase'
 import { newScheduleDocument } from '@/lib/schedules/model'
-import { changeScheduleStatus, duplicateSchedule, getSchedule, getScheduleOverview, saveSchedule } from './schedules'
+import { changeScheduleStatus, deleteSchedule, duplicateSchedule, getSchedule, getScheduleOverview, saveSchedule } from './schedules'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 const EVENT = '11111111-1111-4111-8111-111111111111'
@@ -16,13 +16,12 @@ function document() {
     return doc
 }
 function row(changes: Record<string, unknown> = {}) {
-    return { id: ID, event_id: EVENT, name: 'November', status: 'draft', draft_document: document(), version: 1, published_version: null, published_at: null, updated_at: '2026-10-31T00:00:00Z', city_count: 1, session_count: 1, city_names: ['Malang'], ...changes }
+    return { id: ID, event_id: EVENT, created_by: ACTOR, name: 'November', status: 'draft', draft_document: document(), version: 1, published_version: null, published_at: null, updated_at: '2026-10-31T00:00:00Z', city_count: 1, session_count: 1, city_names: ['Malang'], ...changes }
 }
-function database(builders: MockQueryBuilder[] = [], role = 'admin', assignment: string | null = null) {
+function database(builders: MockQueryBuilder[] = [], role = 'admin') {
     const queue = [...builders]
     vi.mocked(mockSupabaseClient.from).mockImplementation(table => {
-        if (table === 'profiles') return new MockQueryBuilder({ role })
-        if (table === 'event_assignments') return new MockQueryBuilder(assignment ? { role: assignment } : null)
+        if (table === 'profiles') return new MockQueryBuilder({ id: ACTOR, role })
         if (table === 'events') return new MockQueryBuilder([{ id: EVENT, name: 'Seminar Properti', logo_url: null }])
         if (table === 'seminar_schedules') return queue.shift() || new MockQueryBuilder(null)
         throw new Error('Unexpected table: ' + table)
@@ -37,33 +36,57 @@ beforeEach(() => {
 describe('Schedule Manager authorization', () => {
     it('rejects unauthenticated entry points without database reads', async () => {
         vi.mocked(auth).mockResolvedValue(null as never)
-        const result = await Promise.all([getScheduleOverview(), getSchedule(ID), saveSchedule({ eventId: EVENT, name: 'Name', document: document(), publish: false }), duplicateSchedule(ID), changeScheduleStatus(ID, 1, 'archive')])
+        const result = await Promise.all([getScheduleOverview(), getSchedule(ID), saveSchedule({ eventId: EVENT, name: 'Name', document: document(), publish: false }), duplicateSchedule(ID), changeScheduleStatus(ID, 1, 'archive'), deleteSchedule(ID, 1)])
         expect(result.every(item => !item.success)).toBe(true)
         expect(mockSupabaseClient.from).not.toHaveBeenCalled()
     })
-    it.each([null, 'advertiser'])('uses fresh roles and denies writes to users without PIC access (%s)', async assignment => {
-        database([], 'user', assignment)
-        expect(await saveSchedule({ eventId: EVENT, name: 'Name', document: document(), publish: true })).toMatchObject({ success: false })
-        expect(mockSupabaseClient.from).not.toHaveBeenCalledWith('seminar_schedules')
+    it.each(['user', 'admin', 'developer'])('lets %s create a schedule for any event without an assignment', async role => {
+        const insert = new MockQueryBuilder(row({ event_id: OTHER }))
+        database([insert], role)
+        expect(await saveSchedule({ eventId: OTHER, name: 'Any event', document: document(), publish: true })).toMatchObject({ success: true })
+        expect(insert.insert).toHaveBeenCalledWith(expect.objectContaining({ event_id: OTHER, created_by: ACTOR }))
+        expect(mockSupabaseClient.from).not.toHaveBeenCalledWith('event_assignments')
     })
-    it('allows an assigned PIC and keeps read access for an advertiser', async () => {
-        const insert = new MockQueryBuilder(row()); database([insert], 'user', 'pic')
-        expect((await saveSchedule({ eventId: EVENT, name: 'Name', document: document(), publish: false })).success).toBe(true)
-        database([new MockQueryBuilder(row())], 'user', 'advertiser')
-        expect(await getSchedule(ID)).toMatchObject({ success: true, data: { canManage: false } })
+    it.each(['user', 'admin', 'developer'])('isolates reads, updates, duplication, statuses, and delete for %s', async role => {
+        const queries: MockQueryBuilder[] = []
+        vi.mocked(mockSupabaseClient.from).mockImplementation(table => {
+            if (table === 'profiles') return new MockQueryBuilder({ id: ACTOR, role })
+            if (table === 'seminar_schedules') {
+                // A known row belongs to another account. Simulate Postgres' owner predicate.
+                const query = new MockQueryBuilder(row({ created_by: OTHER }))
+                query.maybeSingle.mockImplementation(async () => ({ data: query.eq.mock.calls.some(([key, value]) => key === 'created_by' && value === ACTOR) ? null : query.data, error: null }))
+                queries.push(query)
+                return query
+            }
+            throw new Error('Unexpected table: ' + table)
+        })
+        const results = await Promise.all([
+            getSchedule(ID), duplicateSchedule(ID),
+            saveSchedule({ id: ID, eventId: EVENT, name: 'Attack', document: document(), version: 1, publish: true }),
+            changeScheduleStatus(ID, 1, 'archive'), changeScheduleStatus(ID, 1, 'restore'), changeScheduleStatus(ID, 1, 'unpublish'),
+            deleteSchedule(ID, 1),
+        ])
+        expect(results.every(result => !result.success)).toBe(true)
+        expect(queries).toHaveLength(7)
+        for (const query of queries) expect(query.eq).toHaveBeenCalledWith('created_by', ACTOR)
+        expect(queries.some(query => query.update.mock.calls.length || query.insert.mock.calls.length)).toBe(false)
     })
-    it('does not expose an unassigned event schedule', async () => {
-        database([new MockQueryBuilder(row())], 'user')
-        expect(await getSchedule(ID)).toMatchObject({ success: false })
-    })
-    it('scopes overview reads to assigned events and returns summaries without draft payloads', async () => {
-        const assignments = new MockQueryBuilder([{ event_id: EVENT, role: 'pic' }]), events = new MockQueryBuilder([{ id: EVENT, name: 'Seminar', logo_url: null }]), schedules = new MockQueryBuilder([row()])
-        vi.mocked(mockSupabaseClient.from).mockImplementation(table => table === 'profiles' ? new MockQueryBuilder({ role: 'user' }) : table === 'event_assignments' ? assignments : table === 'events' ? events : schedules)
+    it('lists all event identities but only the authenticated account’s schedule summaries', async () => {
+        const events = new MockQueryBuilder([{ id: EVENT, name: 'Seminar', logo_url: null }, { id: OTHER, name: 'Other event', logo_url: null }])
+        const schedules = new MockQueryBuilder([row()])
+        vi.mocked(mockSupabaseClient.from).mockImplementation(table => table === 'profiles' ? new MockQueryBuilder({ id: ACTOR }) : table === 'events' ? events : schedules)
         const result = await getScheduleOverview()
-        expect(result).toMatchObject({ success: true, data: { events: [{ canManage: true }], schedules: [{ cityCount: 1, sessionCount: 1 }] } })
-        expect(events.in).toHaveBeenCalledWith('id', [EVENT])
-        expect(schedules.in).toHaveBeenCalledWith('event_id', [EVENT])
+        expect(result).toMatchObject({ success: true, data: { events: [{ id: EVENT, canManage: true }, { id: OTHER, canManage: true }], schedules: [{ cityCount: 1, sessionCount: 1 }] } })
+        expect(events.in).not.toHaveBeenCalled()
+        expect(schedules.eq).toHaveBeenCalledWith('created_by', ACTOR)
+        expect(mockSupabaseClient.from).not.toHaveBeenCalledWith('event_assignments')
         expect(JSON.stringify(result)).not.toContain('checkoutUrl')
+    })
+    it('rejects a deleted account even if its session still exists', async () => {
+        vi.mocked(mockSupabaseClient.from).mockReturnValue(new MockQueryBuilder(null))
+        expect(await getScheduleOverview()).toMatchObject({ success: false, error: 'Profil tidak ditemukan.' })
+        expect(await deleteSchedule(ID, 1)).toMatchObject({ success: false })
+        expect(mockSupabaseClient.from).not.toHaveBeenCalledWith('seminar_schedules')
     })
 })
 
@@ -78,6 +101,7 @@ describe('draft, publish, duplication, and concurrency', () => {
         expect(update.update.mock.calls[0][0]).not.toHaveProperty('published_document')
         expect(update.update.mock.calls[0][0]).not.toHaveProperty('status')
         expect(update.eq).toHaveBeenCalledWith('version', 1)
+        expect(update.eq).toHaveBeenCalledWith('created_by', ACTOR)
     })
     it('atomically publishes the same validated draft and public snapshot', async () => {
         const insert = new MockQueryBuilder(row({ status: 'published', published_version: 1 })); database([insert])
@@ -112,5 +136,21 @@ describe('draft, publish, duplication, and concurrency', () => {
         expect((await changeScheduleStatus(ID, 1, action)).success).toBe(true)
         expect(update.update).toHaveBeenCalledWith(expect.objectContaining({ published_document: null, published_version: null, published_at: null, version: 2, status: action === 'archive' ? 'archived' : 'draft' }))
         expect(update.eq).toHaveBeenCalledWith('version', 1)
+        expect(update.eq).toHaveBeenCalledWith('created_by', ACTOR)
+    })
+})
+
+
+describe('owner-only schedule deletion', () => {
+    it('deletes with both ownership and revision predicates', async () => {
+        const query = new MockQueryBuilder({ id: ID }); database([query], 'user')
+        expect(await deleteSchedule(ID, 1)).toEqual({ success: true, data: { id: ID } })
+        expect(query.delete).toHaveBeenCalled()
+        expect(query.eq).toHaveBeenCalledWith('created_by', ACTOR)
+        expect(query.eq).toHaveBeenCalledWith('version', 1)
+    })
+    it('reports missing or concurrently edited rows without false success', async () => {
+        database([new MockQueryBuilder(null)])
+        expect(await deleteSchedule(ID, 1)).toMatchObject({ success: false })
     })
 })

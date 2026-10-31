@@ -3,19 +3,20 @@
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Archive, ArrowLeft, Check, Code2, Copy, Loader2, Plus, RotateCcw, Save, Send, Upload, X } from 'lucide-react'
+import { Archive, ArrowLeft, Check, Code2, Copy, Loader2, Plus, RotateCcw, Save, Send, Trash2, Upload, X } from 'lucide-react'
 import { NavigationLayout } from '@/components/ui/nav-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import type { UserProfile } from '@/app/actions/profile'
-import { changeScheduleStatus, duplicateSchedule, saveSchedule } from '@/app/actions/schedules'
-import { buildTrackedUrl, duplicateCity, newCity, THEME_PRESETS } from '@/lib/schedules/model'
+import { changeScheduleStatus, deleteSchedule, duplicateSchedule, saveSchedule } from '@/app/actions/schedules'
+import { buildTrackedUrl, duplicateCity, newCity } from '@/lib/schedules/model'
 import { MAX_ANIMATION_BYTES, validateAnimationUpload } from '@/lib/schedules/validation'
 import type { ScheduleDocument, ScheduleEvent, ScheduleRecord } from '@/lib/schedules/types'
 import { CityEditor, CountdownEditor, Field, Select, Toggle } from './schedule-form-fields'
 import { EmbedDialog, SchedulePreview } from './schedule-preview'
 import { StatusBadge } from './schedule-manager-client'
+import { TemplateEditor } from './template-editor'
 
 export function ScheduleEditor({ profile, events, initialDocument, initialSchedule, defaultEventId, loadError, canManage }: {
     profile: UserProfile; events: ScheduleEvent[]; initialDocument: ScheduleDocument; initialSchedule?: ScheduleRecord
@@ -84,11 +85,23 @@ export function ScheduleEditor({ profile, events, initialDocument, initialSchedu
         })
     }
 
+    const remove = () => {
+        if (!record || !window.confirm(`Hapus schedule “${record.name}” secara permanen? Embed jadwal ini akan berhenti ditayangkan.`)) return
+        startTransition(async () => {
+            setError('')
+            try {
+                const result = await deleteSchedule(record.id, record.version)
+                if (!result.success) { setError(result.error); return }
+                router.push(backHref)
+            } catch { setError('Gagal menghapus schedule. Silakan coba lagi.') }
+        })
+    }
+
     return <NavigationLayout isAdmin={profile.role === 'admin' || profile.role === 'developer'}>
         <div className="mx-auto w-full max-w-[1600px] p-4 pb-28 md:p-7">
             <Link href={backHref} onClick={event => { if (dirty && !window.confirm('Perubahan belum disimpan. Tinggalkan halaman ini?')) event.preventDefault() }} className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Daftar schedule</Link>
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-                <div><div className="mb-2 flex flex-wrap items-center gap-2"><p className="text-xs font-semibold uppercase tracking-[.18em] text-primary">Schedule editor</p>{record && <StatusBadge status={record.status} />}{dirty && <span className="text-xs text-warning">Belum disimpan</span>}</div><h1 className="text-2xl font-bold tracking-tight">{record ? record.name : 'Create Schedule'}</h1><p className="mt-2 text-sm text-muted-foreground">{canManage ? 'Susun jadwal, periksa preview, lalu publish ke landing page.' : 'Akses lihat untuk schedule event yang ditugaskan kepada Anda.'}</p></div>
+                <div><div className="mb-2 flex flex-wrap items-center gap-2"><p className="text-xs font-semibold uppercase tracking-[.18em] text-primary">Schedule editor</p>{record && <StatusBadge status={record.status} />}{dirty && <span className="text-xs text-warning">Belum disimpan</span>}</div><h1 className="text-2xl font-bold tracking-tight">{record ? record.name : 'Create Schedule'}</h1><p className="mt-2 text-sm text-muted-foreground">{canManage ? 'Susun jadwal, periksa preview, lalu publish ke landing page.' : 'Akses lihat schedule.'}</p></div>
                 <div className="flex flex-wrap gap-2">{record?.status === 'published' && <Button type="button" variant="outline" onClick={() => setShowEmbed(true)}><Code2 className="mr-2 h-4 w-4" />Embed</Button>}{canManage && (archived ? <Button disabled={pending} onClick={() => changeStatus('restore')}><RotateCcw className="mr-2 h-4 w-4" />Pulihkan draft</Button> : <><Button type="button" variant="outline" disabled={pending || !eventId} onClick={() => persist(false)}>{pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Simpan draft</Button><Button type="button" disabled={pending || !eventId} onClick={() => persist(true)}>{pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}{record?.status === 'published' ? 'Publish perubahan' : 'Publish'}</Button></>)}</div>
             </div>
             {error && <p role="alert" className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{error}</p>}
@@ -116,7 +129,7 @@ export function ScheduleEditor({ profile, events, initialDocument, initialSchedu
                             <Panel title="Aturan penayangan"><Toggle label="Sembunyikan sesi yang sudah lewat" hint="Mengikuti jam selesai. Jika kosong, sesi tampil sampai akhir hari sesuai zona waktunya." checked={doc.hidePast} onChange={value => change('hidePast', value)} /><Field label="Urutan kota dan sesi"><Select value={doc.sort} onChange={value => change('sort', value as ScheduleDocument['sort'])}><option value="manual">Manual — sesuai urutan editor</option><option value="date">Tanggal terdekat lebih dahulu</option></Select></Field><Field label="Pesan saat jadwal kosong"><Input value={doc.emptyMessage} maxLength={300} onChange={event => change('emptyMessage', event.target.value)} /></Field></Panel>
                         </>}
                     </fieldset>
-                    {record && canManage && <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3"><Button variant="ghost" size="sm" disabled={pending} onClick={duplicate}><Copy className="mr-2 h-4 w-4" />Duplikat schedule</Button>{!archived && <Button variant="ghost" size="sm" disabled={pending} onClick={() => changeStatus('archive')} title="Menghentikan penayangan embed"><Archive className="mr-2 h-4 w-4" />Arsipkan</Button>}{record.status === 'published' && <Button variant="ghost" size="sm" disabled={pending} onClick={() => changeStatus('unpublish')} className="text-destructive">Hentikan publikasi</Button>}</div>}
+                    {record && canManage && <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3"><Button variant="ghost" size="sm" disabled={pending} onClick={duplicate}><Copy className="mr-2 h-4 w-4" />Duplikat schedule</Button>{!archived && <Button variant="ghost" size="sm" disabled={pending} onClick={() => changeStatus('archive')} title="Menghentikan penayangan embed"><Archive className="mr-2 h-4 w-4" />Arsipkan</Button>}{record.status === 'published' && <Button variant="ghost" size="sm" disabled={pending} onClick={() => changeStatus('unpublish')} className="text-destructive">Hentikan publikasi</Button>}<Button variant="ghost" size="sm" disabled={pending} onClick={remove} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Hapus schedule</Button></div>}
                 </div>
                 <div className="min-w-0 space-y-5 xl:sticky xl:top-6"><SchedulePreview document={doc} scheduleId={record?.id} /><LinkTester document={doc} /></div>
             </div>
@@ -130,14 +143,9 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function AppearanceEditor({ doc, onChange }: { doc: ScheduleDocument; onChange: (value: ScheduleDocument) => void }) {
-    const theme = <K extends keyof ScheduleDocument['theme']>(key: K, value: ScheduleDocument['theme'][K]) => onChange({ ...doc, theme: { ...doc.theme, [key]: value } })
     const cta = <K extends keyof ScheduleDocument['cta']>(key: K, value: ScheduleDocument['cta'][K]) => onChange({ ...doc, cta: { ...doc.cta, [key]: value } })
     return <>
-        <Panel title="Template & warna"><div className="grid grid-cols-3 gap-2">{Object.entries(THEME_PRESETS).map(([key, preset]) => <button type="button" key={key} aria-pressed={doc.theme.preset === key} onClick={() => onChange({ ...doc, theme: { ...doc.theme, ...preset, preset: key as ScheduleDocument['theme']['preset'] } })} className={`overflow-hidden rounded-xl border-2 text-left ${doc.theme.preset === key ? 'border-primary' : 'border-border'}`}><span className="flex h-16 items-center justify-center p-3" style={{ background: preset.background }}><span className="flex h-full w-full items-center justify-center rounded-md text-[10px] font-bold" style={{ background: preset.card, color: preset.text }}>JADWAL<span className="ml-2 h-2 w-4 rounded-sm" style={{ background: preset.accent }} /></span></span><span className="block px-2 py-2 text-xs font-medium">{key === 'classic' ? 'Classic' : key === 'minimal' ? 'Clean' : 'Warm'}</span></button>)}</div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{([{ key: 'background', label: 'Latar section' }, { key: 'card', label: 'Latar kartu' }, { key: 'text', label: 'Teks' }, { key: 'accent', label: 'Tombol & panah' }, { key: 'buttonText', label: 'Teks tombol' }] as const).map(item => <Field key={item.key} label={item.label}><input aria-label={item.label} type="color" value={doc.theme[item.key]} onChange={event => theme(item.key, event.target.value)} className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background p-1" /></Field>)}</div>
-            <div className="grid gap-3 sm:grid-cols-2"><Field label="Layout"><Select value={doc.theme.layout} onChange={value => theme('layout', value as ScheduleDocument['theme']['layout'])}><option value="stack">Kartu vertikal</option><option value="grid">Grid — 2 kolom di layar lebar</option></Select></Field><Field label="Font widget"><Select value={doc.theme.font} onChange={value => theme('font', value as ScheduleDocument['theme']['font'])}><option value="sans">Sans</option><option value="rounded">Rounded</option><option value="serif">Serif</option></Select></Field></div>
-            <div className="grid grid-cols-3 gap-3"><Field label="Radius (px)"><Input type="number" min={0} max={32} value={doc.theme.radius} onChange={event => theme('radius', Number(event.target.value))} /></Field><Field label="Jarak (px)"><Input type="number" min={12} max={64} value={doc.theme.gap} onChange={event => theme('gap', Number(event.target.value))} /></Field><Field label="Lebar maks. (px)"><Input type="number" min={360} max={1400} value={doc.theme.maxWidth} onChange={event => theme('maxWidth', Number(event.target.value))} /></Field></div>
-        </Panel>
+        <TemplateEditor value={doc.theme} onChange={theme => onChange({ ...doc, theme })} />
         <Panel title="Judul section"><Field label="Judul publik (opsional)"><Input value={doc.heading} maxLength={180} placeholder="Pilih Jadwal Seminar Anda" onChange={event => onChange({ ...doc, heading: event.target.value })} /></Field><Field label="Subjudul (opsional)"><Textarea value={doc.subtitle} maxLength={300} rows={2} onChange={event => onChange({ ...doc, subtitle: event.target.value })} /></Field><Field label="Awalan judul kota"><Input value={doc.cityPrefix} maxLength={60} placeholder="Jadwal" onChange={event => onChange({ ...doc, cityPrefix: event.target.value })} /></Field></Panel>
         <Panel title="Custom CTA"><Field label="Teks tombol default" hint="Bisa menggunakan {city} dan {session}. Teks per sesi dapat diatur pada tab Kota & sesi."><Input value={doc.cta.label} maxLength={120} onChange={event => cta('label', event.target.value)} /></Field><div className="grid gap-3 sm:grid-cols-2"><Field label="Teks sold out"><Input value={doc.cta.soldOutLabel} maxLength={120} onChange={event => cta('soldOutLabel', event.target.value)} /></Field><Field label="Teks ditutup"><Input value={doc.cta.closedLabel} maxLength={120} onChange={event => cta('closedLabel', event.target.value)} /></Field></div><Toggle label="Buka checkout di tab baru" checked={doc.cta.newTab} onChange={value => cta('newTab', value)} /><Toggle label="Animasi penekanan tombol" checked={doc.cta.pulse} onChange={value => cta('pulse', value)} /></Panel>
     </>

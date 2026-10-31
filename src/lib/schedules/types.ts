@@ -1,6 +1,7 @@
 export type ScheduleStatus = 'draft' | 'published' | 'archived'
 export type SessionStatus = 'open' | 'sold_out' | 'closed' | 'cancelled'
 export type ScheduleTimezone = 'Asia/Jakarta' | 'Asia/Makassar' | 'Asia/Jayapura'
+export type ScheduleTemplate = 'classic' | 'minimal' | 'warm' | 'ticket' | 'editorial' | 'spotlight' | 'timeline'
 
 export interface CountdownSettings {
     mode: 'off' | 'fixed' | 'evergreen'
@@ -54,7 +55,7 @@ export interface ScheduleDocument {
     sort: 'manual' | 'date'
     cities: ScheduleCity[]
     theme: {
-        preset: 'classic' | 'minimal' | 'warm'
+        preset: ScheduleTemplate
         background: string
         card: string
         text: string
@@ -65,6 +66,10 @@ export interface ScheduleDocument {
         radius: number
         gap: number
         maxWidth: number
+        alignment?: 'left' | 'center'
+        shadow?: 'none' | 'soft' | 'bold'
+        border?: 'none' | 'solid' | 'dashed'
+        buttonStyle?: 'solid' | 'outline' | 'pill'
     }
     cta: { label: string; soldOutLabel: string; closedLabel: string; newTab: boolean; pulse: boolean }
     countdown: CountdownSettings

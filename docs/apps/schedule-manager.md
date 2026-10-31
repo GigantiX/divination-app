@@ -12,14 +12,15 @@ Implemented 31 October 2026. Open **Apps → Schedule Manager** (`/apps/schedule
 6. **Simpan draft** saves work privately. **Publish** atomically replaces the public version.
 7. **Embed** copies a stable div + script snippet for an Elementor HTML widget. Choose all published cities or a single published city. Multiple embeds can appear on the same LP.
 
-The start page groups schedules by existing event and displays active, published, draft, and archived counts. Within an event, search by schedule/city and filter status. Schedules, cities, and sessions can be duplicated. A schedule copy has its own identity and embed; updates to the original and copy are independent. Dates, links, and settings are copied and should be adjusted for the next campaign.
+An empty account starts with an empty home and a plus/Create Schedule action. Only events with schedules owned by the current account appear as cards, showing the event name and total schedule count (including archived schedules), plus status counts. Within an event, search by schedule/city and filter status. Schedules, cities, and sessions can be duplicated. A schedule copy has its own identity and embed; updates to the original and copy are independent. Dates, links, and settings are copied and should be adjusted for the next campaign.
 
-Admin/developer roles manage all event schedules. PICs manage schedules belonging to their assigned events. Advertisers can view schedules of their assigned events. Server actions re-read current roles and assignments; changing a browser-supplied event ID cannot move an existing schedule.
+Every account can select any existing event when creating a schedule. The catalog exposes only event IDs, names, and logos; it grants no access to event reports or assignments. Schedule management is private to the creator (`created_by`), including for admin/developer roles. Every management read, update, publish, archive, restore, duplicate, and delete is scoped to the authenticated account on the server. Sessions for deleted profiles are rejected. Changing a browser-supplied event ID cannot move an existing schedule. Existing schedules keep their original creators.
 
 ## Publication and embedding
 
 - The database stores separate draft and published documents. Saving edits on a published schedule keeps its existing public snapshot intact.
 - Each mutation uses an expected version to detect concurrent edits. A conflict prompts the editor to reload rather than overwrite someone else's changes.
+- Owners can permanently delete schedules, with an explicit confirmation and expected-version check. Deleted schedules stop appearing on the home page and their public endpoint returns 404.
 - Archiving or stopping publication removes the public snapshot. Restoring an archive returns it to draft.
 - The standalone widget is `/embed/schedule.js`. It uses Shadow DOM to isolate its layout from Elementor/WordPress styles, with container-based responsive cards and reduced-motion support.
 - The public GET endpoint is `/api/public/schedules/{id}`. It returns only a published document, ID, and publication timestamp, supports cross-origin fetches without credentials, and sends `Cache-Control: no-store`.
@@ -28,6 +29,8 @@ Admin/developer roles manage all event schedules. PICs manage schedules belongin
 - Generate production snippets from the deployed app's origin. Localhost snippets are for local testing only.
 
 ## Optional features
+
+- **Templates:** Boarding Pass (ticket/perforation/date stamp), The Editorial (serif magazine layout), Night Spotlight (dark numbered cards), City Journey (session timeline), Studio Green, Warm Paper, and Classic Bold. Each template has its own settings for colors, alignment, font, button style, border, shadow, radius, gap, and width. Reset restores the selected template’s style without changing schedule content. The renderer supports older documents that omit these newer style controls.
 
 - **CTA:** default and per-session labels, colors, font, corner radius, new-tab behavior, and pulse animation. Labels support `{city}` and `{session}`.
 - **Countdown:** disabled, a fixed local deadline with WIB/WITA/WIT timezone, or a duration per visitor. Evergreen deadlines persist in that browser's local storage and do not restart on refresh. With storage blocked, the widget falls back to in-memory persistence. Expiry can show a message, hide the timer, or close registration. Session-specific timers can coexist with the global timer.
@@ -44,9 +47,9 @@ References: [Elementor HTML widget](https://elementor.com/help/html-widget/), [O
 
 ## Database and verification
 
-Migration: `supabase/migrations/20261031042347_add_seminar_schedules.sql`. Applied to the connected Divination project. RLS is enabled; anonymous and authenticated database roles have no table grants or policies. Only the server's service role can select/insert/update. The “RLS Enabled No Policy” informational advisory is intentional for this Auth.js/server-only table.
+Migration: `supabase/migrations/20261031042347_add_seminar_schedules.sql`. Applied to the connected Divination project. RLS is enabled; anonymous and authenticated database roles have no table grants or policies. Only the server's service role can select/insert/update/delete. The “RLS Enabled No Policy” informational advisory is intentional for this Auth.js/server-only table.
 
-A transaction that inserted, published, edited a draft, and archived a temporary schedule was rolled back after verifying publication isolation. Grants were checked directly. No example schedules were retained.
+The initial implementation was verified with a rolled-back transaction that inserted, published, edited a draft, and archived a temporary schedule. The additional migration `supabase/migrations/20261031073357_personalize_seminar_schedules.sql` adds an owner/sort index and server-side DELETE permission; it has also been applied. Its index, RLS, and grants were verified with a read-only query. Grants were checked directly. No example schedules were retained.
 
 Targeted tests:
 
@@ -54,4 +57,4 @@ Targeted tests:
 npm run test:run -- src/lib/schedules src/app/actions/schedules.test.ts src/app/apps/schedule-manager/schedule-editor.test.tsx
 ```
 
-These cover authorization, publication isolation, optimistic concurrency, duplication, schema/URL validation, published-only responses, UTM forwarding, countdown persistence, seats, timezone expiry, and the event → name → city/session editor workflow. Vitest uses mocked database calls. Browser QA uses isolated fixtures; no live checkout transactions are created.
+These cover cross-account isolation for regular/admin/developer roles, unrestricted event selection, owner-only deletion, empty-home behavior, template customization and compatibility, publication isolation, optimistic concurrency, duplication, schema/URL validation, published-only responses, UTM forwarding, countdown persistence, seats, timezone expiry, and the event → name → city/session editor workflow. Vitest uses mocked database calls. Browser QA uses isolated fixtures; no live checkout transactions are created.
