@@ -27,6 +27,7 @@ function record(row: Row): ScheduleRecord {
         document: row.draft_document!, version: row.version, publishedVersion: row.published_version,
         publishedAt: row.published_at, updatedAt: row.updated_at,
         publishedCities: row.published_document?.cities.map(city => ({ id: city.id, name: city.name })) || [],
+        publishedDocument: row.published_document || null,
     }
 }
 
@@ -152,6 +153,32 @@ export async function changeScheduleStatus(id: string, version: number, action: 
         status: action === 'archive' ? 'archived' : 'draft', published_document: null, published_version: null,
         published_at: null, version: version + 1, updated_by: actor.data.userId,
     }).eq('id', id).eq('created_by', actor.data.userId).eq('version', version).select(DETAIL).maybeSingle()
+    if (error) return fail(databaseMessage(error))
+    if (!data) return fail('Schedule telah berubah. Muat ulang halaman.')
+    revalidatePath('/apps/schedule-manager', 'layout')
+    return { success: true, data: record(data as Row) }
+}
+
+export async function setPublishedSessionSoldOut(id: string, version: number, cityId: string, sessionId: string, soldOut: boolean): Promise<ScheduleResult<ScheduleRecord>> {
+    const actor = await scheduleActor()
+    if (!actor.success) return fail(actor.error)
+    if (![id, cityId, sessionId].every(value => typeof value === 'string' && UUID_PATTERN.test(value)) || !Number.isInteger(version) || typeof soldOut !== 'boolean') return fail('Data sesi tidak valid.')
+    const found = await findOwnedSchedule(actor.data, id)
+    if (found.error) return fail(databaseMessage(found.error))
+    const row = found.data as Row | null
+    if (!row || row.status !== 'published' || !row.published_document || !row.draft_document) return fail(NOT_FOUND)
+    if (row.version !== version) return fail('Schedule telah berubah. Muat ulang halaman.')
+    const published = structuredClone(row.published_document), draft = structuredClone(row.draft_document)
+    const session = published.cities.find(city => city.id === cityId)?.sessions.find(item => item.id === sessionId)
+    if (!session || (session.status !== 'open' && session.status !== 'sold_out')) return fail('Status sesi tidak dapat diubah dengan toggle ini.')
+    session.status = soldOut ? 'sold_out' : 'open'
+    const draftSession = draft.cities.find(city => city.id === cityId)?.sessions.find(item => item.id === sessionId)
+    if (draftSession && (draftSession.status === 'open' || draftSession.status === 'sold_out')) draftSession.status = session.status
+    const nextVersion = version + 1
+    const { data, error } = await actor.data.db.from('seminar_schedules').update({ draft_document: draft, published_document: published,
+        version: nextVersion, published_version: row.published_version === version ? nextVersion : row.published_version,
+        updated_by: actor.data.userId, published_at: new Date().toISOString() })
+        .eq('id', id).eq('created_by', actor.data.userId).eq('version', version).eq('status', 'published').select(DETAIL).maybeSingle()
     if (error) return fail(databaseMessage(error))
     if (!data) return fail('Schedule telah berubah. Muat ulang halaman.')
     revalidatePath('/apps/schedule-manager', 'layout')

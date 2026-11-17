@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import type { UserProfile } from '@/app/actions/profile'
-import { changeScheduleStatus, deleteSchedule, duplicateSchedule, saveSchedule } from '@/app/actions/schedules'
+import { changeScheduleStatus, deleteSchedule, duplicateSchedule, saveSchedule, setPublishedSessionSoldOut } from '@/app/actions/schedules'
 import { buildTrackedUrl, duplicateCity, newCity } from '@/lib/schedules/model'
 import { MAX_ANIMATION_BYTES, validateAnimationUpload } from '@/lib/schedules/validation'
 import type { ScheduleDocument, ScheduleEvent, ScheduleRecord } from '@/lib/schedules/types'
@@ -97,6 +97,21 @@ export function ScheduleEditor({ profile, events, initialDocument, initialSchedu
         })
     }
 
+    const togglePublished = (cityId: string, sessionId: string, soldOut: boolean) => {
+        if (!record) return
+        startTransition(async () => {
+            setError(''); setMessage('')
+            try {
+                const result = await setPublishedSessionSoldOut(record.id, record.version, cityId, sessionId, soldOut)
+                if (!result.success) { setError(result.error); return }
+                const update = (current: ScheduleDocument) => ({ ...current, cities: current.cities.map(city => city.id !== cityId ? city : { ...city, sessions: city.sessions.map(session => session.id !== sessionId || !['open', 'sold_out'].includes(session.status) ? session : { ...session, status: soldOut ? 'sold_out' as const : 'open' as const }) }) })
+                setRecord(result.data); setDoc(update)
+                setBaseline(previous => { const value = JSON.parse(previous); return JSON.stringify({ ...value, document: update(value.document) }) })
+                setMessage('Status sesi diperbarui di embed otomatis. HTML mandiri perlu diubah di Elementor.')
+            } catch { setError('Gagal memperbarui status sesi.') }
+        })
+    }
+
     return <NavigationLayout isAdmin={profile.role === 'admin' || profile.role === 'developer'}>
         <div className="mx-auto w-full max-w-[1600px] p-4 pb-28 md:p-7">
             <Link href={backHref} onClick={event => { if (dirty && !window.confirm('Perubahan belum disimpan. Tinggalkan halaman ini?')) event.preventDefault() }} className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Daftar schedule</Link>
@@ -108,6 +123,7 @@ export function ScheduleEditor({ profile, events, initialDocument, initialSchedu
             {message && <p role="status" className="mb-5 flex items-start gap-2 rounded-xl border border-success/30 bg-success/10 p-4 text-sm text-success"><Check className="mt-0.5 h-4 w-4 shrink-0" />{message}</p>}
             {record?.status === 'published' && record.version !== record.publishedVersion && <p className="mb-5 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning">Ada draft yang belum dipublikasikan. LP masih menampilkan versi published sebelumnya.</p>}
             {archived && <p className="mb-5 rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">Schedule ini diarsipkan. Embed tidak menayangkan jadwal sampai schedule dipulihkan dan dipublikasikan kembali.</p>}
+            {record?.status === 'published' && record.publishedDocument && <section className="mb-5 rounded-2xl border border-border bg-card p-4 md:p-5"><h2 className="font-semibold">Status sesi published</h2><p className="mt-1 text-sm text-muted-foreground">Toggle memperbarui embed otomatis tanpa mempublish perubahan draft. HTML mandiri harus diedit di Elementor.</p><div className="mt-4 grid gap-2 md:grid-cols-2">{record.publishedDocument.cities.flatMap(city => city.sessions.map((session, index) => <div key={session.id} className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><div><p className="text-sm font-medium">{city.name} · {session.name || `Sesi ${index + 1}`}</p><p className="text-xs text-muted-foreground">{session.date} · {session.time}{session.seats.mode === 'actual' && session.seats.booked >= session.seats.capacity ? ' · kursi habis' : ''}</p></div><label className="flex items-center gap-2 text-sm"><input type="checkbox" role="switch" aria-label={`Sold out ${city.name} ${session.name || `Sesi ${index + 1}`}`} checked={session.status === 'sold_out'} disabled={pending || !canManage || !['open', 'sold_out'].includes(session.status)} onChange={event => togglePublished(city.id, session.id, event.target.checked)} />Sold out</label></div>))}</div></section>}
             <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,.9fr)]">
                 <div className="min-w-0 space-y-5">
                     <fieldset disabled={!editable} className="space-y-4 rounded-2xl border border-border bg-card p-4 md:p-5">
