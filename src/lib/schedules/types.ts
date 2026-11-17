@@ -86,6 +86,7 @@ export interface ScheduleRecord {
     publishedVersion: number | null
     publishedAt: string | null
     publishedCities?: Pick<ScheduleCity, 'id' | 'name'>[]
+    publishedDocument?: ScheduleDocument | null
     updatedAt: string
 }
 

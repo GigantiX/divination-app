@@ -23,6 +23,31 @@ beforeEach(() => {
 afterEach(() => { cleanup?.(); cleanup = undefined; document.body.replaceChildren(); vi.useRealTimers(); vi.unstubAllGlobals() })
 
 describe('standalone Elementor schedule widget', () => {
+    it('responds to container width changes without CSS size containment', () => {
+        const doc = fixture()
+        let onResize: ResizeObserverCallback | undefined
+        const disconnect = vi.fn()
+        class Observer {
+            constructor(callback: ResizeObserverCallback) { onResize = callback }
+            observe() {}
+            disconnect() { disconnect() }
+        }
+        vi.stubGlobal('ResizeObserver', Observer)
+        const { root } = mount(doc)
+        const widget = root.querySelector<HTMLElement>('.widget')!
+        const width = vi.spyOn(widget, 'clientWidth', 'get').mockReturnValue(370)
+        onResize!([], {} as ResizeObserver)
+        expect(widget.dataset.narrow).toBe('true')
+        expect(widget.dataset.wide).toBe('false')
+        expect(widget.style.getPropertyValue('--schedule-cqi')).toBe('3.7px')
+        width.mockReturnValue(800)
+        onResize!([], {} as ResizeObserver)
+        expect(widget.dataset.wide).toBe('true')
+        expect(root.querySelector('style')!.textContent).not.toContain('container-type:inline-size')
+        cleanup?.(); cleanup = undefined
+        expect(disconnect).toHaveBeenCalledOnce()
+        width.mockRestore()
+    })
     it.each(SCHEDULE_TEMPLATES)('renders $name without changing session links or text', template => {
         const doc = fixture()
         doc.theme = { ...applyTemplate(doc.theme, template.id), accent: '#123456', buttonStyle: 'outline' }

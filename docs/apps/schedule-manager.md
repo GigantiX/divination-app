@@ -11,6 +11,8 @@ Implemented 31 October 2026. Open **Apps → Schedule Manager** (`/apps/schedule
 5. Inspect desktop/mobile preview and the **Periksa link & UTM** simulator.
 6. **Simpan draft** saves work privately. **Publish** atomically replaces the public version.
 7. **Embed** copies a stable div + script snippet for an Elementor HTML widget. Choose all published cities or a single published city. Multiple embeds can appear on the same LP.
+8. **HTML mandiri** copies a static published snapshot containing its own HTML, CSS and tracking script. It does not fetch Divination. Edit each session's `status` in the embedded JSON (`open` or `sold_out`) in Elementor, or copy and paste a fresh snapshot after changes. The standalone format includes the same renderer, templates, countdowns, animations, seats, and date hiding as the automatic embed. External image URLs and the Lottie player and external Lottie URLs still require network access. An already-pasted copy is not updated by publishing, changing a toggle, archiving, or deleting a schedule.
+9. On a published schedule, **Status sesi published** changes a session's sold-out status immediately on future loads of the automatic embed without publishing unrelated draft changes. A session with actual seats at zero still appears sold out; closed/cancelled sessions must be edited normally. Concurrent edits require a reload.
 
 An empty account starts with an empty home and a plus/Create Schedule action. Only events with schedules owned by the current account appear as cards, showing the event name and total schedule count (including archived schedules), plus status counts. Within an event, search by schedule/city and filter status. Schedules, cities, and sessions can be duplicated. A schedule copy has its own identity and embed; updates to the original and copy are independent. Dates, links, and settings are copied and should be adjusted for the next campaign.
 
@@ -42,6 +44,8 @@ Every account can select any existing event when creating a schedule. The catalo
 The widget forwards `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `utm_id`, `fbclid`, `gclid`, `msclkid`, and incoming `fbp`/`fbc`. When available, `fbp`/`_fbp` and `fbc`/`_fbc` cookies provide the latter parameters. Incoming tracking replaces matching destination parameters; existing product/affiliate/custom checkout parameters and URL fragments are retained. Parameters are updated at interaction time, including links created after the LP initially loaded.
 
 Widget anchors intentionally omit `oo-link` to avoid double decoration by OO's one-shot tracker. Existing OO scripts remain relevant to other LP links/forms and CAPI configuration. End-to-end attribution on real orders depends on the destination store's tracking setup and has not been exercised by automated tests.
+
+The standalone HTML includes `oo-link` in Shadow DOM and the same Divination UTM/cookie forwarding renderer as the automatic embed, not the official OrderOnline advanced tracking script. A script on the parent page cannot discover links inside the Shadow DOM. If the LP also runs the official script, test its tracking configuration and a real checkout; CAPI behavior is not guaranteed by the standalone script.
 
 References: [Elementor HTML widget](https://elementor.com/help/html-widget/), [OrderOnline tracking guide](https://help.orderonline.id/pengaturan-advanced-url-tracking-utm/), [OO-linked reference script](https://snippets.cacher.io/snippet/71fac6a7fde688a3d130), [Lottie usage](https://github.com/airbnb/lottie-web/wiki/Usage).
 

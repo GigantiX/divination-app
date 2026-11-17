@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { auth } from '@/auth'
 import { MockQueryBuilder, mockSupabaseClient } from '@/tests/mocks/supabase'
 import { newScheduleDocument } from '@/lib/schedules/model'
-import { changeScheduleStatus, deleteSchedule, duplicateSchedule, getSchedule, getScheduleOverview, saveSchedule } from './schedules'
+import { changeScheduleStatus, deleteSchedule, duplicateSchedule, getSchedule, getScheduleOverview, saveSchedule, setPublishedSessionSoldOut } from './schedules'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 const EVENT = '11111111-1111-4111-8111-111111111111'
@@ -91,6 +91,27 @@ describe('Schedule Manager authorization', () => {
 })
 
 describe('draft, publish, duplication, and concurrency', () => {
+    it('updates only the chosen published session while retaining unrelated draft edits and enforcing ownership and revision', async () => {
+        const published = document(), draft = structuredClone(published)
+        draft.heading = 'Unpublished change'
+        const old = row({ status: 'published', version: 3, published_version: 1, published_document: published, draft_document: draft })
+        const update = new MockQueryBuilder(old)
+        database([new MockQueryBuilder(old), update])
+        const city = published.cities[0], session = city.sessions[0]
+        expect((await setPublishedSessionSoldOut(ID, 3, city.id, session.id, true)).success).toBe(true)
+        const saved = update.update.mock.calls[0][0]
+        expect(saved.published_document.heading).not.toBe('Unpublished change')
+        expect(saved.draft_document.heading).toBe('Unpublished change')
+        expect(saved.published_document.cities[0].sessions[0].status).toBe('sold_out')
+        expect(saved.draft_document.cities[0].sessions[0].status).toBe('sold_out')
+        expect(saved.published_version).toBe(1)
+        expect(update.eq).toHaveBeenCalledWith('created_by', ACTOR)
+        expect(update.eq).toHaveBeenCalledWith('version', 3)
+        database([new MockQueryBuilder(old)])
+        expect((await setPublishedSessionSoldOut(ID, 2, city.id, session.id, false)).success).toBe(false)
+        database([new MockQueryBuilder(null)])
+        expect((await setPublishedSessionSoldOut(ID, 3, city.id, session.id, false)).success).toBe(false)
+    })
     it('saves a draft without changing the public snapshot', async () => {
         const publicDocument = document(); publicDocument.cities[0].name = 'Malang published'
         const old = row({ status: 'published', published_version: 1, published_document: publicDocument }), update = new MockQueryBuilder(row({ ...old, version: 2 }))
