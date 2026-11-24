@@ -108,6 +108,7 @@ export type ScheduleResult<T> = { success: true; data: T } | { success: false; e
 export interface WidgetOptions { preview?: boolean; key?: string; city?: string; search?: string }
 export interface ScheduleWidget {
     render: (host: HTMLElement, document: ScheduleDocument, options?: WidgetOptions) => () => void
+    exportHtml: (document: ScheduleDocument, scheduleId: string, cityId?: string) => string
     scan: () => void
     buildTrackedUrl: (url: string, search: string, cookies?: string) => string
 }

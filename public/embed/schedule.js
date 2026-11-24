@@ -1,16 +1,13 @@
 /* Divination Schedule Widget v2. Native DOM + Shadow DOM; no framework required. */
 ;(function () {
     'use strict'
-    var rawScheduleToken = null // RAW_SCHEDULE_TOKEN
-    if (!rawScheduleToken && window.DivinationSchedules) { window.DivinationSchedules.scan(); return }
+    if (window.DivinationSchedules) { window.DivinationSchedules.scan(); return }
     var scriptUrl = document.currentScript && document.currentScript.src
     var origin = scriptUrl ? new URL(scriptUrl).origin : window.location.origin
     var mounts = new WeakMap()
     var initialized = new WeakSet()
     var liveHosts = new Set()
     var volatileTimers = new Map()
-    var lottiePromise
-    var trackingKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'fbclid', 'gclid', 'msclkid', 'fbp', 'fbc']
     var offsets = { 'Asia/Jakarta': '+07:00', 'Asia/Makassar': '+08:00', 'Asia/Jayapura': '+09:00' }
     var zones = { 'Asia/Jakarta': 'WIB', 'Asia/Makassar': 'WITA', 'Asia/Jayapura': 'WIT' }
     var css = `
@@ -55,7 +52,8 @@
     function buildTrackedUrl(destination, search, cookies) {
         try {
             var url = new URL(destination)
-            if (!/^(https?:)$/.test(url.protocol)) return ''
+            if (!/^(https?:)$/.test(url.protocol) || url.username || url.password) return ''
+            var trackingKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'fbclid', 'gclid', 'msclkid', 'fbp', 'fbc']
             var incoming = new URLSearchParams(search)
             trackingKeys.forEach(function (key) { var value = incoming.get(key); if (value) url.searchParams.set(key, value) })
             ;['fbp', 'fbc'].forEach(function (key) {
@@ -82,7 +80,7 @@
     }
     function loadLottie() {
         if (window.lottie) return Promise.resolve(window.lottie)
-        if (!lottiePromise) lottiePromise = new Promise(function (resolve, reject) {
+        if (!window.divinationLottiePromise) window.divinationLottiePromise = new Promise(function (resolve, reject) {
             var script = document.createElement('script')
             // Light player omits expression evaluation. Loaded only for an enabled Lottie asset.
             script.src = 'https://cdn.jsdelivr.net/npm/lottie-web@5.13.0/build/player/lottie_light.min.js'
@@ -91,16 +89,34 @@
             script.onload = function () { clearTimeout(timeout); if (window.lottie) resolve(window.lottie); else reject(new Error('Animation unavailable')) }
             script.onerror = function () { clearTimeout(timeout); reject(new Error('Animation unavailable')) }
             document.head.append(script)
-        }).catch(function (error) { lottiePromise = null; throw error })
-        return lottiePromise
+        }).catch(function (error) { window.divinationLottiePromise = null; throw error })
+        return window.divinationLottiePromise
+    }
+
+    function updateWidgetWidth(widget) {
+        // CSS size containment overestimates height in wrapped column flex containers.
+        var styles = getComputedStyle(widget)
+        var width = widget.clientWidth - (parseFloat(styles.paddingLeft) || 0) - (parseFloat(styles.paddingRight) || 0)
+        if (width <= 0) return
+        widget.style.setProperty('--schedule-cqi', (width / 100) + 'px')
+        widget.dataset.wide = String(width >= 760)
+        widget.dataset.narrow = String(width <= 380)
+    }
+
+    function timerText(deadline, now) {
+        var seconds = Math.max(0, Math.ceil((deadline - now) / 1000)), days = Math.floor(seconds / 86400)
+        return (days ? days + ' hari ' : '') + [Math.floor(seconds / 3600) % 24, Math.floor(seconds / 60) % 60, seconds % 60].map(function (value) { return String(value).padStart(2, '0') }).join(' : ')
     }
 
     function render(host, doc, options) {
         options = options || {}
-        if (mounts.has(host)) mounts.get(host)()
-        liveHosts.add(host)
+        var exporting = options.exporting
+        if (!exporting) {
+            if (mounts.has(host)) mounts.get(host)()
+            liveHosts.add(host)
+        }
         var disposed = false, intervals = [], animations = [], timerChecks = [], buttons = []
-        var root = shadow(host), widget = element('section', 'widget'), inner = element('div', 'inner')
+        var root = exporting ? host : shadow(host), widget = element('section', 'widget'), inner = element('div', 'inner')
         var theme = doc.theme
         widget.dataset.template = theme.preset || 'classic'
         widget.dataset.button = theme.buttonStyle || 'solid'
@@ -114,24 +130,30 @@
         Object.entries({ '--bg': theme.background, '--card': theme.card, '--ink': theme.text, '--accent': theme.accent, '--button': theme.buttonText, '--radius': theme.radius + 'px', '--gap': theme.gap + 'px', '--width': theme.maxWidth + 'px', '--font': fonts[theme.font] || fonts.sans }).forEach(function (entry) { widget.style.setProperty(entry[0], entry[1]) })
         widget.setAttribute('aria-label', doc.heading || 'Jadwal seminar')
         widget.append(inner); root.append(widget)
-        // Avoid CSS size containment: wrapped column flex containers can overestimate its height.
-        function updateWidth() {
-            var styles = getComputedStyle(widget)
-            var width = widget.clientWidth - (parseFloat(styles.paddingLeft) || 0) - (parseFloat(styles.paddingRight) || 0)
-            if (!width) return
-            widget.style.setProperty('--schedule-cqi', (width / 100) + 'px')
-            widget.dataset.wide = String(width >= 760)
-            widget.dataset.narrow = String(width <= 380)
-        }
-        updateWidth()
+        function updateWidth() { updateWidgetWidth(widget) }
         var resizeObserver
-        if (typeof ResizeObserver === 'function') { resizeObserver = new ResizeObserver(updateWidth); resizeObserver.observe(host) }
-        else window.addEventListener('resize', updateWidth)
+        if (!exporting) {
+            updateWidth()
+            if (typeof ResizeObserver === 'function') { resizeObserver = new ResizeObserver(updateWidth); resizeObserver.observe(host) }
+            else window.addEventListener('resize', updateWidth)
+        }
 
         function timer(settings, key, parent) {
             if (!settings || settings.mode === 'off') return function () { return false }
+            var block = element('div', 'timer'), label = element('span', 'timer-label', settings.label), digits = element('span', 'digits')
+            block.append(label, digits); parent.append(block)
             var deadline
-            if (settings.mode === 'fixed') deadline = Date.parse(settings.deadline + ':00' + offsets[settings.timezone])
+            var fixedDeadline = settings.mode === 'fixed' ? settings.deadline + ':00' + offsets[settings.timezone] : ''
+            if (exporting) {
+                block.dataset.timerKey = key
+                block.dataset.expiryAction = settings.expiryAction
+                block.dataset.expiredText = settings.expiredText || 'Periode diskon telah berakhir'
+                if (fixedDeadline) block.dataset.deadline = fixedDeadline
+                else block.dataset.minutes = settings.minutes
+                digits.textContent = fixedDeadline ? '…' : timerText(settings.minutes * 60000, 0)
+                return function () { return false }
+            }
+            if (fixedDeadline) deadline = Date.parse(fixedDeadline)
             else {
                 var storageKey = 'divination-timer:v1:' + (options.key || host.dataset.divinationSchedule || 'preview') + ':' + key + ':' + settings.minutes
                 if (options.preview) deadline = Date.now() + settings.minutes * 60000
@@ -144,8 +166,6 @@
                     }
                 }
             }
-            var block = element('div', 'timer'), label = element('span', 'timer-label', settings.label), digits = element('span', 'digits')
-            block.append(label, digits); parent.append(block)
             function expired() { return Number.isFinite(deadline) && Date.now() >= deadline }
             function tick() {
                 if (!Number.isFinite(deadline)) { digits.className = 'expired'; digits.textContent = 'Batas waktu belum diisi'; return }
@@ -153,8 +173,7 @@
                     block.hidden = settings.expiryAction === 'hide_timer'
                     label.hidden = true; digits.className = 'expired'; digits.textContent = settings.expiredText || 'Periode diskon telah berakhir'
                 } else {
-                    var seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000)), days = Math.floor(seconds / 86400)
-                    digits.textContent = (days ? days + ' hari ' : '') + [Math.floor(seconds / 3600) % 24, Math.floor(seconds / 60) % 60, seconds % 60].map(function (value) { return String(value).padStart(2, '0') }).join(' : ')
+                    digits.textContent = timerText(deadline, Date.now())
                 }
             }
             tick(); timerChecks.push(tick)
@@ -173,12 +192,17 @@
             inner.append(arrows)
         } else if (animation.mode === 'lottie' || animation.mode === 'image') {
             var row = element('div', 'animation'); row.setAttribute('aria-hidden', 'true'); inner.append(row)
+            if (exporting && animation.mode === 'lottie') {
+                if (animation.upload) row.dataset.lottieData = animation.upload
+                else row.dataset.lottieUrl = safeUrl(animation.url)
+            }
             for (var i = 0; i < animation.count; i++) {
                 var item = element('div', 'animation-item'); item.style.width = animation.size + 'px'; row.append(item)
                 if (animation.mode === 'image') {
-                    var img = element('img'); img.alt = ''; img.src = animation.upload || safeUrl(animation.url); img.loading = 'lazy'
+                    var img = exporting ? options.inertDocument.createElement('img') : element('img')
+                    img.alt = ''; img.src = animation.upload || safeUrl(animation.url); img.loading = 'lazy'
                     img.onerror = function () { this.remove() }; item.append(img)
-                } else {
+                } else if (!exporting) {
                     ;(function (container) {
                         loadLottie().then(function (lottie) {
                             if (disposed) return
@@ -217,6 +241,13 @@
             header.append(ordinal, titleBlock); card.append(header)
             city.sessions.forEach(function (session, index) {
                 var block = element('div', 'session'), body = element('div', 'session-body'), stamp = element('div', 'date-stamp')
+                if (exporting) {
+                    card.append(document.createComment(' Sesi ' + (index + 1) + ' '))
+                    block.dataset.sessionId = session.id
+                    block.dataset.cityId = city.id
+                    block.dataset.status = session.status
+                    if (doc.hidePast && session.date) block.dataset.endsAt = session.date + 'T' + (session.endTime || '23:59') + ':59' + offsets[session.timezone]
+                }
                 stamp.setAttribute('aria-hidden', 'true')
                 var stampDate = new Date(session.date + 'T12:00:00Z')
                 stamp.append(element('strong', '', session.date ? session.date.slice(8) : '—'), element('span', '', Number.isFinite(stampDate.getTime()) ? new Intl.DateTimeFormat('id-ID', { month: 'short', timeZone: 'UTC' }).format(stampDate).toUpperCase() : 'TGL'))
@@ -237,18 +268,24 @@
                 }
                 var soldOut = session.status === 'sold_out' || (seats.mode === 'actual' && remaining === 0)
                 var blocked = soldOut || session.status !== 'open' || (!options.preview && !safeUrl(session.checkoutUrl))
-                var button = element(blocked || options.preview ? 'button' : 'a', 'cta' + (doc.cta.pulse && !blocked ? ' pulse' : ''))
                 var openLabel = template(session.ctaLabel || doc.cta.label || 'Daftar Sekarang', city.name, session.name || 'Sesi ' + (index + 1))
                 var closedLabel = soldOut ? doc.cta.soldOutLabel || 'Sold Out' : session.status === 'cancelled' ? 'Sesi Dibatalkan' : doc.cta.closedLabel || 'Pendaftaran Ditutup'
+                if (exporting) {
+                    appendStaticButtons(body, block, doc.cta, session, openLabel, seats.mode === 'actual' && remaining === 0,
+                        doc.countdown.expiryAction === 'close_cta' && doc.countdown.mode !== 'off' ||
+                        session.countdown && session.countdown.expiryAction === 'close_cta' && session.countdown.mode !== 'off')
+                    card.append(block)
+                    return
+                }
+                var button = element(blocked || options.preview ? 'button' : 'a', 'cta' + (doc.cta.pulse && !blocked ? ' pulse' : ''))
                 button.textContent = blocked ? closedLabel : openLabel
                 if (button.tagName === 'A') {
-                    if (options.raw) button.classList.add('oo-link')
                     var updateHref = function () {
                         if (globalClosed() || sessionClosed()) { button.removeAttribute('href'); return }
                         button.href = buildTrackedUrl(session.checkoutUrl, options.search === undefined ? window.location.search : options.search, cookieString())
                     }
                     updateHref(); button.rel = 'noopener noreferrer'; button.target = doc.cta.newTab ? '_blank' : '_self'
-                    // Automatic embeds omit oo-link; raw embeds expose it inside the isolated shadow root.
+                    // Automatic embeds handle UTM inside the isolated shadow root.
                     button.addEventListener('pointerdown', updateHref); button.addEventListener('focus', updateHref)
                     button.addEventListener('click', function (event) {
                         if (globalClosed() || sessionClosed()) { event.preventDefault(); tickButtons(); return }
@@ -263,6 +300,14 @@
         })
         inner.append(cityList)
         if (!cities.length) inner.append(element('p', 'empty', doc.emptyMessage || 'Jadwal berikutnya segera hadir.'))
+        if (exporting) {
+            if (cities.length && doc.hidePast) {
+                var empty = element('p', 'empty', doc.emptyMessage || 'Jadwal berikutnya segera hadir.')
+                empty.hidden = true
+                inner.append(empty)
+            }
+            return
+        }
         function tickButtons() {
             buttons.forEach(function (entry) {
                 var expired = globalClosed() || entry.isClosed()
@@ -284,6 +329,228 @@
         return cleanup
     }
 
+    function appendStaticButtons(body, block, settings, session, openLabel, noSeats, canExpire) {
+        var href = safeUrl(session.checkoutUrl)
+        if (href) {
+            var link = element('a', 'cta oo-link' + (settings.pulse ? ' pulse' : ''), openLabel)
+            link.href = href
+            link.target = settings.newTab ? '_blank' : '_self'
+            link.rel = 'noopener noreferrer'
+            link.dataset.cta = 'open'
+            body.append(link)
+        } else block.setAttribute('data-no-link', '')
+        if (noSeats) block.setAttribute('data-no-seats', '')
+
+        var disabled = element('button', 'cta')
+        disabled.type = 'button'
+        disabled.disabled = true
+        disabled.dataset.cta = 'unavailable'
+        Object.entries({
+            sold_out: settings.soldOutLabel || 'Sold Out',
+            closed: session.status === 'cancelled' ? 'Sesi Dibatalkan' : settings.closedLabel || 'Pendaftaran Ditutup',
+        }).forEach(function (entry) {
+            var label = element('span', '', entry[1])
+            label.dataset.ctaLabel = entry[0]
+            disabled.append(label)
+        })
+        if (canExpire) {
+            var expiry = element('span')
+            expiry.dataset.ctaLabel = 'expired'
+            disabled.append(expiry)
+        }
+        body.append(disabled)
+    }
+
+    // Only these helpers run on a landing page. The cards already exist in HTML.
+    function enhanceStaticSchedule(measureWidth, trackedUrl, formatTimer, loadAnimation) {
+        function enhance() {
+            document.querySelectorAll('[data-divination-static]').forEach(function (host) {
+                if (host.dataset.ready) return
+                var widget = host.querySelector('.dv-schedule-widget')
+                if (!widget) return
+                host.dataset.ready = 'true'
+                measureWidth(widget)
+                if (typeof ResizeObserver === 'function') {
+                    var observer = new ResizeObserver(function () {
+                        if (host.isConnected) measureWidth(widget)
+                        else observer.disconnect()
+                    })
+                    observer.observe(host)
+                } else window.addEventListener('resize', function resize() {
+                    if (host.isConnected) measureWidth(widget)
+                    else window.removeEventListener('resize', resize)
+                })
+
+                var timers = Array.from(widget.querySelectorAll('[data-timer-key]')).map(function (block) {
+                    var deadline = Date.parse(block.dataset.deadline)
+                    if (block.dataset.minutes) {
+                        var key = 'divination-timer:v1:' + host.dataset.divinationStatic + ':' + block.dataset.timerKey + ':' + block.dataset.minutes
+                        try { deadline = Number(localStorage.getItem(key)) } catch { /* Storage can be blocked. */ }
+                        if (!deadline || !Number.isFinite(deadline)) {
+                            deadline = Date.now() + Number(block.dataset.minutes) * 60000
+                            try { localStorage.setItem(key, String(deadline)) } catch { /* Timer still runs in this view. */ }
+                        }
+                    }
+                    return { block: block, deadline: deadline, label: block.querySelector('.dv-schedule-timer-label'), digits: block.querySelector('.dv-schedule-digits') }
+                })
+                var globalTimer = timers.find(function (timer) { return timer.block.dataset.timerKey === 'schedule' })
+                var sessionTimers = new Map(timers.map(function (timer) { return [timer.block.dataset.timerKey, timer] }))
+                var sessions = Array.from(widget.querySelectorAll('[data-session-id]'))
+                var expiryButtons = sessions.filter(function (session) { return session.querySelector('[data-cta-label="expired"]') })
+                var datedSessions = sessions.filter(function (session) { return session.dataset.endsAt })
+                var cities = widget.querySelectorAll('.dv-schedule-city')
+                var empty = widget.querySelector('.dv-schedule-empty')
+                function closedTimer(session, now) {
+                    return [globalTimer, sessionTimers.get(session.dataset.sessionId)].find(function (timer) {
+                        return timer && timer.block.dataset.expiryAction === 'close_cta' && now >= timer.deadline
+                    })
+                }
+                function refresh() {
+                    var now = Date.now()
+                    timers.forEach(function (timer) {
+                        var expired = now >= timer.deadline
+                        timer.block.hidden = expired && timer.block.dataset.expiryAction === 'hide_timer'
+                        timer.label.hidden = expired
+                        timer.digits.className = expired ? 'dv-schedule-expired' : 'dv-schedule-digits'
+                        timer.digits.textContent = expired ? timer.block.dataset.expiredText
+                            : Number.isFinite(timer.deadline) ? formatTimer(timer.deadline, now) : 'Batas waktu belum diisi'
+                    })
+                    expiryButtons.forEach(function (session) {
+                        var timer = closedTimer(session, now)
+                        session.toggleAttribute('data-cta-expired', !!timer)
+                        if (timer) session.querySelector('[data-cta-label="expired"]').textContent = timer.block.dataset.expiredText
+                    })
+                    datedSessions.forEach(function (session) { session.hidden = now > Date.parse(session.dataset.endsAt) })
+                    if (datedSessions.length) {
+                        var visibleCities = 0
+                        cities.forEach(function (city) {
+                            city.hidden = !city.querySelector('.dv-schedule-session:not([hidden])')
+                            if (city.hidden) return
+                            var number = String(++visibleCities).padStart(2, '0')
+                            city.querySelector('.dv-schedule-city-index').textContent = number
+                            city.querySelector('.dv-schedule-city-kicker').textContent = 'SEMINAR / ' + number
+                        })
+                        if (empty) empty.hidden = visibleCities > 0
+                    }
+                }
+                refresh()
+                if (timers.length || datedSessions.length) {
+                    var interval = setInterval(function () {
+                        if (host.isConnected) refresh()
+                        else clearInterval(interval)
+                    }, timers.length ? 1000 : 60000)
+                }
+
+                function track(link) {
+                    var cookies = ''
+                    try { cookies = document.cookie } catch { /* Cookies can be blocked. */ }
+                    var href = trackedUrl(link.href, window.location.search, cookies)
+                    if (href) link.href = href
+                }
+                widget.querySelectorAll('a.oo-link').forEach(track)
+                ;['pointerdown', 'focusin', 'click'].forEach(function (eventName) {
+                    widget.addEventListener(eventName, function (event) {
+                        var link = event.target.closest ? event.target.closest('a.oo-link') : null
+                        if (!link) return
+                        var session = link.closest('[data-session-id]')
+                        if (!session) return
+                        var now = Date.now()
+                        if (session.dataset.status !== 'open' || session.hasAttribute('data-no-seats')
+                            || closedTimer(session, now) || now > Date.parse(session.dataset.endsAt)) {
+                            event.preventDefault()
+                            refresh()
+                            return
+                        }
+                        track(link)
+                        if (eventName === 'click') host.dispatchEvent(new CustomEvent('divination:schedule-click', {
+                            bubbles: true, composed: true,
+                            detail: { scheduleId: host.dataset.divinationStatic, cityId: session.dataset.cityId, sessionId: session.dataset.sessionId },
+                        }))
+                    })
+                })
+
+                var animation = widget.querySelector('[data-lottie-data], [data-lottie-url]')
+                if (animation && loadAnimation) {
+                    loadAnimation().then(function (lottie) {
+                        if (!host.isConnected) return
+                        var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                        animation.querySelectorAll('.dv-schedule-animation-item').forEach(function (item) {
+                            var config = { container: item, renderer: 'svg', loop: !reducedMotion, autoplay: !reducedMotion }
+                            if (animation.dataset.lottieData) config.animationData = JSON.parse(animation.dataset.lottieData)
+                            else config.path = animation.dataset.lottieUrl
+                            lottie.loadAnimation(config).addEventListener('data_failed', function () { item.remove() })
+                        })
+                    }).catch(function () { animation.remove() })
+                }
+            })
+        }
+        enhance()
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enhance, { once: true })
+    }
+
+    var staticCss
+    function exportStyles() {
+        if (staticCss) return staticCss
+        // Parse the shared stylesheet, then scope it for regular HTML outside Shadow DOM.
+        var style = element('style')
+        style.media = 'not all'
+        style.textContent = css
+        document.head.append(style)
+        var scope = '.dv-schedule-export[data-divination-static]'
+        function scopeRule(rule) {
+            if (rule.selectorText) {
+                // Selector groups here contain commas only outside functional selectors.
+                var selector = rule.selectorText.split(/,(?![^()]*\))/).map(function (part) {
+                    if (part.trim() === ':host') return scope
+                    return scope + ' ' + part.trim()
+                        .replace(/\.session\s*\+\s*\.session/g, '.session:where(:not([hidden])) ~ .session')
+                        .replace(/\.([a-z][\w-]*)/gi, '.dv-schedule-$1')
+                }).join(', ')
+                return selector + ' { ' + rule.style.cssText + ' }'
+            }
+            if (rule.media) return '@media ' + rule.media.mediaText + ' {\n' + Array.from(rule.cssRules, scopeRule).join('\n') + '\n}'
+            return rule.cssText
+        }
+        try {
+            staticCss = scope + ' :where(section, div, article, header, h2, h3, p, span, strong, a, button, img) { all: revert; }\n'
+                + Array.from(style.sheet.cssRules, scopeRule).join('\n') + `
+${scope} [hidden] { display: none !important; }
+${scope} [data-cta], ${scope} [data-cta-label] { display: none; }
+${scope} [data-status="open"]:not([data-no-seats], [data-no-link], [data-cta-expired]) [data-cta="open"],
+${scope} :is([data-status]:not([data-status="open"]), [data-no-seats], [data-no-link], [data-cta-expired]) [data-cta="unavailable"] { display: inline-flex; }
+${scope} :is([data-status="sold_out"], [data-no-seats]):not([data-cta-expired]) [data-cta-label="sold_out"],
+${scope} :is([data-status="closed"], [data-status="cancelled"], [data-no-link]):not([data-status="sold_out"], [data-no-seats], [data-cta-expired]) [data-cta-label="closed"],
+${scope} [data-cta-expired] [data-cta-label="expired"] { display: inline; }`
+        } finally { style.remove() }
+        return staticCss
+    }
+
+    function formatMarkup(node, indent) {
+        if (node.nodeType === 8) return indent + '<!--' + node.nodeValue + '-->'
+        if (!node.children.length || !/^(DIV|SECTION|ARTICLE|HEADER)$/.test(node.tagName) || Array.from(node.childNodes).some(function (child) { return child.nodeType === 3 })) return indent + node.outerHTML
+        var opening = node.cloneNode(false).outerHTML
+        return indent + opening.slice(0, opening.lastIndexOf('</')) + '\n'
+            + Array.from(node.childNodes, function (child) { return formatMarkup(child, indent + '  ') }).join('\n')
+            + '\n' + indent + opening.slice(opening.lastIndexOf('</'))
+    }
+
+    function exportHtml(doc, key, city) {
+        var host = element('div', 'dv-schedule-export')
+        host.dataset.divinationStatic = key
+        render(host, doc, { exporting: true, city: city, inertDocument: document.implementation.createHTMLDocument('') })
+        host.querySelectorAll('[class]').forEach(function (node) {
+            node.setAttribute('class', Array.from(node.classList, function (name) { return name === 'oo-link' ? name : 'dv-schedule-' + name }).join(' '))
+        })
+        var markup = formatMarkup(host, '')
+        var script = '(' + enhanceStaticSchedule.toString() + ')(' + [updateWidgetWidth, buildTrackedUrl, timerText, doc.animation.mode === 'lottie' ? loadLottie : null]
+            .map(function (fn) { return fn ? fn.toString() : 'null' }).join(',\n') + ');'
+        var expiryNote = host.querySelector('[data-ends-at]') ? '\n<!-- Jika tanggal atau jam selesai berubah, sesuaikan juga data-ends-at agar sesi disembunyikan tepat waktu. -->' : ''
+        var stampNote = ['ticket', 'editorial'].includes(doc.theme.preset) ? '\n<!-- Jika tanggal berubah, sesuaikan juga angka dan bulan pada date-stamp. -->' : ''
+        return '<!-- Edit jam, tanggal, dan venue langsung pada teks HTML. Untuk sold out, ubah data-status="open" menjadi "sold_out" atau sebaliknya. -->'
+            + expiryNote + stampNote + '\n' + markup + '\n\n<style style="display:none!important">\n' + exportStyles() + '\n</style>\n'
+            + '<script style="display:none!important">\n' + script.replace(/<\/script/gi, '<\\/script') + '\n</script>'
+    }
+
     function mount(host) {
         if (initialized.has(host)) return
         initialized.add(host)
@@ -303,23 +570,7 @@
             }).finally(function () { clearTimeout(timeout) })
     }
     function scan() { document.querySelectorAll('[data-divination-schedule]').forEach(mount) }
-    if (rawScheduleToken) {
-        document.querySelectorAll('[data-divination-raw-host="' + rawScheduleToken + '"]').forEach(function (rawHost) {
-            if (rawHost.dataset.divinationRawReady === 'true') return
-            try {
-                var rawData = rawHost.querySelector('textarea[data-schedule-data]')
-                var rawDoc = JSON.parse(rawData.value)
-                if (!rawDoc || rawDoc.schemaVersion !== 1) throw new Error('Invalid schedule')
-                render(rawHost, rawDoc, { key: rawHost.dataset.scheduleKey, city: rawHost.dataset.city, raw: true })
-                rawHost.dataset.divinationRawReady = 'true'
-            } catch {
-                var errorRoot = rawHost.shadowRoot || rawHost
-                errorRoot.textContent = 'Jadwal belum dapat dimuat. Periksa data jadwal.'
-            }
-        })
-        return
-    }
-    window.DivinationSchedules = { render: render, scan: scan, buildTrackedUrl: buildTrackedUrl }
+    window.DivinationSchedules = { render: render, scan: scan, buildTrackedUrl: buildTrackedUrl, exportHtml: exportHtml }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scan, { once: true })
     else scan()
     // Elementor can insert HTML widgets after the initial DOMContentLoaded event.
